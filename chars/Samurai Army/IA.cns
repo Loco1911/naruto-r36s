@@ -1,0 +1,974 @@
+;===============================================================================
+; INTELIGENCIA ARTIFICIAL:
+;===============================================================================
+[Statedef -2]
+
+[State 0, Control Player o IA]
+type = VarSet
+trigger1 = ailevel > 0
+v = 1
+value = 1
+
+[State 0, Dificultad Rumble]
+type = VarSet
+trigger1 = 1
+v = 2
+value = 6 ; Nivel Normal = 12
+
+[State 0, AngleDraw]
+type = AngleDraw
+trigger1 = stateno = [0,190]
+trigger2 = stateno = 0 && time >= 60
+value = 0
+scale = .99,.99
+ignorehitpause = 1
+
+;===============================================================================
+
+; Samurai CENTRAL:
+;---------------
+
+[State 0, ChangeState]
+type = ChangeState
+triggerall = var(1) = 1
+triggerall = roundstate <= 2
+triggerall = life > 0
+trigger1 = !ishelper && stateno != 1999
+value = 1999
+
+[State 0, AssertSpecial]
+type = AssertSpecial
+triggerall = var(1) = 1
+trigger1 = life <= 0
+flag = Invisible
+flag2 = Noshadow
+
+; Samurai:
+;--------
+
+; LIFEADD
+[State 0, VarAdd]
+type = VarAdd
+trigger1 = ishelper
+v = 6
+value = -gethitvar(damage)
+
+; MUERTE
+[State 0, ChangeState]
+type = ChangeState
+trigger1 = ishelper && stateno = 5110 && var(6) <= 0
+trigger2 = ishelper && stateno = 5110 && roundstate > 2
+value = 1002
+
+[State 0, Air Hit 1]
+type = ChangeState
+triggerall = ishelper && stateno = 50
+trigger1 = p2bodydist x < 20 && random < 25
+value = 1600
+
+[State 0, Air Hit 2]
+type = ChangeState
+triggerall = ishelper && stateno = 50
+trigger1 = p2bodydist x < 20 && random < 25
+value = 1610
+
+[State 0, Air Hit 3]
+type = ChangeState
+triggerall = ishelper && stateno = 50
+trigger1 = p2bodydist x < 20 && random < 25
+value = 1620
+
+; IA NORMAL:
+;------------
+[State 0, Run]
+type = ChangeState
+triggerall = var(5) = 0
+triggerall = stateno != 60
+triggerall = stateno != 65
+triggerall = stateno != 70
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl
+triggerall = p2bodydist x > 100
+trigger1 = random < (ailevel * 100)/2
+value = ifelse(pos y >= 0,60,65)
+
+[State 0, Run Atras]
+type = ChangeState
+triggerall = var(5) = 0
+triggerall = stateno != 60
+triggerall = stateno != 65
+triggerall = stateno != 70
+triggerall = backedgebodydist > 50
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl
+triggerall = p2bodydist x < 100 && p2movetype = A
+trigger1 = random < (ailevel * 100)/4
+value = 70
+
+[State 0, Guard]
+type = ChangeState
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl
+triggerall = (p2bodydist x < 50 && p2movetype = A) || (enemy,numproj > 0)
+trigger1 = random < (ailevel * 100)/2
+value = ifelse(statetype = A,132,130)
+
+; GOLPES NORMALES:
+
+[State 0, A,B,C]
+type = ChangeState
+triggerall = statetype != A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl
+triggerall = p2bodydist x < 35
+trigger1 = random < (ailevel * 100)
+value = ifelse(random < 500,200,ifelse(random < 500,300,400))
+
+[State 0, Air A,B,C]
+type = ChangeState
+triggerall = statetype = A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl
+triggerall = p2bodydist x = [-30,30]
+trigger1 = random < (ailevel * 100)
+value = ifelse(random < 500,600,ifelse(random < 500,610,620))
+
+; SPECIALS:
+
+[State 0, 800]
+type = ChangeState
+Triggerall = power >= 500
+Triggerall = statetype != A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl || numhelper(700) > 0
+triggerall = p2bodydist x < 85
+trigger1 = random < (ailevel * 100)/2
+value = 800
+
+[State 0, 810]
+type = ChangeState
+Triggerall = power >= 500
+Triggerall = statetype != A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl || numhelper(700) > 0
+triggerall = p2bodydist x < 40
+trigger1 = random < (ailevel * 100)/2
+value = 810
+
+[State 0, 820]
+type = ChangeState
+Triggerall = power >= 1000
+Triggerall = statetype != A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl || numhelper(700) > 0
+triggerall = P2BodyDist X >= 100
+trigger1 = random < (ailevel * 100)
+value = 820
+
+[State 0, 830]
+type = ChangeState
+Triggerall = power >= 1000
+Triggerall = statetype != A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl || numhelper(700) > 0
+triggerall = P2BodyDist X = [20,100]
+trigger1 = random < (ailevel * 100)
+value = 830
+
+[State 0, 850]
+type = ChangeState
+Triggerall = power >= 1500
+Triggerall = statetype != A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl || numhelper(700) > 0
+triggerall = p2bodydist x < 35
+trigger1 = random < (ailevel * 100)*1.75
+value = 850
+
+[State 0, 860]
+type = ChangeState
+Triggerall = power >= 1500
+Triggerall = statetype != A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl || numhelper(700) > 0
+triggerall = P2BodyDist X >= 100
+trigger1 = random < (ailevel * 100)*1.75
+value = 860
+;===============================================================================
+;---------------------------Estados usados Siempre------------------------------
+;===============================================================================
+[Statedef -3]
+[State 0, Helper de Conexiones]
+type = Helper
+Triggerall = numhelper(700) = 0
+trigger1 = movecontact && stateno = [200,400]
+helpertype = normal
+name = "Helper de Conexiones"
+ID = 700
+stateno = 700
+pos = 999999,999999
+postype = p1
+;===============================================================================
+; Air Jump y Limitador Air Jump:
+;-------------------------------------------------------------------------------
+[State 0, VarSet]
+type = VarSet
+trigger1 = var(5) = 0 && stateno = 40 && prevstateno = 50
+trigger2 = var(5) = 0 && stateno = 40 && prevstateno = [60,70]
+v = 5
+value = 1
+
+[State 0, VarSet]
+type = VarSet
+trigger1 = var(5) = 1 && pos y >= 0
+v = 5
+value = 0
+
+[State 0, Air Jump]
+type = ChangeState
+triggerall = stateno = 50
+triggerall = pos y < -20
+triggerall = var(5) = 0
+triggerall = time > 10
+trigger1 = ailevel = 0 && command = "up"
+trigger2 = roundstate = 2 && ailevel > 0 && random < (ailevel * 100) && p2bodydist y < - 30
+trigger3 = roundstate = 2 && ailevel > 0 && random < (ailevel * 100)/8
+value = 40
+ctrl = 1
+;===============================================================================
+; GUARD SPARK:
+;-------------------------------------------------------------------------------
+[State 0, Guard Spark]
+type = Explod
+triggerall = numexplod(7010) = 0
+trigger1 = moveguarded = 1
+anim = 7010
+ID = 7010
+postype = P2
+pos = 8,-30
+facing = 1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = .6,.6
+removeongethit = 1
+ontop = 1
+ignorehitpause = 1
+;===============================================================================
+; COUNTER:
+;-------------------------------------------------------------------------------
+; P1
+[State 0, VarSet]
+type = VarSet
+trigger1 = teamside = 1
+fv = 1
+value = 190
+[State 0, VarSet]
+type = VarSet
+trigger1 = teamside = 1 && teammode = simul
+fv = 2
+value = ifelse(id < partner,id,0,-30)
+
+; P2
+[State 0, VarSet]
+type = VarSet
+trigger1 = teamside = 2
+fv = 1
+value = -30
+[State 0, VarSet]
+type = VarSet
+trigger1 = teamside = 2 && teammode = simul
+fv = 2
+value = ifelse(id < partner,id,0,-30)
+
+[State 0, K.O.]
+type = Explod
+triggerall = !ishelper
+trigger1 = var(1) = 1 && numexplod(910) = 0
+anim = 910
+ID = 910
+pos = 100+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+; CIFRA 1:
+
+[State 0, 0]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(900) = 0
+trigger1 = var(3) = 0
+trigger2 = var(3) = 10
+trigger3 = var(3) = 20
+trigger4 = var(3) = 30
+trigger5 = var(3) = 40
+trigger6 = var(3) = 50
+trigger7 = var(3) = 60
+trigger8 = var(3) = 70
+trigger9 = var(3) = 80
+trigger10 = var(3) = 90
+anim = 900
+ID = 900
+pos = 60+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != 0
+trigger1 = var(3) != 10
+trigger1 = var(3) != 20
+trigger1 = var(3) != 30
+trigger1 = var(3) != 40
+trigger1 = var(3) != 50
+trigger1 = var(3) != 60
+trigger1 = var(3) != 70
+trigger1 = var(3) != 80
+trigger1 = var(3) != 90 && var(3) < 90
+id = 900
+
+[State 0, 1]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(901) = 0
+trigger1 = var(3) = 1
+trigger2 = var(3) = 11
+trigger3 = var(3) = 21
+trigger4 = var(3) = 31
+trigger5 = var(3) = 41
+trigger6 = var(3) = 51
+trigger7 = var(3) = 61
+trigger8 = var(3) = 71
+trigger9 = var(3) = 81
+trigger10 = var(3) = 91
+anim = 901
+ID = 901
+pos = 60+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != 1
+trigger1 = var(3) != 11
+trigger1 = var(3) != 21
+trigger1 = var(3) != 31
+trigger1 = var(3) != 41
+trigger1 = var(3) != 51
+trigger1 = var(3) != 61
+trigger1 = var(3) != 71
+trigger1 = var(3) != 81
+trigger1 = var(3) != 91
+id = 901
+
+[State 0, 2]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(902) = 0
+trigger1 = var(3) = 2
+trigger2 = var(3) = 12
+trigger3 = var(3) = 22
+trigger4 = var(3) = 32
+trigger5 = var(3) = 42
+trigger6 = var(3) = 52
+trigger7 = var(3) = 62
+trigger8 = var(3) = 72
+trigger9 = var(3) = 82
+trigger10 = var(3) = 92
+anim = 902
+ID = 902
+pos = 60+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != 2
+trigger1 = var(3) != 12
+trigger1 = var(3) != 22
+trigger1 = var(3) != 32
+trigger1 = var(3) != 42
+trigger1 = var(3) != 52
+trigger1 = var(3) != 62
+trigger1 = var(3) != 72
+trigger1 = var(3) != 82
+trigger1 = var(3) != 92
+id = 902
+
+[State 0, 3]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(903) = 0
+trigger1 = var(3) = 3
+trigger2 = var(3) = 13
+trigger3 = var(3) = 23
+trigger4 = var(3) = 33
+trigger5 = var(3) = 43
+trigger6 = var(3) = 53
+trigger7 = var(3) = 63
+trigger8 = var(3) = 73
+trigger9 = var(3) = 83
+trigger10 = var(3) = 93
+anim = 903
+ID = 903
+pos = 60+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != 3
+trigger1 = var(3) != 13
+trigger1 = var(3) != 23
+trigger1 = var(3) != 33
+trigger1 = var(3) != 43
+trigger1 = var(3) != 53
+trigger1 = var(3) != 63
+trigger1 = var(3) != 73
+trigger1 = var(3) != 83
+trigger1 = var(3) != 93
+id = 903
+
+[State 0, 4]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(904) = 0
+trigger1 = var(3) = 4
+trigger2 = var(3) = 14
+trigger3 = var(3) = 24
+trigger4 = var(3) = 34
+trigger5 = var(3) = 44
+trigger6 = var(3) = 54
+trigger7 = var(3) = 64
+trigger8 = var(3) = 74
+trigger9 = var(3) = 84
+trigger10 = var(3) = 94
+anim = 904
+ID = 904
+pos = 60+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != 4
+trigger1 = var(3) != 14
+trigger1 = var(3) != 24
+trigger1 = var(3) != 34
+trigger1 = var(3) != 44
+trigger1 = var(3) != 54
+trigger1 = var(3) != 64
+trigger1 = var(3) != 74
+trigger1 = var(3) != 84
+trigger1 = var(3) != 94
+id = 904
+
+[State 0, 5]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(905) = 0
+trigger1 = var(3) = 5
+trigger2 = var(3) = 15
+trigger3 = var(3) = 25
+trigger4 = var(3) = 35
+trigger5 = var(3) = 45
+trigger6 = var(3) = 55
+trigger7 = var(3) = 65
+trigger8 = var(3) = 75
+trigger9 = var(3) = 85
+trigger10 = var(3) = 95
+anim = 905
+ID = 905
+pos = 60+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != 5
+trigger1 = var(3) != 15
+trigger1 = var(3) != 25
+trigger1 = var(3) != 35
+trigger1 = var(3) != 45
+trigger1 = var(3) != 55
+trigger1 = var(3) != 65
+trigger1 = var(3) != 75
+trigger1 = var(3) != 85
+trigger1 = var(3) != 95
+id = 905
+
+[State 0, 6]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(906) = 0
+trigger1 = var(3) = 6
+trigger2 = var(3) = 16
+trigger3 = var(3) = 26
+trigger4 = var(3) = 36
+trigger5 = var(3) = 46
+trigger6 = var(3) = 56
+trigger7 = var(3) = 66
+trigger8 = var(3) = 76
+trigger9 = var(3) = 86
+trigger10 = var(3) = 96
+anim = 906
+ID = 906
+pos = 60+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != 6
+trigger1 = var(3) != 16
+trigger1 = var(3) != 26
+trigger1 = var(3) != 36
+trigger1 = var(3) != 46
+trigger1 = var(3) != 56
+trigger1 = var(3) != 66
+trigger1 = var(3) != 76
+trigger1 = var(3) != 86
+trigger1 = var(3) != 96
+id = 906
+
+[State 0, 7]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(907) = 0
+trigger1 = var(3) = 7
+trigger2 = var(3) = 17
+trigger3 = var(3) = 27
+trigger4 = var(3) = 37
+trigger5 = var(3) = 47
+trigger6 = var(3) = 57
+trigger7 = var(3) = 67
+trigger8 = var(3) = 77
+trigger9 = var(3) = 87
+trigger10 = var(3) = 97
+anim = 907
+ID = 907
+pos = 60+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != 7
+trigger1 = var(3) != 17
+trigger1 = var(3) != 27
+trigger1 = var(3) != 37
+trigger1 = var(3) != 47
+trigger1 = var(3) != 57
+trigger1 = var(3) != 67
+trigger1 = var(3) != 77
+trigger1 = var(3) != 87
+trigger1 = var(3) != 97
+id = 907
+
+[State 0, 8]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(908) = 0
+trigger1 = var(3) = 8
+trigger2 = var(3) = 18
+trigger3 = var(3) = 28
+trigger4 = var(3) = 38
+trigger5 = var(3) = 48
+trigger6 = var(3) = 58
+trigger7 = var(3) = 68
+trigger8 = var(3) = 78
+trigger9 = var(3) = 88
+trigger10 = var(3) = 98
+anim = 908
+ID = 908
+pos = 60+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != 8
+trigger1 = var(3) != 18
+trigger1 = var(3) != 28
+trigger1 = var(3) != 38
+trigger1 = var(3) != 48
+trigger1 = var(3) != 58
+trigger1 = var(3) != 68
+trigger1 = var(3) != 78
+trigger1 = var(3) != 88
+trigger1 = var(3) != 98
+id = 908
+
+[State 0, 9]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(909) = 0
+trigger1 = var(3) = 9
+trigger2 = var(3) = 19
+trigger3 = var(3) = 29
+trigger4 = var(3) = 39
+trigger5 = var(3) = 49
+trigger6 = var(3) = 59
+trigger7 = var(3) = 69
+trigger8 = var(3) = 79
+trigger9 = var(3) = 89
+trigger10 = var(3) >= 99
+anim = 909
+ID = 909
+pos = 60+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != 9
+trigger1 = var(3) != 19
+trigger1 = var(3) != 29
+trigger1 = var(3) != 39
+trigger1 = var(3) != 49
+trigger1 = var(3) != 59
+trigger1 = var(3) != 69
+trigger1 = var(3) != 79
+trigger1 = var(3) != 89
+id = 909
+
+; CIFRA 2:
+
+[State 0, 1]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(1001) = 0
+trigger1 = var(3) = [10,19]
+anim = 901
+ID = 1001
+pos = 40+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != [10,19]
+id = 1001
+
+[State 0, 2]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(1002) = 0
+trigger1 = var(3) = [20,29]
+anim = 902
+ID = 1002
+pos = 40+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != [20,29]
+id = 1002
+
+[State 0, 3]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(1003) = 0
+trigger1 = var(3) = [30,39]
+anim = 903
+ID = 1003
+pos = 40+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != [30,39]
+id = 1003
+
+[State 0, 4]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(1004) = 0
+trigger1 = var(3) = [40,49]
+anim = 904
+ID = 1004
+pos = 40+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != [40,49]
+id = 1004
+
+[State 0, 5]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(1005) = 0
+trigger1 = var(3) = [50,59]
+anim = 905
+ID = 1005
+pos = 40+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != [50,59]
+id = 1005
+
+[State 0, 6]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(1006) = 0
+trigger1 = var(3) = [60,69]
+anim = 906
+ID = 1006
+pos = 40+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != [60,69]
+id = 1006
+
+[State 0, 7]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(1007) = 0
+trigger1 = var(3) = [70,79]
+anim = 907
+ID = 1007
+pos = 40+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != [70,79]
+id = 1007
+
+[State 0, 8]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(1008) = 0
+trigger1 = var(3) = [80,89]
+anim = 908
+ID = 1008
+pos = 40+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+triggerall = !ishelper
+trigger1 = var(3) != [80,89]
+id = 1008
+
+[State 0, 9]
+type = Explod
+triggerall = !ishelper
+triggerall = var(1) = 1 && numexplod(1009) = 0
+trigger1 = var(3) >= 90
+anim = 909
+ID = 1009
+pos = 40+fvar(1),220+fvar(2)
+postype = Left
+bindtime = -1
+removetime = -1
+supermove = 999999999999
+pausemove = 999999999999
+supermovetime = 999999999999
+pausemovetime = 999999999999
+scale = .25,.25
+sprpriority = 9
+ownpal = 1
+ontop = 1

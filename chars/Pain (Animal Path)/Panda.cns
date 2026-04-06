@@ -1,0 +1,418 @@
+;End
+[Statedef 1359]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+ctrl = 0
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = Time = 0
+value = S7,13
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = Time = 0
+value = S7,13
+volume = 999
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 999
+
+[State 0, FX Corte]
+type = Explod
+trigger1 = time = 0
+anim = 2232
+ID = 2232
+vel = 0,-1
+pos = 0,-35
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .6,.6
+sprpriority = 4
+ontop = 1
+ownpal = 1
+[State 0, FX Corte]
+type = Explod
+trigger1 = time = 0
+anim = 2232
+ID = 2232
+vel = 0,-1
+pos = 0,-35
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .6,.6
+sprpriority = 4
+ontop = 1
+ownpal = 1
+
+[State 200, End]
+type = Destroyself
+trigger1 = animtime = 0
+;---------------------------------------------------------------------------
+;Panda - Start
+[Statedef 1350]
+type = S
+movetype= A
+physics = S
+sprpriority = 0
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = Time = 0
+value = S10,10
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = Time = 0
+value = S10,10
+volume = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = Movehit = 1
+value = S7,14
+volume = 999
+persistent = 0
+ignorehitpause = 1
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = Movehit = 1
+value = S7,14
+volume = 999
+persistent = 0
+ignorehitpause = 1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = Movehit = 1
+value = S7,15
+volume = 999
+persistent = 0
+ignorehitpause = 1
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = Movehit = 1
+value = S7,15
+volume = 999
+persistent = 0
+ignorehitpause = 1
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = 1
+x = 0
+y = 0
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+trigger1 = 1
+value = 1350
+elem = 1
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 5
+
+[State 0, wall]
+type = Helper
+trigger1 = time = 0
+helpertype = normal
+name = "wall"
+ID = 1352
+stateno = 1352
+pos = 0,0
+postype = p1
+ownpal = 1
+size.height = 50
+size.ground.back = 25
+size.ground.front = 25
+size.air.back = 25
+size.air.front = 25
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = S, SA
+animtype  = Hard
+damage    = 80,40
+guardflag = MA
+pausetime = 0,10
+sparkno = -1
+guard.sparkno = -1
+sparkxy = -8,-25
+hitsound   = -1
+guardsound = S4,1
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = -4,-2
+air.velocity = -4,-1
+Fall = 1
+Fall.Recover = 0 
+envshake.time = 15
+
+[State 0, Hit Spark]
+type = Explod
+triggerall = Numexplod(1460) = 0
+trigger1 = Movehit = 1
+anim = 1460
+ID = 1460
+postype = P2
+pos = -5+random%10,-35
+facing = -1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = .4,.4
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 0, Guard Spark]
+type = Explod
+triggerall = numexplod(7000) = 0
+trigger1 = moveguarded = 1
+anim = 7000
+ID = 7000
+postype = P2
+pos = 8,-30
+facing = 1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = .5,.5
+removeongethit = 1
+ontop = 1
+ignorehitpause = 1
+
+[State 200, End]
+type = ChangeState
+trigger1 = time = 30
+value = 1351
+;---------------------------------------------------------------------------
+;Aoda - Start
+[Statedef 1351]
+type    = S
+physics = S
+anim = 1350
+sprpriority = -1
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 5
+
+[State 0, ChangeState]
+type = ChangeState
+trigger1 = var(16) <= 0 && time > 20
+value = 1359
+
+[State 200, Death]
+type = ChangeState
+trigger1 = parent,stateno = 170
+trigger2 = parent,stateno = 181
+trigger3 = parent,life = 0
+value = 1359
+;---------------------------------------------------------------------------
+[Statedef 1352]
+type    = S
+movetype= I
+physics = N
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 1352
+sprpriority = -1
+
+[State 0, Life]
+type = ParentVarSet
+trigger1 = time = 0
+v = 16
+value = 150
+
+[State 0, PlayerPush]
+type = PlayerPush
+trigger1 = 1
+value = 1
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+y = 0
+
+[State 0, BindToParent]
+type = BindToParent
+trigger1 = 1
+pos = 0,0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 = 1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 1353
+time = 9999
+
+[State 0, ChangeState]
+type = ChangeState
+trigger1 = parent,var(16) <= 0 && time > 30
+value = 1354
+
+[State 200, Death]
+type = ChangeState
+trigger1 = parent,stateno = 170
+trigger2 = parent,stateno = 181
+trigger3 = parent,life = 0
+value = 1354
+;---------------------------------------------------------------------------
+[Statedef 1355]
+type    = S
+movetype= I
+physics = N
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 1352
+sprpriority = -1
+
+[State 0, PlayerPush]
+type = PlayerPush
+trigger1 = 1
+value = 1
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+y = 0
+
+[State 0, BindToParent]
+type = BindToParent
+trigger1 = 1
+pos = 0,0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 = 1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 1353
+time = 9999
+
+[State 0, ChangeState]
+type = ChangeState
+trigger1 = parent,var(16) <= 0 && time > 30
+value = 1354
+
+[State 200, Death]
+type = ChangeState
+trigger1 = parent,stateno = 170
+trigger2 = parent,stateno = 181
+trigger3 = parent,life = 0
+value = 1354
+;---------------------------------------------------------------------------
+[Statedef 1353]
+type    = S
+movetype= I
+physics = N
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 1352
+sprpriority = -1
+
+[State 0, PlayerPush]
+type = PlayerPush
+trigger1 = 1
+value = 1
+
+[State 0, PlayerPush]
+type = PlayerPush
+trigger1 = 1
+value = 1
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+y = 0
+
+[State 0, BindToParent]
+type = BindToParent
+trigger1 = 1
+pos = 0,0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 = parent,var(16) > 0
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 1353
+time = 9999
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 = parent,var(16) <= 0
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 1359
+time = 9999
+
+[State 0, ParentVaradd]
+type = ParentVaradd
+trigger1 = time = 0
+v = 16
+value = -gethitvar(damage)
+
+[State 0, VelSet]
+type = Veladd
+trigger1 = time = 0
+x = ifelse(facing = 1,gethitvar(xvel)/2,-gethitvar(xvel)/2)
+
+[State 0, ChangeState]
+type = ChangeState
+trigger1 = parent,var(16) > 0 && Hitover
+value = 1355
+
+[State 0, ChangeState]
+type = ChangeState
+trigger1 = parent,var(16) <= 0 && Hitover
+value = 1354
+;---------------------------------------------------------------------------
+[Statedef 1354]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+ctrl = 0
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 1
+;---------------------------------------------------------------------------
