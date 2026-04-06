@@ -1,0 +1,398 @@
+;===============================================================================
+; INTELIGENCIA ARTIFICIAL:
+;===============================================================================
+[Statedef -2]
+
+[State 0, VarSet]
+type = VarSet
+trigger1 = prevstateno = 311 && time = 1
+v = 1
+value = 0
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = prevstateno = 311 && time = 1
+y = 0
+
+[State 0, Posadd]
+type = Posadd
+trigger1 = prevstateno = 311 && time = 1
+x = 20
+
+[State 0, Run]
+type = ChangeState
+triggerall = var(5) = 0
+triggerall = stateno != 60
+triggerall = stateno != 65
+triggerall = stateno != 70
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl
+triggerall = p2bodydist x > 100
+trigger1 = random < (ailevel * 100)/2
+value = ifelse(pos y >= 0,60,65)
+
+[State 0, Run Atras]
+type = ChangeState
+triggerall = var(5) = 0
+triggerall = stateno != 60
+triggerall = stateno != 65
+triggerall = stateno != 70
+triggerall = backedgebodydist > 50
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl
+triggerall = p2bodydist x < 100 && p2movetype = A
+trigger1 = random < (ailevel * 100)/4
+value = 70
+
+[State 0, Guard]
+type = ChangeState
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl
+triggerall = (p2bodydist x < 50 && p2movetype = A) || (enemy,numproj > 0)
+trigger1 = random < (ailevel * 100)/2
+value = ifelse(statetype = A,132,130)
+
+[State 0, Power Charge]
+type = ChangeState
+triggerall = power < powermax
+triggerall = statetype != A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl
+triggerall = p2bodydist x >= 100
+trigger1 = random < (ailevel * 100)/2
+value = 500
+
+; RAITON CHAKRA MODE:
+
+[State 0, RAITON CHAKRA MODE]
+type = ChangeState
+triggerall = power >= 3000
+triggerall = var(2) = 0
+triggerall = statetype != A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl
+triggerall = p2bodydist x >= 100
+trigger1 = random < (ailevel * 100)*2
+value = 800
+
+; GOLPES NORMALES:
+
+[State 0, A,B & C]
+type = ChangeState
+triggerall = statetype != A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl
+triggerall = p2bodydist x < 30
+trigger1 = random < (ailevel * 100)
+value = ifelse(random < 500,200,ifelse(random < 500,300,ifelse(var(2) = 1,2400,400)))
+
+[State 0, Air Combo]
+type = ChangeState
+triggerall = statetype = A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl
+triggerall = p2bodydist x = [-30,30]
+trigger1 = random < (ailevel * 100)
+value = 600
+
+; SPECIALS:
+
+[State 0, Lariat]
+type = ChangeState
+Triggerall = power >= 1000
+Triggerall = statetype != A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl || numhelper(700) > 0
+trigger1 = p2bodydist x = [100,200]
+trigger1 = random < (ailevel * 100)/2
+trigger1 = var(2) = 0
+trigger2 = p2bodydist x = [150,300]
+trigger2 = random < (ailevel * 100)/2
+trigger2 = var(2) = 1
+value = 1000
+
+[State 0, Raigiaku Suihei Choppu]
+type = ChangeState
+Triggerall = power >= 1500
+Triggerall = statetype != A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl || numhelper(700) > 0
+triggerall = p2bodydist x = [-200,200]
+trigger1 = random < (ailevel * 100)
+value = 1100
+
+[State 0, Guillotine]
+type = ChangeState
+Triggerall = power >= 1000
+Triggerall = statetype != A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl || numhelper(700) > 0
+triggerall = p2bodydist x = [50,100]
+trigger1 = random < (ailevel * 100)/2
+value = 1200
+
+[State 0, Raiga Bomb]
+type = ChangeState
+Triggerall = power >= 1500
+Triggerall = statetype != A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl || numhelper(700) > 0
+triggerall = p2bodydist x < 50
+trigger1 = random < (ailevel * 100)
+value = 1300
+
+[State 0, Lighting Straight]
+type = ChangeState
+triggerall = power >= 2000
+triggerall = statetype != A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl || numhelper(700) > 0
+triggerall = p2bodydist x = [100,300]
+trigger1 = random < (ailevel * 100)*1.25
+value = 1400
+
+[State 0, Elbow]
+type = ChangeState
+triggerall = power >= 1000
+triggerall = statetype != A
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl || numhelper(700) > 0
+triggerall = p2bodydist x = [50,100]
+trigger1 = random < (ailevel * 100)/2
+value = 1500
+;===============================================================================
+;---------------------------Estados usados Siempre------------------------------
+;===============================================================================
+[Statedef -3]
+[State 0, Helper de Conexiones]
+type = Helper
+Triggerall = numhelper(700) = 0
+trigger1 = stateno = 200 && movecontact
+trigger2 = stateno = 210 && movecontact
+trigger3 = stateno = 221 && time > 55
+trigger4 = stateno = 300 && movecontact
+trigger5 = stateno = 311 && movecontact
+trigger6 = stateno = 320 && time > 45
+trigger7 = stateno = 400 && movecontact
+trigger8 = stateno = 1001 && time > 5
+trigger9 = stateno = 1002 && time > 45
+trigger10 = stateno = 1201 && time > 0 && numhelper(1250) = 0
+trigger11 = stateno = 1400 && time > 32 && numhelper(1450) = 0
+helpertype = normal
+name = "Helper de Conexiones"
+ID = 700
+stateno = 700
+pos = 999999,999999
+postype = p1
+
+[State 0, Helper Pared]
+type = Helper
+trigger1 = enemy,stateno = 227 && numhelper(240) = 0
+helpertype = normal
+name = "Helper Pared"
+ID = 240
+stateno = 240
+pos = 0,-30
+postype = p2
+facing = 1
+
+[State 0, Helper Pared]
+type = Helper
+trigger1 = enemy,stateno = 236 && numhelper(240) = 0
+helpertype = normal
+name = "Helper Pared"
+ID = 240
+stateno = 240
+pos = 0,-30
+postype = p2
+facing = 1
+
+[State 0, Helper Polvo]
+type = Helper
+triggerall = p2movetype = H
+trigger1 = enemy,stateno = 235 && numhelper(245) = 0
+helpertype = normal
+name = "Helper Polvo"
+ID = 245
+stateno = 245
+pos = 0,-40
+postype = p2
+facing = 1
+
+[State 0, Helper Pared]
+type = Helper
+trigger1 = enemy,stateno = 427 && numhelper(240) = 0
+helpertype = normal
+name = "Helper Pared"
+ID = 240
+stateno = 240
+pos = 0,-30
+postype = p2
+facing = 1
+
+[State 0, Helper Polvo]
+type = Helper
+triggerall = p2movetype = H
+trigger1 = enemy,stateno = 1015 && numhelper(245) = 0
+helpertype = normal
+name = "Helper Polvo"
+ID = 245
+stateno = 245
+pos = 0,-40
+postype = p2
+facing = 1
+
+[State 0, Helper Pared]
+type = Helper
+trigger1 = enemy,stateno = 1016 && numhelper(240) = 0
+helpertype = normal
+name = "Helper Pared"
+ID = 240
+stateno = 240
+pos = 0,-30
+postype = p2
+facing = 1
+;===============================================================================
+; Turn Transformaciones:
+;-------------------------------------------------------------------------------
+[State -3, Turn Raiton Chakra]
+type = ChangeAnim
+trigger1 = var(2) = 1
+trigger1 = anim = 5
+value = 2005
+;===============================================================================
+; Air Jump y Limitador Air Jump:
+;-------------------------------------------------------------------------------
+[State 0, VarSet]
+type = VarSet
+trigger1 = var(5) = 0 && stateno = 40 && prevstateno = 50
+trigger2 = var(5) = 0 && stateno = 40 && prevstateno = [60,70]
+v = 5
+value = 1
+
+[State 0, VarSet]
+type = VarSet
+trigger1 = var(5) = 1 && pos y >= 0
+v = 5
+value = 0
+
+[State 0, Air Jump]
+type = ChangeState
+triggerall = stateno = 50
+triggerall = pos y < -20
+triggerall = var(5) = 0
+triggerall = time > 10
+trigger1 = ailevel = 0 && command = "up"
+trigger2 = roundstate = 2 && ailevel > 0 && random < (ailevel * 100) && p2bodydist y < - 30
+trigger3 = roundstate = 2 && ailevel > 0 && random < (ailevel * 100)/8
+value = 40
+ctrl = 1
+;===============================================================================
+; GUARD SPARK:
+;-------------------------------------------------------------------------------
+[State 0, Guard Spark]
+type = Explod
+triggerall = numexplod(7010) = 0
+trigger1 = moveguarded = 1
+anim = 7010
+ID = 7010
+postype = P2
+pos = 8,-30
+facing = 1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = .6,.6
+removeongethit = 1
+ontop = 1
+ignorehitpause = 1
+;===============================================================================
+; Raiton Chakra Mode:
+;-------------------------------------------------------------------------------
+[State -3, VarSet - Raiton Chakra Mode]
+type = VarSet
+trigger1 = numhelper(850) = 1
+v = 2
+value = 1
+
+[State -3, VarSet - Raiton Chakra Mode]
+type = VarSet
+trigger1 = life = 0
+v = 2
+value = 0
+
+[State 0, Fin Forzado]
+type = ChangeState
+triggerall = var(2) = 1
+trigger1 = numhelper(850) = 0
+trigger1 = stateno = [0,20]
+value = 825
+
+[State -3, VarSet, Golpeado]
+type = VarSet
+trigger1 = var(2) = 1
+v = 10
+value = 1000
+
+[State -3, VarSet, Apariencia]
+type = VarSet
+trigger1 = var(2) = 1
+v = 11
+value = 2000
+
+[State 0, Aura]
+type = Helper
+trigger1 = var(2) = 1 && numhelper(900) = 0
+helpertype = normal
+name = "Aura"
+ID = 900
+stateno = 900
+pos = 0,0
+postype = p1
+facing = 1
+ownpal = 1
+supermove = 99999999
+pausemove = 99999999
+supermovetime = 99999999
+pausemovetime = 99999999
+size.xscale = .45
+size.yscale = .45
+;-------------------------------------------------------------------------------
+; COMUNES:
+[State -3, VarSet,Apariencia]
+type = VarSet
+trigger1 = var(2) = 0
+v = 11
+value = 0
+
+[State -3, VarSet,Golpeado]
+type = VarSet
+trigger1 = var(2) = 0
+v = 10
+value = 0
+
+[State 0, AttackMulSet]
+type = AttackMulSet
+trigger1 = 1
+value = 1+fvar(2)
+
+[State 0, DefenceMulSet]
+type = DefenceMulSet
+trigger1 = 1
+value = 1-fvar(2)
+;-------------------------------------------------------------------------------
+; FVARS:
+;-------------------------------------------------------------------------------
+[State 0, VarSet] ; Base
+type = VarSet
+trigger1 = var(2) = 0
+fv = 2
+value = 0
+
+[State 0, VarSet] ; Raiton Chakra Mode
+type = VarSet
+trigger1 = var(2) = 1
+fv = 2
+value = .1

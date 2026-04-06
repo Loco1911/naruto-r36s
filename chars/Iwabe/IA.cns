@@ -1,0 +1,727 @@
+;-------------------------------------------------------------------------------
+[Statedef -2]
+;-------------------------------------------------------------------------------
+[State 0, Armor Break]
+type = Helper
+triggerall = movetype = H
+trigger1 = life <= lifemax/2 && numhelper(950) = 0
+helpertype = normal
+name = "Armor Break"
+ID = 950
+stateno = 950
+pos = 0,-40
+postype = p1
+facing = 1
+supermove = 9999999999
+pausemove = 9999999999
+supermovetime = 99999999
+pausemovetime = 99999999999
+;===============================================================================
+; IA:
+;-------------------------------------------------------------------------------
+[State -3, IA de Defensa]
+type = ChangeState
+value = 132
+triggerall = p2movetype = A || (enemy, NumProj >= 1) ;
+triggerall = P2bodydist X <= 40 || (enemy, NumProj >= 1)
+triggerall = statetype = A
+triggerall = random <= 600
+triggerall = ailevel > 0
+triggerall = ctrl
+triggerall = stateno != 132
+trigger1 = p2statetype = A
+trigger2 = (enemy, NumProj >= 1)
+
+[State -3, IA de Defensa]
+type = ChangeState
+value = 130
+triggerall = p2movetype = A || (enemy, NumProj >= 1)
+triggerall = P2bodydist X <= 40 || (enemy, NumProj >= 1)
+triggerall = random <= 400
+triggerall = statetype != A
+triggerall = ailevel > 0
+triggerall = ctrl
+triggerall = stateno != 120
+trigger1 = p2statetype = S
+trigger2 = (enemy, NumProj >= 1)
+
+; Correr:
+[State -3, Run]
+type = ChangeState
+triggerall = stateno != 60
+triggerall = stateno != 65
+triggerall = stateno != 70
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl
+triggerall = p2bodydist x > 100
+trigger1 = random < (ailevel * 100)/2
+value = ifelse(pos y >= 0,60,65)
+
+[State -3, Run Atras]
+type = ChangeState
+triggerall = stateno != 60
+triggerall = stateno != 65
+triggerall = stateno != 70
+triggerall = backedgebodydist > 50
+triggerall = ailevel > 0 && roundstate = 2
+triggerall = ctrl
+triggerall = p2bodydist x < 100 && p2movetype = A
+trigger1 = random < (ailevel * 100)/4
+value = 70
+;===============================================================================
+;--------------------------Ataques IA-------------------------------------------
+;===============================================================================
+;-----------------------Supers--------------------------------------------------
+;===============================================================================
+[State -1, 3000]
+type = changestate
+Triggerall = power >= 1500
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = StateType != A
+triggerall = P2BodyDist X = [-70,70]
+trigger1 = ctrl
+trigger1 = Random = [500,700]
+trigger2 = numhelper(700) > 0
+trigger2 = random < 75
+value = 3000
+
+[State -1, 3100]
+type = changestate
+Triggerall = numhelper(3102) = 0
+Triggerall = power >= 2000
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = StateType != A
+triggerall = P2BodyDist X = [10,60]
+trigger1 = ctrl
+trigger1 = Random = [600,800]
+trigger2 = numhelper(700) > 0
+trigger2 = random < 100
+value = 3100
+
+[State -1, 3200]
+type = changestate
+Triggerall = power >= 1000
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = StateType != A
+triggerall = P2BodyDist X = [10,40]
+trigger1 = Ctrl
+trigger1 = Random = [100,200]
+trigger2 = numhelper(700) > 0
+trigger2 = random < 50
+value = 3200
+;===============================================================================
+;-------------------------Especiales--------------------------------------------
+;===============================================================================
+[State -1, 1000]
+type = changestate
+Triggerall = numhelper(1002) = 0
+Triggerall = power >= 500
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = StateType != A
+triggerall = p2movetype = A || (enemy, NumProj >= 1)
+trigger1 = Ctrl
+trigger1 = Random = [100,200]
+trigger2 = numhelper(700) > 0
+trigger2 = random < 25
+value = 1000
+
+[State -1, 1100]
+type = changestate
+Triggerall = power >= 500
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = StateType != A
+triggerall = P2BodyDist X = [50,100]
+trigger1 = Ctrl
+trigger1 = Random = [100,200]
+trigger2 = numhelper(700) > 0
+trigger2 = random < 25
+value = 1100
+
+[State -1, 1180]
+type = changestate
+Triggerall = power >= 5000
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = StateType = A
+triggerall = P2BodyDist X = [120,200]
+trigger1 = Ctrl
+trigger1 = Random = [100,200]
+trigger2 = numhelper(700) > 0
+trigger2 = random < 25
+value = 1180
+
+[State -1, 1200]
+type = changestate
+Triggerall = numhelper(1201) = 0
+Triggerall = power >= 500
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = StateType != A
+triggerall = P2BodyDist X = [80,200]
+trigger1 = Ctrl
+trigger1 = Random = [100,200]
+trigger2 = numhelper(700) > 0
+trigger2 = random < 25
+value = 1200
+
+[State -1, 1280]
+type = changestate
+triggerall = pos y < -50
+Triggerall = numhelper(1201) = 0
+Triggerall = power >= 500
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = StateType = A
+trigger1 = P2BodyDist X = [100,150]
+trigger1 = Ctrl
+trigger1 = Random = [100,200]
+trigger2 = numhelper(700) > 0
+trigger2 = random < 25
+value = 1280
+
+[State -1, 1300]
+type = changestate
+Triggerall = numhelper(1350) = 0
+Triggerall = power >= 1000
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = StateType != A
+triggerall = P2BodyDist X = [50,150]
+trigger1 = Ctrl
+trigger1 = Random = [100,200]
+trigger2 = numhelper(700) > 0
+trigger2 = random < 50
+value = 1300
+
+[State -1, 1400]
+type = changestate
+Triggerall = power >= 1000
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = StateType != A
+triggerall = P2BodyDist X = [40,100]
+trigger1 = Ctrl
+trigger1 = Random = [100,200]
+trigger2 = numhelper(700) > 0
+trigger2 = random < 50
+value = 1400
+
+[State -1, 1500]
+type = changestate
+Triggerall = power >= 1500
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = StateType != A
+triggerall = P2BodyDist X = [10,40]
+trigger1 = Ctrl
+trigger1 = Random = [400,600]
+trigger2 = numhelper(700) > 0
+trigger2 = random < 75
+value = 1500
+;===============================================================================
+;----------------Normales-------------------------------------------------------
+;===============================================================================
+[State -1, Combo 1 Start]
+type = changestate
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = StateType != A
+triggerall = P2BodyDist X = [0,30]
+trigger1 = Ctrl
+trigger1 = Random = [600,800]
+value = 200
+
+[State -1, Combo 2 Start]
+type = changestate
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = StateType != A
+triggerall = P2BodyDist X = [0,30]
+trigger1 = Ctrl
+trigger1 = Random = [600,800]
+value = 300
+
+[State -1, Combo 3 Start]
+type = changestate
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = StateType != A
+triggerall = P2BodyDist X = [0,30]
+trigger1 = Ctrl
+trigger1 = Random = [600,800]
+value = 400
+
+[State -1, Power Charge]
+type = changestate
+triggerall = power < 3000
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = StateType != A
+triggerall = Ctrl
+triggerall = P2BodyDist X >= 100
+trigger1 = power < 1000 && Random = [600,800]
+trigger2 = power < 2000 && power > 1000 && Random = [300,500]
+trigger3 = power < 3000 && power > 2000 && Random = [100,200]
+trigger4 = numhelper(1120) = 1
+value = 500
+
+[State -1, Awakening]
+type = changestate
+Triggerall = var(2) = 0
+Triggerall = life < lifemax /2
+Triggerall = power = 3000
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = StateType != A
+triggerall = Ctrl
+triggerall = P2BodyDist X >= 150
+trigger1 = random = [800,1000]
+value = 550
+
+[State -1, Combo Aire Start]
+type = changestate
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = StateType = A
+triggerall = P2BodyDist X = [0,30]
+trigger1 = Ctrl
+trigger1 = Random = [600,800]
+value = 600
+;===============================================================================
+;---------------------------Estados usados Siempre------------------------------
+;===============================================================================
+[Statedef -3]
+[State 0, Helper de Conexiones]
+type = Helper
+Triggerall = numhelper(700) = 0
+trigger1 = stateno = 200 && movecontact
+trigger2 = stateno = 210 && movecontact
+trigger3 = (stateno = 220 && movecontact) || stateno = 225
+trigger4 = stateno = 300 && movecontact
+trigger5 = (stateno = 310 && movecontact) || stateno = 311|| stateno = 312
+trigger6 = stateno = 400 && movecontact
+trigger7 = stateno = 410 && movecontact
+trigger8 = stateno = 420 && movecontact
+trigger9 = stateno = 430 && movecontact
+trigger10 = stateno = 450 && movecontact
+trigger11 = stateno = 600 && movecontact
+trigger12 = stateno = 610 && movecontact
+trigger13 = stateno = 620 && time > 25
+trigger14 = stateno = 1100 && time > 95
+trigger15 = stateno = 1200 && time > 45
+trigger16 = stateno = 1280 && time > 45
+trigger17 = stateno = 1300 && time > 77
+trigger18 = stateno = 1400 && time > 60
+trigger19 = stateno = 1500 && time > 50
+trigger20 = stateno = 3100 && time > 170
+trigger21 = stateno = 3200 && time > 63
+helpertype = normal
+name = "Helper de Conexiones"
+ID = 700
+stateno = 700
+pos = 999999,999999
+postype = p1
+;===============================================================================
+; Awakening:
+;-------------------------------------------------------------------------------
+[State -3, VarSet - Awakening]
+type = VarSet
+trigger1 = numhelper(560) = 1
+v = 2
+value = 1
+
+[State -3, VarSet - Awakening]
+type = VarSet
+trigger1 = numhelper(561) = 1
+trigger2 = life = 0
+trigger3 = stateno = 181 && time = 2
+trigger4 = stateno = 170 && time = 2
+v = 2
+value = 0
+
+[State 0, Explosion]
+type = Explod
+triggerall = stateno = 170||stateno = 181
+triggerall = var(2) = 1
+trigger1 = time = 1
+anim = 9022
+ID = 9022
+pos = 0,0
+postype = left
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = -2
+scale = 999,999
+sprpriority = 9
+ontop = 1
+ownpal = 1
+removeongethit = 0
+ignorehitpause = 1
+supermove = 99999
+pausemove = 99999
+supermovetime = 99999
+pausemovetime = 99999
+
+[State 0, PlaySnd]
+type = PlaySnd
+triggerall = stateno = 170||stateno = 181
+triggerall = var(2) = 1
+trigger1 = time = 1
+value = S2,2
+volume = 999
+
+[State 0, EnvShake]
+type = EnvShake
+triggerall = stateno = 170||stateno = 181
+triggerall = var(2) = 1
+trigger1 = time = 1
+time = 10
+freq = 60
+ampl = -8
+phase = 90
+
+[State 0, Limite]
+type = VarAdd
+triggerall = stateno != [550,554]
+triggerall = var(3) > 0
+triggerall = var(2) = 1
+trigger1 = time%2 = 0
+v = 3
+value = -1
+
+[State 0, Vuelta a la Normalidad]
+type = ChangeState
+triggerall = var(2) = 1
+triggerall = stateno = 0||stateno = 20||stateno = 500
+triggerall = var(3) <= 50
+trigger1 = 1
+value = 554
+
+[State 0, PalFXWiz]
+type = PalFX
+triggerall = var(2) = 1
+trigger1 = gametime%40 = 0
+time = 200
+add = 5,12,62
+mul = 256,256,256
+sinadd = 20,20,20,20
+invertall = 0
+color = 256
+ignorehitpause = 1
+
+[State 0, AfterImage]
+type = AfterImage
+triggerall = var(2) = 1
+trigger1 = time = 1
+time = 1000
+length = 4
+palcolor = 256
+palinvertall = 0
+palbright = 30,30,30
+palcontrast = 120,120,220
+palpostbright = 0,0,0
+paladd = 2,2,6
+palmul = .65,.65,.75
+timegap = 1
+framegap = 1
+trans = add
+
+;---------------------
+[State 0, PalFXWiz];ANULAR
+type = PalFX
+trigger1 = time = 10 && stateno = 554
+trigger2 = time = 1 && stateno = [170,190]
+trigger3 = life = 0
+TRIGGER4 = STATENO = 440 || STATENO = 230
+time = 1
+add = 0,0,0
+mul = 256,256,256
+color = 256
+ignorehitpause = 1
+
+[State 0, AfterImage];ANULAR
+type = AfterImage
+trigger1 = time = 10 && stateno = 554
+trigger2 = time = 1 && stateno = [170,190]
+trigger3 = life = 0
+TRIGGER4 = STATENO = 440 || STATENO = 230
+time = 1
+length = 1
+palcolor = 256
+palinvertall = 0
+palbright = 30,30,30
+palcontrast = 120,120,220
+palpostbright = 0,0,0
+paladd = 10,10,25
+palmul = .65,.65,.75
+timegap = 1
+framegap = 1
+trans = add
+;-------------------
+
+[State 0, Pause]
+type = Pause
+triggerall = var(2) = 1
+trigger1 = movehit = 1
+time = 3
+movetime = 0
+
+[State 0, EnvShake]
+type = EnvShake
+triggerall = var(2) = 1
+trigger1 = movehit = 1
+time = 5
+freq = 60
+ampl = -4
+phase = 90
+
+[State 0, AttackMulSet]
+type = AttackMulSet
+trigger1 = 1
+value = 1+fvar(2)
+
+[State 0, DefenceMulSet]
+type = DefenceMulSet
+trigger1 = 1
+value = 1-fvar(2)
+;-------------------------------------------------------------------------------
+; FVARS:
+;-------------------------------------------------------------------------------
+[State 0, VarSet] ; Normal
+type = VarSet
+trigger1 = var(2) = 0
+fv = 2
+value = 0
+
+[State 0, VarSet] ; Sharingan Mode
+type = VarSet
+trigger1 = var(2) = 1
+fv = 2
+value = .2
+;---------------------------------------------------------------------------
+[State 0, Clash]
+type = ChangeState
+triggerall = facing != enemy,facing
+triggerall = p2bodydist x = [40,80]
+triggerall = stateno = 1002
+triggerall = time < 5
+trigger1 = enemy,name = "Uzumaki Naruto Kid" && enemy,authorname = "CobraG6" && (enemy,stateno = 1002||enemy,stateno = 17002||enemy,stateno = 10000)
+trigger2 = enemy,name = "Uzumaki Naruto Kid 1 Tail" && enemy,authorname = "CobraG6" && (enemy,stateno = 17002||enemy,stateno = 10000)
+trigger3 = enemy,name = "Uzumaki Naruto Sennin" && enemy,authorname = "CobraG6" && (enemy,stateno = 1402||enemy,stateno = 10000)
+trigger4 = enemy,name = "Uchiha Sasuke Kid" && enemy,authorname = "CobraG6" && (enemy,stateno = 1000||enemy,stateno = 17000||enemy,stateno = 10000)
+trigger5 = enemy,name = "Uchiha Sasuke Kid CS2" && enemy,authorname = "CobraG6" && (enemy,stateno = 17000||enemy,stateno = 10000)
+trigger6 = enemy,name = "Uchiha Sasuke" && enemy,authorname = "CobraG6" && (enemy,stateno = 1000||enemy,stateno = 17000||enemy,stateno = 10000)
+trigger7 = enemy,name = "Uchiha Sasuke Akatsuki" && enemy,authorname = "CobraG6" && (enemy,stateno = 1000||enemy,stateno = 10000)
+trigger8 = enemy,name = "Jiraiya" && enemy,authorname = "CobraG6" && (enemy,stateno = 1002||enemy,stateno = 17002||enemy,stateno = 10000)
+trigger9 = enemy,name = "Yakushi Kabuto" && enemy,authorname = "CobraG6" && (enemy,stateno = 1000||enemy,stateno = 10000)
+trigger10 = enemy,name = "Raikage Ay" && enemy,authorname = "CobraG6" && (enemy,stateno = 1002||enemy,stateno = 10000)
+trigger11 = enemy,name = "Killer Bee" && enemy,authorname = "CobraG6" && (enemy,stateno = 1002||enemy,stateno = 10000)
+trigger12 = enemy,name = "Asuma Sarutobi" && enemy,authorname = "CobraG6" && (enemy,stateno = 1002||enemy,stateno = 10000)
+trigger13 = enemy,name = "Juugo" && enemy,authorname = "CobraG6" && (enemy,stateno = 1002||enemy,stateno = 10000)
+trigger14 = enemy,name = "Kakashi Kid" && enemy,authorname = "CobraG6" && (enemy,stateno = 1200||enemy,stateno = 10000)
+value = 10000
+;-------------------------------------
+[State 0, PosAdd]
+type = PosAdd
+triggerall = stateno = 10000
+trigger1 = time = 1
+x = -45
+
+[State 0, NotHitBy]
+type = NotHitBy
+triggerall = stateno = 10000
+triggerall = enemy,numhelper(10500) = 0
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 1
+
+[State 0, VarSet]
+type = VarSet
+triggerall = stateno = 10000
+trigger1 = time = 1
+v = 55
+value = 0
+
+[State 0, VarAdd Player]
+type = VarAdd
+triggerall = stateno = 10000
+triggerall = ailevel = 0
+trigger1 = command = "a"||command = "b"||command = "c"
+v = 55
+value = 1
+
+[State 0]
+type = PlaySnd
+triggerall = stateno = 10000
+trigger1 = command = "a"||command = "b" ||command = "c"
+value = S1,3
+
+[State 0, VarAdd IA]
+type = VarAdd
+triggerall = stateno = 10000
+triggerall = ailevel > 0
+trigger1 = timemod = 4,0
+v = 55
+value = -1+random%4
+
+[State 0, Clash]
+type = Helper
+triggerall = stateno = 10000
+triggerall = numhelper(10500) = 0
+trigger1 = var(55) >= 20
+trigger2 = roundstate != 2
+trigger3 = time = 200
+helpertype = Normal
+name = "Clash"
+ID = 10500
+stateno =  10500
+pos = 0,0
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+
+[State 0, Push The Buttons FX]
+type = Helper
+triggerall = stateno = 10000
+triggerall = numhelper(10800) = 0
+trigger1 = 1
+helpertype = Normal
+name = "Push The Buttons FX"
+ID = 10800
+stateno =  10800
+pos = 0,0
+postype = p1
+facing = facing
+keyctrl = 0
+ownpal = 1
+
+[State 3000, VarAdd]
+type = VarAdd
+triggerall = stateno = 10000
+trigger1 = time < 10
+v = 12
+value = -10
+
+[State 3000, VarSet]
+type = Varset
+triggerall = stateno = 10000
+trigger1 = time = 10
+v = 12
+value = -100
+
+[State 3000, VarAdd]
+type = VarAdd
+triggerall = stateno = 10001
+trigger1 = time > 0 && Var(12) < 0
+v = 12
+value = 2
+
+[State 3000, BGColorFX]
+type = BGPalFX
+triggerall = stateno = 10000
+trigger1 = Time > 0
+time = 1
+add = Var(12),Var(12),Var(12)
+
+[State 0, EnvShake]
+type = EnvShake
+triggerall = stateno = 10000
+trigger1 = time = 1
+trigger2 = time%10 = 0
+time = 10
+freq = 60
+ampl = -1
+phase = 90
+;===============================================================================
+; Pared Rota:
+;-------------------------------------------------------------------------------
+[State 0, Helper]
+type = Helper
+triggerall = numhelper(450) = 0
+trigger1 = p2stateno = 426
+helpertype = normal
+name = "Pared Rota"
+ID = 450
+stateno = 450
+pos = 0,-30
+postype = p2
+facing = 1
+keyctrl = 0
+ownpal = 1
+;===============================================================================
+; Chakra Bar:
+;-------------------------------------------------------------------------------
+[State 0, Chakra Bar]
+type = Helper
+trigger1 = numhelper(20000) = 0
+helpertype = normal
+name = "Chakra Bar"
+ID = 20000
+stateno = 20000
+pos = 0,0
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+supermove = 999999
+pausemove = 999999
+supermovetime = 999999
+pausemovetime = 999999
+;-------------------------------------------------------------------------------
+; Sonidos Comunes:
+;-------------------------------------------------------------------------------
+[State 0, Andando]
+type = PlaySnd
+triggerall = stateno = 20
+trigger1 = animelem = 3||animelem = 6
+value = S20,1
+
+[State 0, Saltando]
+type = PlaySnd
+triggerall = stateno = 40
+trigger1 = Time = 1
+value = S40,1
+volume = 55
+channel = -1
+
+[State 0, Super Jump]
+type = PlaySnd
+triggerall = stateno = 80
+trigger1 = Time = 1
+value = S60,1
+volume = 55
+channel = -1
+
+[State 0, Land]
+type = PlaySnd
+triggerall = stateno = 52
+trigger1 = time = 1
+value = S52,1
+volume = 50
+
+[State 0, Run]
+type = PlaySnd
+triggerall = stateno = 70
+trigger1 = time = 1
+value = S40,2
+volume = 50
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+TRIGGERALL = stateno != 500 && stateno != 550
+trigger1 = time = 1
+id = 550
+
+[State 0, StopSnd]
+type = StopSnd
+TRIGGERALL = stateno != 500 && stateno != 550
+trigger1 = time = 1
+channel = 1
+
+[State 0, StopSnd]
+type = StopSnd
+TRIGGERALL = stateno != 500 && stateno != 550
+trigger1 = time = 1
+channel = 2
+
+[State 0, Golpeado]
+type = PlaySnd
+trigger1 = movetype=H && (stateno!=[0,155]) && !time && HitOver=0 && random%3=0
+value = 5000,ifelse(random < 500,1,ifelse(random < 500,2,3))
+
+[State 0, Solucion Stand Aire]
+type = ChangeState
+triggerall = stateno = 0||stateno = 20
+trigger1 = pos y < 0
+value = 50
+ctrl = 1
