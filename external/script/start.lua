@@ -1310,6 +1310,11 @@ end
 function start.f_matchPersistence()
 	-- checked only after at least 1 match
 	if matchno() >= 2 then
+		-- Story/resume scripts can jump directly into later matches without having
+		-- previous-session match stats in memory yet.
+		if type(t_gameStats.match) ~= 'table' or #t_gameStats.match == 0 then
+			return start.p[1].numChars
+		end
 		-- set 'existed' flag (decides if var/fvar should be persistent between matches)
 		for _, v in ipairs(t_gameStats.match) do
 			for _, t in pairs(v) do
