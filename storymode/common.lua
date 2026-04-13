@@ -261,8 +261,8 @@ function story.playChapter(arcId, chapterId, chapterData)
            local px = math.floor(w * 0.04)
 
            fillRect(0, 0, w, h, 10, 10, 15, 120, 0)
-           fillRect(0, boxY, w, boxY + boxH, 20, 26, 36, 240, 0)
-           fillRect(0, boxY, w, boxY + math.max(2, math.floor(h * 0.01)), sColor[1], sColor[2], sColor[3], 255, 0)
+           fillRect(0, boxY, w, boxH, 20, 26, 36, 240, 0)
+           fillRect(0, boxY, w, math.max(2, math.floor(h * 0.01)), sColor[1], sColor[2], sColor[3], 255, 0)
 
            textImgSetFont(_G.storyDlgTxt, _G.storyDlgFont)
            local tScale = math.max(0.6, (h / 960) * 0.95)

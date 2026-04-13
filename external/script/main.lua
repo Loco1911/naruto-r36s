@@ -2666,6 +2666,20 @@ main.t_itemname = {
 		hook.run("main.t_itemname")
 		return options.menu.loop
 	end,
+	--MOVE LIST VIEWER
+	['movelistviewer'] = function()
+		setGameMode('movelistviewer')
+		hook.run("main.t_itemname")
+		return function()
+			main.f_cmdBufReset()
+			local ok, err = pcall(function()
+				assert(loadfile('storymode/movelist_viewer.lua'))()
+			end)
+			if not ok then
+				printConsole("Move List Viewer error: " .. tostring(err))
+			end
+		end
+	end,
 	--RANDOMTEST
 	['randomtest'] = function()
 		setGameMode('randomtest')

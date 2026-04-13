@@ -56,36 +56,52 @@
 
         /* ── Historia Visual ── */
         .scroll-bg {
-            background-image: url('/storymode/legacy_tests/story_menu.png');
-            background-size: 100% 100%;
-            background-repeat: no-repeat;
+            background: linear-gradient(180deg, #101722 0%, #0c1119 100%);
+            border: 1px solid #1e2a3a;
         }
         .chapter-node {
-            width: 80px; flex-shrink: 0;
+            width: 92px; flex-shrink: 0;
             display: flex; flex-direction: column; align-items: center; gap: 4px;
             cursor: pointer; transition: transform 0.15s;
             user-select: none;
         }
         .chapter-node:hover { transform: scale(1.08); }
         .chapter-node.active .node-circle { box-shadow: 0 0 0 3px #fff, 0 0 12px rgba(255,200,0,0.8); }
+        .chapter-node.drag-over .node-circle { box-shadow: 0 0 0 3px #ea580c, 0 0 18px rgba(234,88,12,0.45); }
         .node-circle {
-            width: 52px; height: 52px; border-radius: 50%;
+            width: 56px; height: 56px; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 22px; font-weight: 700; border: 3px solid;
+            font-size: 15px; font-weight: 800; border: 3px solid;
             box-shadow: 0 2px 8px rgba(0,0,0,0.5);
             transition: box-shadow 0.15s;
         }
+        .node-index {
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
         .node-label {
-            font-size: 9px; font-weight: 700; text-align: center;
-            color: #1a0a00; text-shadow: 0 1px 0 rgba(255,255,255,0.4);
-            max-width: 72px; line-height: 1.2;
+            font-size: 10px; font-weight: 700; text-align: center;
+            color: #dbe5f1;
+            max-width: 86px; line-height: 1.25;
+        }
+        .node-meta {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #7c8aa0;
+            margin-bottom: 2px;
+        }
+        .node-parent {
+            font-size: 9px;
+            color: #64748b;
         }
         .node-normal { background: radial-gradient(circle at 35% 35%, #fef9d0, #c8a84b); border-color: #8b6914; }
         .node-sidestory { background: radial-gradient(circle at 35% 35%, #d0e8ff, #5b9ed6); border-color: #2563ab; }
         .node-midboss { background: radial-gradient(circle at 35% 35%, #ffd0d0, #d66565); border-color: #991b1b; }
         .node-finalboss { background: radial-gradient(circle at 35% 35%, #f0d0ff, #9b59d6); border-color: #7c2fa8; }
         .node-empty { background: #3d3020; border-color: #5a4a2a; border-style: dashed; opacity: 0.5; }
-        .connector { height: 3px; background: linear-gradient(90deg,#8b6914,#c8a84b,#8b6914); flex: 1; min-width: 10px; border-radius: 2px; margin-top: -28px; }
+        .connector { height: 3px; background: linear-gradient(90deg,#334155,#64748b,#334155); flex: 1; min-width: 10px; border-radius: 2px; margin-top: -30px; }
         .format-btn { padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; }
         .format-btn.active { background: rgba(234,88,12,0.2); border-color: #ea580c; color: #fb923c; }
         .format-btn:not(.active) { background: #1a2332; border-color: #2a3a4e; color: #64748b; }
@@ -186,29 +202,39 @@
 
                 <!-- Scroll canvas -->
                 <div class="flex-1 overflow-auto custom-scroll p-6 flex flex-col gap-4">
-                    <!-- Pergamino background wrapping chapters -->
                     <div class="scroll-bg rounded-lg p-6 min-h-[200px] relative">
-                        <div class="text-[10px] font-bold text-[#6b4c1e] uppercase tracking-widest mb-4 text-center" style="font-family:'Cinzel',serif;">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 text-center" style="font-family:'Cinzel',serif;">
                             {{ currentArc.title||'Saga' }}
                         </div>
-                        <!-- Chapter nodes row -->
+                        <div class="text-[11px] text-slate-500 text-center mb-5">
+                            Arrastra nodos para reordenar. Si arrastras una side story sobre otro nodo, se anida bajo ese capítulo.
+                        </div>
                         <div class="flex items-center flex-wrap gap-y-6 gap-x-0 px-2" style="min-height:100px;">
                             <template v-for="(cap,cI) in currentArc.chapters" :key="'n'+cI">
-                                <!-- Connector except before first -->
                                 <div v-if="cI>0 && cap.type!=='sidestory'" class="connector" style="min-width:18px;max-width:32px;"></div>
                                 <div v-if="cI>0 && cap.type==='sidestory'" class="w-4"></div>
-                                <!-- Node -->
-                                <div class="chapter-node" :class="{active:selectedChapterIndex===cI}" @click="selectedChapterIndex=cI">
+                                <div class="chapter-node"
+                                     :class="{active:selectedChapterIndex===cI,'drag-over':storyDropIndex===cI}"
+                                     draggable="true"
+                                     @dragstart="onChapterDragStart(cI,$event)"
+                                     @dragover.prevent="onChapterDragOver(cI,$event)"
+                                     @dragleave="onChapterDragLeave(cI,$event)"
+                                     @drop.prevent="onChapterDrop(cI,$event)"
+                                     @dragend="onChapterDragEnd"
+                                     @click="selectedChapterIndex=cI">
                                     <div class="node-circle" :class="nodeClass(cap.type)">
-                                        <span>{{ nodeEmoji(cap.type) }}</span>
+                                        <span class="node-index">{{ (currentArcChapterMap[cI] || {}).label || (cI+1) }}</span>
                                     </div>
                                     <div class="node-label">
-                                        <div class="text-[8px] text-[#8b6014] uppercase font-bold">{{ nodeTypeLabel(cap.type) }}</div>
-                                        {{ cap.title||('Cap '+(cI+1)) }}
+                                        <div class="node-meta">{{ nodeTypeLabel(cap.type) }}</div>
+                                        <div>{{ cap.title||('Cap '+(((currentArcChapterMap[cI] || {}).label) || (cI+1))) }}</div>
+                                    </div>
+                                    <div v-if="cap.type==='sidestory' && (currentArcChapterMap[cI] || {}).parentLabel" class="node-parent">
+                                        ↳ {{ currentArcChapterMap[cI].parentLabel }}
                                     </div>
                                 </div>
                             </template>
-                            <div v-if="!currentArc.chapters||currentArc.chapters.length===0" class="text-sm text-[#8b6914] text-center w-full py-4 opacity-70">
+                            <div v-if="!currentArc.chapters||currentArc.chapters.length===0" class="text-sm text-slate-500 text-center w-full py-4 opacity-70">
                                 Usa los botones de arriba para agregar capítulos a esta saga.
                             </div>
                         </div>
@@ -230,6 +256,19 @@
                             <div><label class="section-title">ID</label><input v-model="currentChapter.id" class="input-dark"></div>
                             <div><label class="section-title">Título</label><input v-model="currentChapter.title" class="input-dark"></div>
                             <div><label class="section-title">Subtítulo / Misión</label><input v-model="currentChapter.subtitle" class="input-dark"></div>
+                        </div>
+
+                        <div v-if="currentChapter.type==='sidestory'" class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="section-title">Capítulo Padre</label>
+                                <select v-model="currentChapter.sideUnlockAfter" class="input-dark">
+                                    <option value="">Automático / anterior</option>
+                                    <option v-for="opt in availableSideParents" :key="'parent-'+opt.idx" :value="opt.id">{{ opt.label }}</option>
+                                </select>
+                            </div>
+                            <div class="text-xs text-gray-500 flex items-end pb-2">
+                                También puedes arrastrar esta side story sobre otro nodo para reanclarla o anidarla.
+                            </div>
                         </div>
 
                         <!-- Battle format -->
@@ -297,7 +336,7 @@
                         </div>
                     </div>
                     <div v-else-if="currentArc.chapters&&currentArc.chapters.length>0" class="text-center text-sm text-gray-600 py-4">
-                        ↑ Haz clic en un nodo del pergamino para editar ese capítulo
+                        ↑ Haz clic en un nodo para editar ese capítulo
                     </div>
                 </div>
             </template>
@@ -418,41 +457,62 @@
             <div v-if="sel.chars.size>0" class="px-4 py-1.5 bg-purple-950/30 border-b border-purple-800/40 flex items-center gap-2 text-xs">
                 <span class="text-purple-300 font-bold">{{ sel.chars.size }} sel:</span>
                 <button @click="bulkAction('chars','delete')" class="bg-red-900/40 text-red-300 px-2 py-0.5 rounded font-bold">🗑 Quitar</button>
-                <button @click="bulkAction('chars','lock')" class="bg-gray-700 text-gray-300 px-2 py-0.5 rounded font-bold">🔒</button>
-                <button @click="bulkAction('chars','unlock')" class="bg-gray-700 text-gray-300 px-2 py-0.5 rounded font-bold">🔓</button>
+                <button @click="bulkToggleSlotLock()" class="px-2 py-0.5 rounded font-bold"
+                        :class="selectedCharsAllLocked()?'bg-slate-700 text-slate-300':'bg-orange-900/40 text-orange-300'">
+                    {{ selectedCharsAllLocked() ? '📎 Liberar' : '📌 Fijar' }}
+                </button>
                 <button @click="clearSel('chars')" class="text-gray-500 hover:text-white px-2 ml-auto">✕</button>
             </div>
             <div class="text-[10px] text-gray-500 px-4 py-1 flex items-center gap-2 border-b border-[#1e2a3a] bg-[#0d1219]">
                 <input type="checkbox" @change="toggleAll('chars',$event)" class="mr-1">
                 <span class="w-8 text-center">#</span><span class="flex-1">Personaje</span>
-                <span class="w-14 text-center">Orden</span><span class="w-20 text-center">Estado</span><span class="w-28 text-center">Acciones</span>
+                <span class="w-20 text-center">Motor</span><span class="w-16 text-center">Slot</span><span class="w-32 text-center">Acciones</span>
             </div>
             <div class="flex-1 overflow-y-auto custom-scroll">
-                <div v-for="(ch,idx) in filteredCharRoster" :key="'c'+idx+tick"
+                <div v-for="(row,viewIdx) in filteredCharRoster" :key="'c'+row.idx+tick"
                      class="row-item flex items-center gap-2 px-4 py-1.5 border-b border-[#1e2a3a]/50"
-                     :class="{'bg-[#0d1219]':idx%2===0, selected:isSel('chars',idx)}"
-                     draggable="true" @dragstart="onDragStart('chars',idx,$event)" @dragover.prevent="onDragOver($event)" @dragleave="onDragLeave($event)" @drop="onDrop('chars',idx,$event)"
-                     @click="handleRowClick('chars',idx,$event)">
-                    <input type="checkbox" :checked="isSel('chars',idx)" @click.stop @change="toggleSel('chars',idx)" class="mr-1">
-                    <span class="w-8 text-center text-gray-600 text-[11px] font-mono">{{idx+1}}</span>
-                    <div class="flex-1 flex items-center gap-1.5">
-                        <span v-if="editIdx.chars!==idx" class="text-sm hover:text-orange-400" @dblclick.stop="startEdit('chars',idx)">{{ ch.name }}</span>
-                        <input v-else v-model="editName" @blur="finishEdit('chars',idx)" @keyup.enter="finishEdit('chars',idx)" @keyup.escape="editIdx.chars=-1" class="input-dark text-sm py-0 px-2 w-44" autofocus>
-                        <span v-if="ch.name==='null'" class="badge badge-yellow">vacío</span>
-                        <span v-if="ch.name==='randomselect'" class="badge badge-blue">random</span>
+                     :class="{'bg-[#0d1219]':viewIdx%2===0, selected:isSel('chars',row.idx), 'bg-[#1a1324]':isLabelEntry(row.item), 'opacity-80':isSlotLocked(row.item)}"
+                     :draggable="!isSlotLocked(row.item)"
+                     @dragstart="onDragStart('chars',row.idx,$event)" @dragover.prevent="onDragOver($event)" @dragleave="onDragLeave($event)" @drop="onDrop('chars',row.idx,$event)"
+                     @click="handleRowClick('chars',row.idx,$event)">
+                    <input type="checkbox" :checked="isSel('chars',row.idx)" @click.stop @change="toggleSel('chars',row.idx)" class="mr-1">
+                    <span class="w-8 text-center text-gray-600 text-[11px] font-mono">{{row.idx+1}}</span>
+                    <div class="flex-1 flex items-center gap-1.5 min-w-0">
+                        <template v-if="isLabelEntry(row.item)">
+                            <span class="badge badge-purple">tag</span>
+                            <span v-if="editIdx.chars!==row.idx" class="text-sm italic text-purple-300 truncate hover:text-purple-200" @dblclick.stop="startEdit('chars',row.idx)">{{ row.item.label }}</span>
+                            <input v-else v-model="editName" @blur="finishEdit('chars',row.idx)" @keyup.enter="finishEdit('chars',row.idx)" @keyup.escape="editIdx.chars=-1" class="input-dark text-sm py-0 px-2 w-52" autofocus>
+                        </template>
+                        <template v-else>
+                            <span v-if="editIdx.chars!==row.idx" class="text-sm truncate hover:text-orange-400" :class="isSlotLocked(row.item)?'text-gray-400':''" @dblclick.stop="startEdit('chars',row.idx)">{{ row.item.name }}</span>
+                            <input v-else v-model="editName" @blur="finishEdit('chars',row.idx)" @keyup.enter="finishEdit('chars',row.idx)" @keyup.escape="editIdx.chars=-1" class="input-dark text-sm py-0 px-2 w-44" autofocus>
+                            <span v-if="row.item.name==='null'" class="badge badge-yellow">vacío</span>
+                            <span v-if="row.item.name==='randomselect'" class="badge badge-blue">random</span>
+                            <span v-if="row.item.slot_locked" class="badge badge-red">fijo</span>
+                        </template>
                     </div>
-                    <div class="w-14 text-center"><select v-model.number="ch.order" class="input-dark text-[11px] py-0 px-1 w-11 text-center" @click.stop><option v-for="o in 10" :value="o">{{o}}</option></select></div>
                     <div class="w-20 text-center">
-                        <button @click.stop="toggleLock('chars',idx)" class="text-[10px] px-1.5 py-0.5 rounded"
-                                :class="ch.hidden>0?'bg-red-900/30 text-red-400':'bg-green-900/20 text-green-400'">
-                            {{ ch.hidden>0?'🔒 Oculto':'🔓 Visible' }}
+                        <template v-if="isCharEntry(row.item)">
+                            <button @click.stop="toggleEngineLock(row.idx)" class="text-[10px] px-1.5 py-0.5 rounded"
+                                    :disabled="isSlotLocked(row.item)"
+                                    :class="row.item.hidden>0?'bg-red-900/30 text-red-400':'bg-green-900/20 text-green-400'">
+                                {{ row.item.hidden>0?'Oculto':'Visible' }}
+                            </button>
+                        </template>
+                        <span v-else class="text-[10px] text-purple-300">Comentario</span>
+                    </div>
+                    <div class="w-16 text-center">
+                        <button @click.stop="toggleSlotLock(row.idx)" class="text-[10px] px-1.5 py-0.5 rounded"
+                                :class="isSlotLocked(row.item)?'bg-orange-900/40 text-orange-300':'bg-slate-700 text-slate-300'">
+                            {{ isSlotLocked(row.item)?'📌 Fijo':'📎 Libre' }}
                         </button>
                     </div>
-                    <div class="w-28 flex justify-center gap-1">
-                        <button @click.stop="moveItem('chars',idx,-1)" v-if="idx>0" class="text-gray-500 hover:text-white text-[10px]">▲</button>
-                        <button @click.stop="moveItem('chars',idx,1)" v-if="idx<charRoster.length-1" class="text-gray-500 hover:text-white text-[10px]">▼</button>
-                        <button @click.stop="dupItem('chars',idx)" class="text-blue-400 hover:text-blue-300 text-[10px]">📋</button>
-                        <button @click.stop="removeItem('chars',idx)" class="text-red-400 hover:text-red-300 text-[10px]">✕</button>
+                    <div class="w-32 flex justify-center gap-1">
+                        <button @click.stop="moveItem('chars',row.idx,-1)" v-if="row.idx>0" class="text-gray-500 hover:text-white text-[10px]" :class="isSlotLocked(row.item)?'opacity-30 cursor-not-allowed':''">▲</button>
+                        <button @click.stop="moveItem('chars',row.idx,1)" v-if="row.idx<charRoster.length-1" class="text-gray-500 hover:text-white text-[10px]" :class="isSlotLocked(row.item)?'opacity-30 cursor-not-allowed':''">▼</button>
+                        <button @click.stop="insertLabelAfter(row.idx)" class="text-purple-400 hover:text-purple-300 text-[10px]" :class="isSlotLocked(row.item)?'opacity-30 cursor-not-allowed':''">🏷</button>
+                        <button v-if="isCharEntry(row.item)" @click.stop="dupItem('chars',row.idx)" class="text-blue-400 hover:text-blue-300 text-[10px]" :class="isSlotLocked(row.item)?'opacity-30 cursor-not-allowed':''">📋</button>
+                        <button @click.stop="removeItem('chars',row.idx)" class="text-red-400 hover:text-red-300 text-[10px]" :class="isSlotLocked(row.item)?'opacity-30 cursor-not-allowed':''">✕</button>
                     </div>
                 </div>
             </div>
@@ -472,6 +532,7 @@
                 <p class="section-title">🛠️ Herramientas</p>
                 <button @click="addNull()" class="btn-secondary w-full text-xs">➕ Slot Vacío</button>
                 <button @click="addRandom()" class="btn-secondary w-full text-xs">🎲 Random Select</button>
+                <button @click="addLabel()" class="btn-secondary w-full text-xs">🏷 Agregar Etiqueta</button>
                 <button @click="fillRow()" class="btn-secondary w-full text-xs">📐 Completar Fila (21)</button>
             </div>
             <div class="p-3 border-b border-[#1e2a3a] space-y-2">
@@ -593,11 +654,23 @@ createApp({
         renameOld:'', renameNew:'', renameDisk:false,
         msg:{chars:'',stages:''}, msgType:{chars:'ok',stages:'ok'},
         dragState:{type:null,idx:null},
+        storyDragIndex:-1, storyDropIndex:-1,
         mlGenChar:'', mlGenLoading:false, mlGenResult:'', mlGenError:''
     }},
     computed: {
         currentArc(){ return this.selectedArcIndex>=0?this.catalog[this.selectedArcIndex]:null },
         currentChapter(){ return this.currentArc&&this.currentArc.chapters&&this.selectedChapterIndex>=0&&this.selectedChapterIndex<this.currentArc.chapters.length?this.currentArc.chapters[this.selectedChapterIndex]:null },
+        currentArcChapterMap(){ return this.buildChapterVisualMap(this.currentArc) },
+        availableSideParents(){
+            if(!this.currentArc||!Array.isArray(this.currentArc.chapters))return [];
+            return this.currentArc.chapters
+                .map((chapter,idx)=>({
+                    idx,
+                    id:chapter&&chapter.id?chapter.id:'',
+                    label:`${((this.currentArcChapterMap[idx]||{}).label)||(idx+1)} · ${chapter.title||chapter.id||('Cap '+(idx+1))}`
+                }))
+                .filter(opt=>opt.idx!==this.selectedChapterIndex&&opt.id);
+        },
         battleFormat(){
             if(!this.currentChapter)return '1v1';
             return this.currentChapter.battleFormat||'1v1';
@@ -608,7 +681,16 @@ createApp({
             return 1;
         },
         projectName(){ if(!this.projectRoot)return''; const p=this.projectRoot.replace(/\\/g,'/').split('/').filter(Boolean); return p[p.length-1]||'Proyecto' },
-        filteredCharRoster(){ if(!this.charSearch)return this.charRoster; const q=this.charSearch.toLowerCase();return this.charRoster.filter(c=>c.name.toLowerCase().includes(q)) },
+        filteredCharRoster(){
+            const q=this.charSearch.trim().toLowerCase();
+            return this.charRoster
+                .map((item,idx)=>({item,idx}))
+                .filter(row=>{
+                    if(!q)return true;
+                    const text=this.isLabelEntry(row.item)?(row.item.label||''):(row.item.name||'');
+                    return text.toLowerCase().includes(q);
+                });
+        },
         filteredStageRoster(){ if(!this.stageSearch)return this.stageRoster; const q=this.stageSearch.toLowerCase();return this.stageRoster.filter(s=>(this.stageNameMap[s]||s).toLowerCase().includes(q)) },
         uniqueEnemies(){ if(!this.currentArc||!this.currentArc.chapters)return 0;const s=new Set();this.currentArc.chapters.forEach(ch=>(ch.p2||[]).forEach(p=>s.add(p)));return s.size },
         storyboardSagas(){ const s=new Set();this.storyboardList.forEach(x=>s.add(x.saga));return Array.from(s).sort() },
@@ -616,6 +698,83 @@ createApp({
     },
     methods: {
         // ── Node helpers ──
+        lettersForIndex(n){
+            let value=Math.max(1, Number(n)||1);
+            let out='';
+            while(value>0){
+                const rem=(value-1)%26;
+                out=String.fromCharCode(97+rem)+out;
+                value=Math.floor((value-1)/26);
+            }
+            return out;
+        },
+        buildChapterVisualMap(arc){
+            const chapters=arc&&Array.isArray(arc.chapters)?arc.chapters:[];
+            const idToIdx=new Map();
+            const parentOf={};
+            const childrenOf={};
+            const labels={};
+            const mainOrder=[];
+            const addChild=(parentIdx,childIdx)=>{
+                if(parentIdx==null||parentIdx<0||parentIdx===childIdx)return;
+                if(!childrenOf[parentIdx])childrenOf[parentIdx]=[];
+                childrenOf[parentIdx].push(childIdx);
+                parentOf[childIdx]=parentIdx;
+            };
+
+            chapters.forEach((chapter,idx)=>{
+                if(chapter&&chapter.id)idToIdx.set(chapter.id,idx);
+                if((((chapter || {}).type)||'normal')!=='sidestory'){
+                    mainOrder.push(idx);
+                    labels[idx]=String(mainOrder.length);
+                }
+            });
+
+            chapters.forEach((chapter,idx)=>{
+                if((((chapter || {}).type)||'normal')!=='sidestory')return;
+                let parentIdx=-1;
+                if(chapter.sideUnlockAfter&&idToIdx.has(chapter.sideUnlockAfter))parentIdx=idToIdx.get(chapter.sideUnlockAfter);
+                if(parentIdx<0){
+                    for(let j=idx-1;j>=0;j--){
+                        if((((chapters[j] || {}).type)||'normal')!=='sidestory'){
+                            parentIdx=j;
+                            break;
+                        }
+                    }
+                }
+                if(parentIdx>=0)addChild(parentIdx,idx);
+            });
+
+            Object.values(childrenOf).forEach(list=>list.sort((a,b)=>a-b));
+
+            const assignChildren=(parentIdx)=>{
+                (childrenOf[parentIdx]||[]).forEach((childIdx,order)=>{
+                    labels[childIdx]=`${labels[parentIdx]||'1'}${this.lettersForIndex(order+1)}`;
+                    assignChildren(childIdx);
+                });
+            };
+
+            mainOrder.forEach(assignChildren);
+
+            let orphanCount=0;
+            chapters.forEach((chapter,idx)=>{
+                if(((((chapter || {}).type)||'normal')!=='sidestory')||parentOf[idx]!=null)return;
+                orphanCount+=1;
+                labels[idx]=`1${this.lettersForIndex(orphanCount)}`;
+                assignChildren(idx);
+            });
+
+            const map={};
+            chapters.forEach((chapter,idx)=>{
+                const parentIdx=Number.isInteger(parentOf[idx])?parentOf[idx]:-1;
+                map[idx]={
+                    label:labels[idx]||String(idx+1),
+                    parentIdx,
+                    parentLabel:parentIdx>=0?(labels[parentIdx]||String(parentIdx+1)):''
+                };
+            });
+            return map;
+        },
         nodeClass(type){
             const m={normal:'node-normal',sidestory:'node-sidestory',midboss:'node-midboss',finalboss:'node-finalboss'};
             return m[type]||'node-normal';
@@ -634,6 +793,64 @@ createApp({
         },
         arcChapterCount(arc,type){ return (arc.chapters||[]).filter(c=>c.type===type).length },
         arcBossCount(arc){ return (arc.chapters||[]).filter(c=>c.type==='midboss'||c.type==='finalboss').length },
+        isLabelEntry(item){ return item && item.kind==='label' },
+        isCharEntry(item){ return !this.isLabelEntry(item) },
+        isSlotLocked(item){ return !!(item && item.slot_locked) },
+        makeCharEntry(name='null'){
+            return {kind:'char',name,stage:"",hidden:0,order:1,music:"",ai:0,includestage:1,unlock:"",extra_params:[],slot_locked:false};
+        },
+        makeLabelEntry(label='Nueva etiqueta'){
+            return {kind:'label',label,slot_locked:false};
+        },
+        ensureChapterId(chapter,prefix='cap'){
+            if(!chapter)return'';
+            if(!chapter.id||!String(chapter.id).trim()){
+                chapter.id=`${prefix}_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;
+            }
+            return chapter.id;
+        },
+        chapterParentIndex(arc,idx,map){
+            const view=map||this.buildChapterVisualMap(arc);
+            return view[idx]?view[idx].parentIdx:-1;
+        },
+        isChapterDescendant(arc,candidateIdx,ancestorIdx,map){
+            const chapters=arc&&Array.isArray(arc.chapters)?arc.chapters:[];
+            let cursor=candidateIdx;
+            let guard=0;
+            while(cursor>=0&&guard<=chapters.length){
+                if(cursor===ancestorIdx)return true;
+                cursor=this.chapterParentIndex(arc,cursor,map);
+                guard+=1;
+            }
+            return false;
+        },
+        suggestedSideParentIndex(){
+            if(!this.currentArc||!Array.isArray(this.currentArc.chapters)||this.currentArc.chapters.length===0)return-1;
+            if(this.selectedChapterIndex>=0&&this.selectedChapterIndex<this.currentArc.chapters.length)return this.selectedChapterIndex;
+            return this.currentArc.chapters.length-1;
+        },
+        normalizeRosterItem(item){
+            if(this.isLabelEntry(item))return {...this.makeLabelEntry(item.label||'Nueva etiqueta'),...item,kind:'label'};
+            const base=this.makeCharEntry(item&&item.name?item.name:'null');
+            const extraParams=Array.isArray(item&&item.extra_params)?item.extra_params:[];
+            return {...base,...item,kind:'char',extra_params:[...extraParams],slot_locked:!!(item&&item.slot_locked)};
+        },
+        ensureRosterEditable(idx,action){
+            const item=this.charRoster[idx];
+            if(this.isSlotLocked(item)){
+                this.showMsg('chars',`Slot fijo: no se puede ${action}`,'err');
+                return false;
+            }
+            return true;
+        },
+        selectedCharsAllLocked(){
+            if(this.sel.chars.size===0)return false;
+            return Array.from(this.sel.chars).every(i=>this.isSlotLocked(this.charRoster[i]));
+        },
+        bulkToggleSlotLock(){
+            if(this.sel.chars.size===0)return;
+            this.bulkAction('chars', this.selectedCharsAllLocked() ? 'slotunlock' : 'slotlock');
+        },
 
         // ── Battle format ──
         setBattleFormat(fmt){
@@ -680,7 +897,10 @@ createApp({
                 let r2=await fetch('/api/assets');this.assets=await r2.json();
             }catch(e){}
         },
-        async saveData(){ try{await fetch('/api/catalog',{method:'POST',body:JSON.stringify(this.catalog),headers:{'Content-Type':'application/json'}});alert('¡Guardado!')}catch(e){alert('Error')} },
+        async saveData(){
+            this.catalog.forEach(arc=>(arc.chapters||[]).forEach(ch=>this.ensureChapterId(ch,'cap')));
+            try{await fetch('/api/catalog',{method:'POST',body:JSON.stringify(this.catalog),headers:{'Content-Type':'application/json'}});alert('¡Guardado!')}catch(e){alert('Error')}
+        },
 
         // ── Arc/Chapter ──
         addArc(){
@@ -691,12 +911,20 @@ createApp({
             if(!this.currentArc)return;
             if(!this.currentArc.chapters)this.currentArc.chapters=[];
             const first=this.assets.chars[0]||'';
-            this.currentArc.chapters.push({
+            const chapter={
                 id:'cap_'+Date.now(),title:'',subtitle:'',type,
                 battleFormat:'1v1',introStoryboard:'',
                 p1:[first],p2:[first],p2ai:[6],
                 stage:'random',dialogues:[]
-            });
+            };
+            if(type==='sidestory'){
+                const parentIdx=this.suggestedSideParentIndex();
+                if(parentIdx>=0){
+                    const parent=this.currentArc.chapters[parentIdx];
+                    chapter.sideUnlockAfter=this.ensureChapterId(parent,'cap');
+                }
+            }
+            this.currentArc.chapters.push(chapter);
             this.selectedChapterIndex=this.currentArc.chapters.length-1;
         },
         deleteCurrentChapter(){
@@ -748,37 +976,136 @@ createApp({
         isSel(t,i){ void this.tick;return this.sel[t].has(i) },
         toggleSel(t,i){ this.sel[t].has(i)?this.sel[t].delete(i):this.sel[t].add(i);this.lastClicked[t]=i;this.tick++ },
         clearSel(t){ this.sel[t].clear();this.tick++ },
-        toggleAll(t,ev){ const l=t==='chars'?this.filteredCharRoster:this.filteredStageRoster;if(ev.target.checked)l.forEach((_,i)=>this.sel[t].add(i));else this.sel[t].clear();this.tick++ },
+        toggleAll(t,ev){
+            const l=t==='chars'?this.filteredCharRoster:this.filteredStageRoster;
+            if(ev.target.checked){
+                l.forEach((row,i)=>this.sel[t].add(t==='chars'?row.idx:i));
+            }else this.sel[t].clear();
+            this.tick++;
+        },
         handleRowClick(t,i,ev){
             if(['INPUT','SELECT','BUTTON','TEXTAREA'].includes(ev.target.tagName))return;
             if(ev.ctrlKey||ev.metaKey){this.toggleSel(t,i);return}
             if(ev.shiftKey&&this.lastClicked[t]>=0){const a=Math.min(this.lastClicked[t],i),b=Math.max(this.lastClicked[t],i);for(let x=a;x<=b;x++)this.sel[t].add(x);this.tick++;return}
             this.sel[t].clear();this.sel[t].add(i);this.lastClicked[t]=i;this.tick++
         },
-        moveItem(t,i,d){ const l=this.getList(t);const n=i+d;if(n<0||n>=l.length)return;const it=l.splice(i,1)[0];l.splice(n,0,it) },
-        dupItem(t,i){ const l=this.getList(t);l.splice(i+1,0,t==='chars'?JSON.parse(JSON.stringify(l[i])):l[i]);this.showMsg(t,'Duplicado','ok') },
-        removeItem(t,i){ const l=this.getList(t);if(t==='chars'){const ch=l[i];if(ch.name!=='null'&&ch.name!=='randomselect')this.charUnused.push({name:ch.name,type:'folder'})}l.splice(i,1) },
+        moveItem(t,i,d){
+            const l=this.getList(t),n=i+d;
+            if(n<0||n>=l.length)return;
+            if(t==='chars'){
+                if(!this.ensureRosterEditable(i,'mover'))return;
+                if(this.isSlotLocked(l[n]))return this.showMsg('chars','No puedes mover sobre un slot fijo','err');
+            }
+            const it=l.splice(i,1)[0];
+            l.splice(n,0,it);
+        },
+        dupItem(t,i){
+            const l=this.getList(t);
+            if(t==='chars'){
+                if(!this.ensureRosterEditable(i,'duplicar'))return;
+                const copy=this.normalizeRosterItem(JSON.parse(JSON.stringify(l[i])));
+                copy.slot_locked=false;
+                l.splice(i+1,0,copy);
+            }else l.splice(i+1,0,l[i]);
+            this.showMsg(t,'Duplicado','ok');
+        },
+        removeItem(t,i){
+            const l=this.getList(t);
+            if(t==='chars'){
+                if(!this.ensureRosterEditable(i,'quitar'))return;
+                const ch=l[i];
+                if(this.isCharEntry(ch)&&ch.name!=='null'&&ch.name!=='randomselect')this.charUnused.push({name:ch.name,type:'folder'});
+            }
+            l.splice(i,1);
+        },
         bulkAction(t,a){
             const idx=Array.from(this.sel[t]).sort((a,b)=>b-a);
-            if(a==='delete'){if(!confirm(`¿Quitar ${idx.length} items?`))return;const l=this.getList(t);idx.forEach(i=>{if(t==='chars'){const ch=l[i];if(ch&&ch.name!=='null'&&ch.name!=='randomselect')this.charUnused.push({name:ch.name,type:'folder'})}l.splice(i,1)});this.showMsg(t,idx.length+' removidos','ok')}
-            else if(a==='lock'){idx.forEach(i=>{if(this.charRoster[i])this.charRoster[i].hidden=2});this.showMsg(t,'Ocultados','ok')}
-            else if(a==='unlock'){idx.forEach(i=>{if(this.charRoster[i]){this.charRoster[i].hidden=0;this.charRoster[i].unlock=''}});this.showMsg(t,'Visibles','ok')}
+            if(a==='delete'){
+                if(t==='chars'&&idx.some(i=>this.isSlotLocked(this.charRoster[i])))return this.showMsg('chars','Libera primero los slots fijos','err');
+                if(!confirm(`¿Quitar ${idx.length} items?`))return;
+                const l=this.getList(t);
+                idx.forEach(i=>{
+                    if(t==='chars'){
+                        const ch=l[i];
+                        if(ch&&this.isCharEntry(ch)&&ch.name!=='null'&&ch.name!=='randomselect')this.charUnused.push({name:ch.name,type:'folder'});
+                    }
+                    l.splice(i,1);
+                });
+                this.showMsg(t,idx.length+' removidos','ok');
+            }
+            else if(a==='slotlock'){ idx.forEach(i=>{if(this.charRoster[i])this.charRoster[i].slot_locked=true}); this.showMsg(t,'Slots fijados','ok') }
+            else if(a==='slotunlock'){ idx.forEach(i=>{if(this.charRoster[i])this.charRoster[i].slot_locked=false}); this.showMsg(t,'Slots liberados','ok') }
             this.clearSel(t)
         },
-        toggleLock(t,i){ const c=this.charRoster[i];if(c.hidden>0){c.hidden=0;c.unlock=''}else c.hidden=2 },
-        startEdit(t,i){ this.editIdx[t]=i;this.editName=this.charRoster[i].name },
-        finishEdit(t,i){ const o=this.charRoster[i].name,n=this.editName.trim();this.editIdx[t]=-1;if(!n||n===o)return;this.charRoster.forEach(c=>{if(c.name===o)c.name=n});this.showMsg(t,`${o} → ${n}`,'ok') },
+        toggleEngineLock(i){
+            if(!this.ensureRosterEditable(i,'cambiar el estado'))return;
+            const c=this.charRoster[i];
+            if(!this.isCharEntry(c))return;
+            if(c.hidden>0){c.hidden=0;c.unlock=''}else c.hidden=2;
+        },
+        toggleSlotLock(i){
+            const item=this.charRoster[i];
+            if(!item)return;
+            item.slot_locked=!item.slot_locked;
+            this.showMsg('chars',item.slot_locked?'Slot fijado':'Slot liberado','ok');
+        },
+        startEdit(t,i){
+            if(t==='chars'&&!this.ensureRosterEditable(i,'editar'))return;
+            this.editIdx[t]=i;
+            this.editName=this.isLabelEntry(this.charRoster[i])?this.charRoster[i].label:this.charRoster[i].name;
+        },
+        finishEdit(t,i){
+            const item=this.charRoster[i],n=this.editName.trim();
+            this.editIdx[t]=-1;
+            if(!item||!n)return;
+            if(this.isLabelEntry(item)){
+                if(n===item.label)return;
+                item.label=n;
+                return this.showMsg('chars','Etiqueta actualizada','ok');
+            }
+            const o=item.name;
+            if(n===o)return;
+            this.charRoster.forEach(c=>{if(this.isCharEntry(c)&&c.name===o)c.name=n});
+            this.showMsg(t,`${o} → ${n}`,'ok');
+        },
         addToRoster(t,name){
-            if(t==='chars'){this.charRoster.push({name,stage:"",hidden:0,order:1,music:"",ai:0,includestage:1,unlock:"",extra_params:[]});this.charUnused=this.charUnused.filter(u=>u.name!==name)}
+            if(t==='chars'){this.charRoster.push(this.makeCharEntry(name));this.charUnused=this.charUnused.filter(u=>u.name!==name)}
             else{this.stageRoster.push(name);this.stageUnused=this.stageUnused.filter(u=>u.name!==name)}
             this.showMsg(t,'Agregado','ok')
         },
-        addNull(){ this.charRoster.push({name:"null",stage:"",hidden:0,order:1,music:"",ai:0,includestage:1,unlock:"",extra_params:[]}) },
-        addRandom(){ this.charRoster.push({name:"randomselect",stage:"",hidden:0,order:1,music:"",ai:0,includestage:1,unlock:"",extra_params:[]}) },
-        fillRow(){ const r=this.charRoster.length%21;if(r===0)return this.showMsg('chars','Ya alineado','ok');const n=21-r;for(let i=0;i<n;i++)this.addNull();this.showMsg('chars',n+' nulls','ok') },
+        addNull(){ this.charRoster.push(this.makeCharEntry('null')) },
+        addRandom(){ this.charRoster.push(this.makeCharEntry('randomselect')) },
+        addLabel(){
+            this.charRoster.push(this.makeLabelEntry());
+            this.editIdx.chars=this.charRoster.length-1;
+            this.editName='Nueva etiqueta';
+        },
+        insertLabelAfter(i){
+            if(!this.ensureRosterEditable(i,'insertar una etiqueta'))return;
+            this.charRoster.splice(i+1,0,this.makeLabelEntry());
+            this.editIdx.chars=i+1;
+            this.editName='Nueva etiqueta';
+        },
+        fillRow(){
+            const slots=this.charRoster.filter(item=>this.isCharEntry(item)).length;
+            const r=slots%21;
+            if(r===0)return this.showMsg('chars','Ya alineado','ok');
+            const n=21-r;
+            for(let i=0;i<n;i++)this.charRoster.push(this.makeCharEntry('null'));
+            this.showMsg('chars',n+' nulls','ok');
+        },
 
-        async loadChars(){ try{let r=await fetch('/api/chars');let d=await r.json();if(d.error)return this.showMsg('chars',d.error,'err');this.charRoster=d.roster||[];this.charAvailable=d.available||[];this.charUnused=d.unused||[]}catch(e){this.showMsg('chars','Error','err')} },
-        async saveChars(){ try{let r=await fetch('/api/chars/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roster:this.charRoster})});let d=await r.json();if(d.success){this.showMsg('chars','Guardado ✓','ok');this.loadData()}else this.showMsg('chars',d.error,'err')}catch(e){this.showMsg('chars','Error','err')} },
+        async loadChars(){
+            try{
+                let r=await fetch('/api/chars');
+                let d=await r.json();
+                if(d.error)return this.showMsg('chars',d.error,'err');
+                this.charRoster=(d.roster||[]).map(item=>this.normalizeRosterItem(item));
+                this.charAvailable=d.available||[];
+                this.charUnused=d.unused||[];
+            }catch(e){this.showMsg('chars','Error','err')}
+        },
+        async saveChars(){ try{let r=await fetch('/api/chars/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roster:this.charRoster})});let d=await r.json();if(d.success){this.showMsg('chars','Guardado ✓','ok');this.loadChars();this.loadData()}else this.showMsg('chars',d.error,'err')}catch(e){this.showMsg('chars','Error','err')} },
         async loadStages(){ try{let r=await fetch('/api/stages');let d=await r.json();if(d.error)return this.showMsg('stages',d.error,'err');this.stageRoster=d.roster||[];this.stageAvailable=d.available||[];this.stageUnused=d.unused||[];this.stageNameMap=d.name_map||{}}catch(e){this.showMsg('stages','Error','err')} },
         async saveStages(){ try{let r=await fetch('/api/stages/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({stages:this.stageRoster})});let d=await r.json();if(d.success){this.showMsg('stages','Guardado ✓','ok');this.loadData()}else this.showMsg('stages',d.error,'err')}catch(e){this.showMsg('stages','Error','err')} },
         async renameChar(){ if(!this.renameOld||!this.renameNew)return;try{let r=await fetch('/api/chars/rename',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({old_name:this.renameOld,new_name:this.renameNew,rename_disk:this.renameDisk})});let d=await r.json();if(d.success){this.showMsg('chars',`${this.renameOld} → ${this.renameNew}`,'ok');this.renameOld='';this.renameNew='';this.loadChars()}else this.showMsg('chars',d.error,'err')}catch(e){this.showMsg('chars','Error','err')} },
@@ -792,10 +1119,73 @@ createApp({
                 else this.showMsg(t,d.error,'err')
             }catch(e){this.showMsg(t,'Error','err')}
         },
-        onDragStart(t,i,ev){ this.dragState={type:t,idx:i};ev.dataTransfer.effectAllowed='move' },
+        onChapterDragStart(i,ev){
+            if(!this.currentArc||!this.currentArc.chapters||!this.currentArc.chapters[i])return;
+            this.storyDragIndex=i;
+            this.storyDropIndex=i;
+            ev.dataTransfer.effectAllowed='move';
+        },
+        onChapterDragOver(i){
+            this.storyDropIndex=i;
+        },
+        onChapterDragLeave(i){
+            if(this.storyDropIndex===i)this.storyDropIndex=-1;
+        },
+        onChapterDrop(i){
+            if(!this.currentArc||!Array.isArray(this.currentArc.chapters))return this.onChapterDragEnd();
+            const from=this.storyDragIndex;
+            if(from<0||from===i)return this.onChapterDragEnd();
+            const chapters=this.currentArc.chapters;
+            const selected=this.currentChapter;
+            const map=this.buildChapterVisualMap(this.currentArc);
+            const target=chapters[i];
+            if(!target||!chapters[from])return this.onChapterDragEnd();
+
+            if((chapters[from].type||'normal')==='sidestory'&&this.isChapterDescendant(this.currentArc,i,from,map)){
+                this.onChapterDragEnd();
+                alert('No puedes anidar una side story dentro de una de sus propias ramas.');
+                return;
+            }
+
+            this.ensureChapterId(target,'cap');
+            const [item]=chapters.splice(from,1);
+            if((item.type||'normal')==='sidestory'){
+                item.sideUnlockAfter=target.id;
+            }else{
+                delete item.sideUnlockAfter;
+            }
+
+            const insertAt=Math.min(chapters.length, from<i ? i : i+1);
+            chapters.splice(insertAt,0,item);
+            this.selectedChapterIndex=selected?chapters.indexOf(selected):chapters.indexOf(item);
+            this.onChapterDragEnd();
+        },
+        onChapterDragEnd(){
+            this.storyDragIndex=-1;
+            this.storyDropIndex=-1;
+        },
+        onDragStart(t,i,ev){
+            if(t==='chars'&&this.isSlotLocked(this.charRoster[i])){
+                ev.preventDefault();
+                return;
+            }
+            this.dragState={type:t,idx:i};
+            ev.dataTransfer.effectAllowed='move';
+        },
         onDragOver(ev){ ev.currentTarget.classList.add('drag-over') },
         onDragLeave(ev){ ev.currentTarget.classList.remove('drag-over') },
-        onDrop(t,i,ev){ ev.currentTarget.classList.remove('drag-over');if(!this.dragState.type||this.dragState.type!==t||this.dragState.idx===i)return;const l=this.getList(t);const it=l.splice(this.dragState.idx,1)[0];l.splice(i,0,it);this.dragState={type:null,idx:null} },
+        onDrop(t,i,ev){
+            ev.currentTarget.classList.remove('drag-over');
+            if(!this.dragState.type||this.dragState.type!==t||this.dragState.idx===i)return;
+            const l=this.getList(t);
+            if(t==='chars'&&(this.isSlotLocked(l[i])||this.isSlotLocked(l[this.dragState.idx]))){
+                this.dragState={type:null,idx:null};
+                return this.showMsg('chars','No puedes mover slots fijos','err');
+            }
+            const it=l.splice(this.dragState.idx,1)[0];
+            l.splice(i,0,it);
+            this.dragState={type:null,idx:null};
+        },
         async generateMovelist(){
             this.mlGenLoading=true;this.mlGenResult='';this.mlGenError='';
             try{

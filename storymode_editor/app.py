@@ -3,6 +3,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
 PROJECT_ROOT = None
+EDITOR_CHARS_META = os.path.join("save", "editor_chars_meta.json")
 
 def get_select_def_path(root_path):
     motif_path = "data/system.def"
@@ -31,6 +32,96 @@ def get_select_def_path(root_path):
 
 # ─── Select.def parsing ─────────────────────────────────────────────
 
+def make_char_entry(name):
+    return {
+        "kind": "char",
+        "name": name,
+        "stage": "",
+        "hidden": 0,
+        "order": 1,
+        "music": "",
+        "ai": 0,
+        "includestage": 1,
+        "unlock": "",
+        "extra_params": [],
+        "slot_locked": False,
+    }
+
+def make_label_entry(label):
+    return {
+        "kind": "label",
+        "label": label,
+        "slot_locked": False,
+    }
+
+def _to_int(value, default):
+    try: return int(value)
+    except: return default
+
+def get_editor_chars_meta_path(root):
+    return os.path.join(root, EDITOR_CHARS_META)
+
+def load_editor_chars_meta(root):
+    mp = get_editor_chars_meta_path(root)
+    if not os.path.isfile(mp):
+        return {"slot_locks": []}
+    try:
+        with open(mp, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            return {"slot_locks": []}
+        if not isinstance(data.get("slot_locks"), list):
+            data["slot_locks"] = []
+        return data
+    except:
+        return {"slot_locks": []}
+
+def apply_editor_chars_meta(root, roster):
+    meta = load_editor_chars_meta(root)
+    locks = meta.get("slot_locks", [])
+    out = []
+    for i, entry in enumerate(roster or []):
+        item = dict(entry)
+        item["slot_locked"] = bool(locks[i]) if i < len(locks) else bool(entry.get("slot_locked", False))
+        out.append(item)
+    return out
+
+def save_editor_chars_meta(root, roster):
+    mp = get_editor_chars_meta_path(root)
+    os.makedirs(os.path.dirname(mp), exist_ok=True)
+    data = {"slot_locks": [bool(entry.get("slot_locked", False)) for entry in roster or []]}
+    with open(mp, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2)
+
+def normalize_char_roster(roster):
+    normalized = []
+    for raw in roster or []:
+        if not isinstance(raw, dict):
+            continue
+        if raw.get("kind") == "label":
+            label = str(raw.get("label", "")).strip()
+            if not label:
+                continue
+            entry = make_label_entry(label)
+        else:
+            name = str(raw.get("name", "")).strip()
+            if not name:
+                continue
+            entry = make_char_entry(name)
+            entry["stage"] = str(raw.get("stage", "")).strip()
+            entry["hidden"] = _to_int(raw.get("hidden"), 0)
+            entry["order"] = max(1, _to_int(raw.get("order"), 1))
+            entry["music"] = str(raw.get("music", "")).strip()
+            entry["ai"] = _to_int(raw.get("ai"), 0)
+            entry["includestage"] = _to_int(raw.get("includestage"), 1)
+            entry["unlock"] = str(raw.get("unlock", "")).strip()
+            extra_params = raw.get("extra_params", [])
+            if isinstance(extra_params, list):
+                entry["extra_params"] = [str(p).strip() for p in extra_params if str(p).strip()]
+        entry["slot_locked"] = bool(raw.get("slot_locked", False))
+        normalized.append(entry)
+    return normalized
+
 def parse_select_def_full(root):
     sp = get_select_def_path(root)
     chars, stages_section, options_section = [], [], []
@@ -47,7 +138,12 @@ def parse_select_def_full(root):
         elif stripped.startswith('[Options]'): mode = "options"; continue
         elif stripped.startswith('[') and ']' in stripped: mode = "other"; options_section.append(line); continue
         if mode == "chars":
-            if not stripped or stripped.startswith(';'): continue
+            if not stripped: continue
+            if stripped.startswith(';'):
+                comment = stripped[1:].strip()
+                if comment and not re.fullmatch(r'-+', comment):
+                    chars.append(make_label_entry(comment))
+                continue
             entry = parse_char_line(stripped)
             if entry: chars.append(entry)
         elif mode == "stages":
@@ -64,7 +160,7 @@ def parse_char_line(line):
     parts = [p.strip() for p in line.split(',')]
     name = parts[0]
     if not name: return None
-    entry = {"name": name, "stage": "", "hidden": 0, "order": 1, "music": "", "ai": 0, "includestage": 1, "unlock": "", "extra_params": []}
+    entry = make_char_entry(name)
     params_start = 2 if len(parts) > 1 and parts[1] and '=' not in parts[1] else 1
     if params_start == 2: entry["stage"] = parts[1]
     for i in range(params_start, len(parts)):
@@ -83,6 +179,8 @@ def parse_char_line(line):
     return entry
 
 def char_entry_to_line(entry):
+    if entry.get("kind") == "label":
+        return "; " + str(entry.get("label", "")).strip()
     parts = [entry["name"]]
     if entry.get("stage"): parts.append(entry["stage"])
     if entry.get("order", 1) != 1: parts.append(f"order={entry['order']}")
@@ -95,6 +193,7 @@ def char_entry_to_line(entry):
     return ", ".join(parts)
 
 def write_select_def(root, chars, stages, options):
+    chars = normalize_char_roster(chars)
     sp = get_select_def_path(root)
     lines = [";---------------------------------------------------------------------", "[Characters]", ""]
     for entry in chars: lines.append(char_entry_to_line(entry))
@@ -448,10 +547,11 @@ class StoryEditorHandler(BaseHTTPRequestHandler):
             if not PROJECT_ROOT: return self.end_json({"error": "No root"})
             try:
                 pd = parse_select_def_full(PROJECT_ROOT)
+                roster = apply_editor_chars_meta(PROJECT_ROOT, pd["chars"])
                 available = list_available_chars(PROJECT_ROOT)
-                roster_names = set(c["name"] for c in pd["chars"])
+                roster_names = set(c["name"] for c in roster if c.get("kind") == "char")
                 unused = [c for c in available if c["name"] not in roster_names and c["name"] != "null"]
-                self.end_json({"roster": pd["chars"], "stages": pd["stages"], "available": available, "unused": unused})
+                self.end_json({"roster": roster, "stages": pd["stages"], "available": available, "unused": unused})
             except Exception as e: self.end_json({"error": traceback.format_exc()})
         elif path == '/api/stages':
             if not PROJECT_ROOT: return self.end_json({"error": "No root"})
@@ -605,7 +705,9 @@ class StoryEditorHandler(BaseHTTPRequestHandler):
             if not PROJECT_ROOT: return self.end_json({"error": "No root"})
             try:
                 existing = parse_select_def_full(PROJECT_ROOT)
-                write_select_def(PROJECT_ROOT, data.get("roster", []), data.get("stages", existing["stages"]), existing["options"])
+                roster = normalize_char_roster(data.get("roster", []))
+                write_select_def(PROJECT_ROOT, roster, data.get("stages", existing["stages"]), existing["options"])
+                save_editor_chars_meta(PROJECT_ROOT, roster)
                 self.end_json({"success": True})
             except Exception as e: self.end_json({"success": False, "error": traceback.format_exc()})
 
@@ -624,7 +726,8 @@ class StoryEditorHandler(BaseHTTPRequestHandler):
                         if os.path.isfile(old_def): os.rename(old_def, new_def)
                 parsed = parse_select_def_full(PROJECT_ROOT)
                 for c in parsed["chars"]:
-                    if c["name"] == old_name: c["name"] = new_name
+                    if c.get("kind") == "char" and c.get("name") == old_name:
+                        c["name"] = new_name
                 write_select_def(PROJECT_ROOT, parsed["chars"], parsed["stages"], parsed["options"])
                 self.end_json({"success": True})
             except Exception as e: self.end_json({"success": False, "error": traceback.format_exc()})
@@ -633,8 +736,10 @@ class StoryEditorHandler(BaseHTTPRequestHandler):
             if not PROJECT_ROOT: return self.end_json({"error": "No root"})
             try:
                 parsed = parse_select_def_full(PROJECT_ROOT)
-                parsed["chars"] = [c for c in parsed["chars"] if c["name"] != data.get("name", "")]
+                roster = apply_editor_chars_meta(PROJECT_ROOT, parsed["chars"])
+                parsed["chars"] = [c for c in roster if c.get("kind") != "char" or c["name"] != data.get("name", "")]
                 write_select_def(PROJECT_ROOT, parsed["chars"], parsed["stages"], parsed["options"])
+                save_editor_chars_meta(PROJECT_ROOT, parsed["chars"])
                 if data.get("remove_files"):
                     cp = os.path.join(PROJECT_ROOT, "chars", data.get("name", ""))
                     if os.path.isdir(cp): shutil.rmtree(cp)

@@ -1,6 +1,5 @@
 -- storymode/main.lua
--- Visual Node Map Story Mode for IKEMEN GO
--- Uses pergamino-style background with horizontal node chain
+-- Timeline-based story mode UI for IKEMEN GO
 
 local function log(msg)
     local f = io.open("storymode/debug.log", "a")
@@ -12,524 +11,773 @@ end
 
 log("--- Story Mode Session Start ---")
 
+local function clamp(v, minV, maxV)
+    if v < minV then return minV end
+    if v > maxV then return maxV end
+    return v
+end
+
+local function trimLabel(str, maxLen)
+    str = tostring(str or "")
+    if #str <= maxLen then
+        return str
+    end
+    return string.sub(str, 1, math.max(1, maxLen - 2)) .. ".."
+end
+
+local function safeString(str, fallback)
+    if str == nil or str == "" then
+        return fallback or ""
+    end
+    return tostring(str)
+end
+
 local function main_execution()
     log("Loading common.lua")
-    local story   = dofile("storymode/common.lua")
-    
+    local story = dofile("storymode/common.lua")
+
     log("Loading catalog.lua")
     local catalog = dofile("storymode/catalog.lua")
 
-    if not catalog or type(catalog) ~= "table" or #catalog == 0 then
+    if type(catalog) ~= "table" or #catalog == 0 then
         log("No catalog found, exiting")
         setMatchNo(-1)
         return
     end
 
-    -- Screen dimensions
-    log("Getting motif info")
-    local lc  = motif.info.localcoord or {640, 480}
-    local W, H = lc[1], lc[2]
-    log("Dimensions: " .. W .. "x" .. H)
+    local lc = motif.info.localcoord or {640, 480}
+    local W, H = lc[1] or 640, lc[2] or 480
 
-    -- ─── COLOR PALETTE ───────────────────────────────────────────────────
     local C = {
-      bg        = {5,  8,  14},
-      pBG       = {210, 184, 150},
-      pHeader   = {180, 210, 224},
-      pBorder   = {72,  52,  28},
-      pShadow   = {52,  36,  16},
-      pInner    = {222, 198, 166},
-      nNormal   = {196, 163, 84},  nNormalBD  = {142, 108, 44},
-      nSide     = {88,  148, 210}, nSideBD    = {48,   90, 160},
-      nMidBoss  = {200, 72,  72},  nMidBossBD = {140,  38,  38},
-      nBoss     = {165, 76,  210}, nBossBD    = {108,  38, 155},
-      nLocked   = {70,  74,  80},  nLockedBD  = {48,   50,  55},
-      nCleared  = {72,  192, 96},  nClearedBD = {44,  130,  60},
-      selGlow   = {255, 222, 48},
-      tTitle    = {255, 128,  0},
-      tLight    = {238, 228, 210},
-      tDark     = {44,   28,   8},
-      tMuted    = {148, 158, 172},
-      tLocked   = {88,   88,  90},
-      tCleared  = {88,  210, 108},
-      conn      = {148, 110, 56},
-      accent    = {255, 128,  0},
+        bg         = {0, 0, 0},
+        panel      = {10, 13, 19},
+        panel_alt  = {14, 18, 26},
+        panel_hi   = {18, 24, 34},
+        border     = {36, 44, 58},
+        accent     = {255, 132, 24},
+        accent_dim = {140, 88, 32},
+        text       = {228, 234, 244},
+        text_muted = {130, 142, 160},
+        text_dark  = {26, 28, 34},
+        track      = {92, 104, 124},
+        locked     = {70, 76, 88},
+        locked_bd  = {54, 58, 66},
+        cleared    = {62, 190, 104},
+        cleared_bd = {30, 120, 62},
+        normal     = {210, 176, 84},
+        normal_bd  = {120, 88, 28},
+        side       = {86, 154, 232},
+        side_bd    = {38, 88, 154},
+        mid        = {224, 88, 88},
+        mid_bd     = {130, 40, 40},
+        boss       = {180, 96, 232},
+        boss_bd    = {102, 48, 140},
+        select     = {255, 210, 64},
     }
 
-    -- ─── LAYOUT ──────────────────────────────────────────────────────────
-    local PX  = math.floor(W * 0.038)
-    local PY  = math.floor(H * 0.16)
-    local PW  = math.floor(W * 0.924)
-    local PH  = math.floor(H * 0.50)
-    local PHD = 26
+    local SCALE = {
+        title = 1.00,
+        subtitle = 1.00,
+        panel = 1.00,
+        rowTitle = 1.00,
+        rowMeta = 0.84,
+        detailTitle = 1.40,
+        detailLabel = 0.84,
+        detailBody = 1.00,
+        footer = 0.92,
+        node = 1.10,
+        nodeMeta = 0.74,
+    }
 
-    local NR       = 20
-    local NBOSS_R  = 26
-    local NSPACING = 84
-    local NY_MAIN  = PY + PHD + math.floor((PH - PHD) * 0.52)
-    local NY_UP    = NY_MAIN - 60
-    local NY_DOWN  = NY_MAIN + 60
-    local MAX_VIS  = 7
+    local fntTitle = fontNew("font/8-BIT WONDER_STORY.def", -1)
+    if not fntTitle then
+        fntTitle = fontNew("font/8-BIT WONDER.def", -1)
+    end
+    if not fntTitle then
+        fntTitle = fontNew("font/arcade.def", -1)
+    end
 
-    -- ─── FONTS / TEXT ────────────────────────────────────────────────────
-    log("Loading Font: font/Open_Sans.def")
-    local fntMain = fontNew("font/Open_Sans.def", -1)
-    if not fntMain then
-        log("WARNING: Failed to load font/Open_Sans.def, attempting fallback")
-        -- Try to find any loaded font from motif title info
-        local f_idx = motif.title_info.menu_item_font[1]
-        local f_height = motif.title_info.menu_item_font[7]
-        fntMain = main.font[f_idx .. f_height]
-        if not fntMain then
-            fntMain = fontNew("font/f-6x9.def", -1) -- Ultimate fallback
+    local fntBody = fontNew("font/f-6x9.def", -1)
+    if not fntBody then
+        fntBody = fontNew("font/Open_Sans.def", -1)
+    end
+    if not fntBody and motif.title_info and motif.title_info.menu_item_font then
+        local key = motif.title_info.menu_item_font[1] .. motif.title_info.menu_item_font[7]
+        fntBody = main.font[key]
+    end
+    fntTitle = fntTitle or fntBody
+
+    local storyBgAnim = nil
+    if motif.files and motif.files.spr_data then
+        local ok, anim = pcall(function()
+            return animNew(motif.files.spr_data, "0,0, 0,0, -1")
+        end)
+        if ok and anim ~= nil then
+            storyBgAnim = anim
+            animSetScale(storyBgAnim, W / 640, H / 480)
+            animUpdate(storyBgAnim)
         end
     end
 
     local ti = {}
-    for i = 1, 6 do ti[i] = textImgNew() end
+    for i = 1, 48 do
+        ti[i] = textImgNew()
+    end
+    local textIdx = 1
 
-    -- ─── HELPERS ─────────────────────────────────────────────────────────
-    local function fRect(x, y, w, h, c, a, d)
-      if w > 0 and h > 0 then
-        fillRect(x, y, x + w, y + h, c[1], c[2], c[3], a or 255, d or 0)
-      end
+    local function beginTextFrame()
+        textIdx = 1
     end
 
-    local function drawText(idx, s, x, y, color, sx, sy, align)
-      if not ti[idx] then return end
-      local av = (align == "left") and 1 or (align == "right") and -1 or 0
-      textImgSetFont(ti[idx], fntMain)
-      textImgSetAlign(ti[idx], av)
-      textImgSetText(ti[idx], tostring(s))
-      textImgSetPos(ti[idx], x + main.f_alignOffset(av), y)
-      textImgSetColor(ti[idx], color[1], color[2], color[3])
-      textImgSetScale(ti[idx], sx or 1, sy or 1)
-      textImgSetWindow(ti[idx], 0, 0, W, H)
-      textImgDraw(ti[idx])
+    local function nextText()
+        local obj = ti[textIdx]
+        textIdx = textIdx + 1
+        if textIdx > #ti then
+            textIdx = 1
+        end
+        return obj
     end
 
-    -- ─── PERGAMINO ───────────────────────────────────────────────────────
-    local function drawPergamino()
-      fRect(PX+4, PY+6, PW, PH, C.pShadow, 100)
-      fRect(PX-3, PY-3, PW+6, PH+6, C.pBorder)
-      fRect(PX, PY, PW, PH, C.pBG)
-      fRect(PX, PY, PW, PHD, C.pHeader)
-      fRect(PX, PY+PHD, PW, 2, C.pBorder, 80)
-      fRect(PX+4, PY+PHD+2, PW-8, math.floor((PH-PHD)*0.4), C.pInner, 90)
-      -- Corner rolls
-      fRect(PX-9, PY-9,  24, 24, C.pBorder)
-      fRect(PX-6, PY-6,  16, 16, {185,152,108})
-      fRect(PX-2, PY-2,   7,  7, {220,195,155})
-      fRect(PX+PW-15, PY-9,  24, 24, C.pBorder)
-      fRect(PX+PW-10, PY-6,  16, 16, {185,152,108})
-      fRect(PX-2, PY-2,   7,  7, {220,195,155}) -- Fixed: was missing from earlier
-      fRect(PX-9, PY+PH-15, 24, 24, C.pBorder)
-      fRect(PX-6, PY+PH-10, 16, 16, {185,152,108})
-      fRect(PX+PW-15, PY+PH-15, 24, 24, C.pBorder)
-      fRect(PX+PW-10, PY+PH-10, 16, 16, {185,152,108})
+    local function rect(x, y, w, h, col, alpha, depth)
+        if w > 0 and h > 0 then
+            fillRect(x, y, w, h, col[1], col[2], col[3], alpha or 255, depth or 0)
+        end
     end
 
-    -- ─── NODE ────────────────────────────────────────────────────────────
-    local function nodeR(cap)
-      local t = cap.type or "normal"
-      if t == "finalboss" then return NBOSS_R end
-      if t == "midboss"   then return NBOSS_R - 4 end
-      return NR
+    local function frame(x, y, w, h, border, fill, borderAlpha, fillAlpha)
+        rect(x, y, w, h, border, borderAlpha or 255)
+        rect(x + 1, y + 1, math.max(0, w - 2), math.max(0, h - 2), fill, fillAlpha or borderAlpha or 255)
     end
 
-    local function nodeColors(cap, unlocked, cleared)
-      if not unlocked  then return C.nLocked,  C.nLockedBD  end
-      if cleared       then return C.nCleared, C.nClearedBD end
-      local t = cap.type or "normal"
-      if t == "sidestory"  then return C.nSide,    C.nSideBD    end
-      if t == "midboss"    then return C.nMidBoss, C.nMidBossBD end
-      if t == "finalboss"  then return C.nBoss,    C.nBossBD    end
-      return C.nNormal, C.nNormalBD
+    local function panel(x, y, w, h, title, accent)
+        frame(x, y, w, h, C.border, C.panel, 245, 232)
+        rect(x, y, w, 22, accent or C.panel_hi, 228)
+        if title and title ~= "" then
+            local obj = nextText()
+            textImgSetFont(obj, fntBody)
+            textImgSetAlign(obj, 1)
+            textImgSetText(obj, tostring(title))
+            textImgSetPos(obj, x + 10 + main.f_alignOffset(1), y + 6)
+            textImgSetColor(obj, C.text[1], C.text[2], C.text[3])
+            textImgSetScale(obj, SCALE.panel, SCALE.panel)
+            textImgSetWindow(obj, 0, 0, W, H)
+            textImgDraw(obj)
+        end
     end
 
-    local function drawNode(cap, cx, cy, selected, unlocked, cleared)
-      local fill, border = nodeColors(cap, unlocked, cleared)
-      local r = nodeR(cap)
-
-      if selected then
-        fRect(cx-r-6, cy-r-6, (r+6)*2, (r+6)*2, C.selGlow, 220)
-        fRect(cx-r-4, cy-r-4, (r+4)*2, (r+4)*2, {0, 0, 0}, 100)
-      end
-      fRect(cx-r-2, cy-r-2, (r+2)*2, (r+2)*2, border)
-      fRect(cx-r,   cy-r,   r*2,     r*2,     fill)
-
-      local t = cap.type or "normal"
-      local label = t == "sidestory" and "S" or t == "midboss" and "M" or
-                    t == "finalboss" and "B" or tostring(cap._visIdx or "?")
-      local lcol = unlocked and C.tDark or C.tLocked
-      drawText(3, label, cx, cy - 9, lcol, 0.82, 0.82, "center")
-
-      local badges = {sidestory="SIDE", midboss="MID", finalboss="BOSS", normal=""}
-      local badge = badges[t] or ""
-      if badge ~= "" then
-        local badgeCol = t == "sidestory" and C.nSide or
-                         t == "midboss"   and C.nMidBoss or C.nBoss
-        drawText(4, badge, cx, cy + r + 2, badgeCol, 0.52, 0.52, "center")
-      end
-
-      local capTitle = cap.title or ""
-      if #capTitle > 13 then capTitle = string.sub(capTitle, 1, 11) .. ".." end
-      if cy < NY_MAIN - 20 then
-        drawText(5, capTitle, cx, cy - r - 13, C.tDark, 0.60, 0.60, "center")
-      elseif cy > NY_MAIN + 20 then
-        drawText(5, capTitle, cx, cy + r + (badge~="" and 10 or 4), C.tDark, 0.60, 0.60, "center")
-      else
-        drawText(5, capTitle, cx, cy + r + (badge~="" and 12 or 4), C.tDark, 0.60, 0.60, "center")
-      end
+    local function drawText(str, x, y, col, sx, sy, align, font)
+        local chosenFont = font or fntBody
+        if not chosenFont then return end
+        local obj = nextText()
+        local a = 0
+        if align == "left" then
+            a = 1
+        elseif align == "right" then
+            a = -1
+        end
+        textImgSetFont(obj, chosenFont)
+        textImgSetAlign(obj, a)
+        textImgSetText(obj, tostring(str or ""))
+        textImgSetPos(obj, x + main.f_alignOffset(a), y)
+        textImgSetColor(obj, col[1], col[2], col[3])
+        textImgSetScale(obj, sx or 1, sy or 1)
+        textImgSetWindow(obj, 0, 0, W, H)
+        textImgDraw(obj)
     end
 
-    -- ─── CONNECTOR ───────────────────────────────────────────────────────
-    local function drawConn(x1, y1, r1, x2, y2, r2)
-      if y1 == y2 then
-        local cx = math.min(x1,x2) + r1 + 2
-        local cw = math.abs(x2-x1) - r1 - r2 - 4
-        if cw > 2 then fRect(cx, y1-2, cw, 4, C.conn) end
-      else
-        local cy1 = math.min(y1,y2) + r1 + 2
-        local cy2 = math.max(y1,y2) - r2 - 2
-        if cy2 > cy1 then fRect(x1-2, cy1, 4, cy2-cy1, C.conn) end
-      end
+    local function drawBackground()
+        clearColor(0, 0, 0)
+        if storyBgAnim ~= nil then
+            animSetPos(storyBgAnim, 0, 0)
+            animDraw(storyBgAnim)
+        end
     end
 
-    -- ─── LAYOUT BUILDER ──────────────────────────────────────────────────
+    local function summarizeTeam(list, maxLen)
+        return trimLabel(table.concat(list or {}, ", "), maxLen or 42)
+    end
+
+    local function typeColors(chapterType, unlocked, cleared)
+        if not unlocked then
+            return C.locked, C.locked_bd, C.text_muted
+        end
+        if cleared then
+            return C.cleared, C.cleared_bd, C.text_dark
+        end
+        if chapterType == "sidestory" then
+            return C.side, C.side_bd, C.text
+        elseif chapterType == "midboss" then
+            return C.mid, C.mid_bd, C.text
+        elseif chapterType == "finalboss" then
+            return C.boss, C.boss_bd, C.text
+        end
+        return C.normal, C.normal_bd, C.text_dark
+    end
+
+    local function typeLabel(chapterType)
+        if chapterType == "sidestory" then
+            return "SIDE STORY"
+        elseif chapterType == "midboss" then
+            return "MID BOSS"
+        elseif chapterType == "finalboss" then
+            return "FINAL BOSS"
+        end
+        return "CAPITULO"
+    end
+
+    local function nodeSize(chapterType)
+        if chapterType == "finalboss" then
+            return 34
+        elseif chapterType == "midboss" then
+            return 32
+        end
+        return 30
+    end
+
+    local function lettersForIndex(n)
+        local s = ""
+        n = math.max(1, tonumber(n) or 1)
+        while n > 0 do
+            local rem = (n - 1) % 26
+            s = string.char(97 + rem) .. s
+            n = math.floor((n - 1) / 26)
+        end
+        return s
+    end
+
     local function buildLayout(arc)
-      local mainList   = {}
-      local sideBranches = {}
-      local mainIdMap  = {}
+        local chapters = arc.chapters or {}
+        local byId = {}
+        local mainOrder = {}
+        local parentOf = {}
+        local childMap = {}
+        local columnOf = {}
+        local laneOf = {}
+        local labelOf = {}
 
-      for i, cap in ipairs(arc.chapters or {}) do
-        local t = cap.type or "normal"
-        if t ~= "sidestory" then
-          table.insert(mainList, i)
-          cap._visIdx = #mainList
-          mainIdMap[cap.id or ""] = #mainList
-        end
-      end
-
-      for i, cap in ipairs(arc.chapters or {}) do
-        local t = cap.type or "normal"
-        if t == "sidestory" then
-          local afterId = cap.sideUnlockAfter or ""
-          local pos = mainIdMap[afterId] or (#mainList > 0 and #mainList or 1)
-          if not sideBranches[pos] then sideBranches[pos] = {} end
-          table.insert(sideBranches[pos], i)
-        end
-      end
-
-      return mainList, sideBranches
-    end
-
-    -- ─── VIEWPORT ────────────────────────────────────────────────────────
-    local function getViewport(total, focus)
-      local half  = math.floor(MAX_VIS / 2)
-      local first = math.max(1, focus - half)
-      if first + MAX_VIS - 1 > total then
-        first = math.max(1, total - MAX_VIS + 1)
-      end
-      return first, math.min(total, first + MAX_VIS - 1)
-    end
-
-    local function nodeX(totalVis, slot)
-      local totalW = (totalVis - 1) * NSPACING
-      local startX = math.floor(W / 2 - totalW / 2)
-      return startX + slot * NSPACING
-    end
-
-    -- ─── ARC SELECT ──────────────────────────────────────────────────────
-    local function drawArcSelect(progress)
-      drawText(1, "CRONICAS NINJA",     W/2, 32, C.tTitle, 1.28, 1.28, "center")
-      drawText(2, "Selecciona una Saga", W/2, 66, C.tLight, 0.90, 0.90, "center")
-
-      local rowH  = 50
-      local startY = 105
-      local listW  = math.floor(W * 0.70)
-      local listX  = math.floor(W / 2 - listW / 2)
-
-      fRect(listX-10, startY-8, listW+20, #catalog*rowH+16, {12,18,28}, 180)
-      fRect(listX-10, startY-8, 4, #catalog*rowH+16, C.tTitle)
-
-      for i, arc in ipairs(catalog) do
-        local y = startY + (i-1)*rowH
-        local sel = (i == _stState.arcIdx)
-        local unlocked = story.isArcUnlocked(catalog, i, progress)
-
-        if sel then
-          fRect(listX, y, listW, rowH-4, {28,18,8}, 150)
-          fRect(listX, y, 4, rowH-4, C.tTitle)
-        end
-
-        local tc = not unlocked and C.tLocked or (sel and C.tTitle or C.tLight)
-        local sc = sel and 1.0 or 0.86
-        drawText(2, arc.title or "Saga", W/2, y+8, tc, sc, sc, "center")
-
-        local nMain, nSide, nBoss = 0, 0, 0
-        for _, cap in ipairs(arc.chapters or {}) do
-          local t = cap.type or "normal"
-          if t == "sidestory" then nSide = nSide+1
-          elseif t == "midboss" or t == "finalboss" then nBoss = nBoss+1
-          else nMain = nMain+1 end
-        end
-        local sub = nMain .. " caps"
-        if nSide > 0 then sub = sub .. " + " .. nSide .. " side" end
-        if nBoss > 0 then sub = sub .. " + " .. nBoss .. " jefes" end
-        drawText(3, sub, W/2, y+30, sel and C.tMuted or C.tLocked, 0.72, 0.72, "center")
-      end
-
-      drawText(6, "Arriba/Abajo: Navegar - A: Entrar - B: Volver", W/2, H-20, C.tMuted, 0.78, 0.78, "center")
-    end
-
-    -- ─── CHAPTER MAP ─────────────────────────────────────────────────────
-    local function drawChapterMap(progress)
-      local arc = catalog[_stState.arcIdx]
-      local mainList, sideBranches = buildLayout(arc)
-
-      drawText(1, "CRONICAS NINJA", W/2, 18, C.tTitle, 1.10, 1.10, "center")
-      drawText(2, arc.title or "",  W/2, 46, C.tLight, 0.92, 0.92, "center")
-
-      drawPergamino()
-      drawText(3, "-- MAPA DE CAPITULOS --", W/2, PY+8, C.tDark, 0.76, 0.76, "center")
-
-      if #mainList == 0 then
-        drawText(2, "Esta saga no tiene capitulos aun.", W/2, NY_MAIN-12, C.tDark, 0.86, 0.86, "center")
-      else
-        local vFirst, vLast = getViewport(#mainList, _stState.mainIdx)
-        local totalVis = vLast - vFirst + 1
-        local positions = {}
-
-        for vi = vFirst, vLast do
-          local capIdx = mainList[vi]
-          local slot   = vi - vFirst
-          local cx     = nodeX(totalVis, slot)
-          positions[capIdx] = {cx, NY_MAIN}
-
-          if vi > vFirst then
-            local prevIdx = mainList[vi-1]
-            local pp = positions[prevIdx]
-            if pp then
-              drawConn(pp[1], NY_MAIN, nodeR(arc.chapters[prevIdx]),
-                       cx,    NY_MAIN, nodeR(arc.chapters[capIdx]))
+        for i, chapter in ipairs(chapters) do
+            if chapter.id and chapter.id ~= "" then
+                byId[chapter.id] = i
             end
-          end
+        end
 
-          if sideBranches[vi] then
-            for si, sCapIdx in ipairs(sideBranches[vi]) do
-              local sY = (si % 2 == 1) and NY_UP or NY_DOWN
-              positions[sCapIdx] = {cx, sY}
-              drawConn(cx, NY_MAIN, nodeR(arc.chapters[capIdx]),
-                       cx, sY,     nodeR(arc.chapters[sCapIdx]))
+        for i, chapter in ipairs(chapters) do
+            local chapterType = chapter.type or "normal"
+            if chapterType ~= "sidestory" then
+                table.insert(mainOrder, i)
+                columnOf[i] = #mainOrder
+                laneOf[i] = 0
+                labelOf[i] = tostring(#mainOrder)
             end
-          end
         end
 
-        for vi = vFirst, vLast do
-          local capIdx = mainList[vi]
-          local cap    = arc.chapters[capIdx]
-          local pos    = positions[capIdx]
-          local isSel  = (not _stState.focusSide and vi == _stState.mainIdx)
-          local unlocked = story.isChapterUnlocked(catalog, _stState.arcIdx, capIdx, progress)
-          local cleared  = story.isChapterCleared(arc.id, cap.id, progress)
-          drawNode(cap, pos[1], pos[2], isSel, unlocked, cleared)
-
-          if sideBranches[vi] then
-            for si, sCapIdx in ipairs(sideBranches[vi]) do
-              local sCap = arc.chapters[sCapIdx]
-              local sPos = positions[sCapIdx]
-              local sSel = _stState.focusSide and _stState.sideCapIdx == sCapIdx
-              local sU = story.isChapterUnlocked(catalog, _stState.arcIdx, sCapIdx, progress)
-              local sC = story.isChapterCleared(arc.id, sCap.id, progress)
-              drawNode(sCap, sPos[1], sPos[2], sSel, sU, sC)
+        local function addChild(parentIdx, childIdx)
+            if not childMap[parentIdx] then
+                childMap[parentIdx] = {}
             end
-          end
+            table.insert(childMap[parentIdx], childIdx)
+            parentOf[childIdx] = parentIdx
         end
 
-        if vFirst > 1 then
-          drawText(6, "< mas", PX+22, NY_MAIN-8, C.tTitle, 0.85, 0.85, "center")
+        local orphanSides = {}
+        for i, chapter in ipairs(chapters) do
+            if (chapter.type or "normal") == "sidestory" then
+                local parentIdx = nil
+                if chapter.sideUnlockAfter and byId[chapter.sideUnlockAfter] then
+                    parentIdx = byId[chapter.sideUnlockAfter]
+                end
+                if not parentIdx then
+                    for j = i - 1, 1, -1 do
+                        local prevType = chapters[j].type or "normal"
+                        if prevType ~= "sidestory" then
+                            parentIdx = j
+                            break
+                        end
+                    end
+                end
+                if parentIdx then
+                    addChild(parentIdx, i)
+                else
+                    table.insert(orphanSides, i)
+                end
+            end
         end
-        if vLast < #mainList then
-          local arrowX = nodeX(totalVis, totalVis-1) + NSPACING/2
-          drawText(6, "mas >", math.min(arrowX, PX+PW-26), NY_MAIN-8, C.tTitle, 0.85, 0.85, "center")
+
+        local function assignChildren(parentIdx)
+            local children = childMap[parentIdx] or {}
+            if #children == 0 then
+                return
+            end
+            table.sort(children)
+
+            if (laneOf[parentIdx] or 0) == 0 then
+                local topCount = 0
+                local bottomCount = 0
+                for pos, childIdx in ipairs(children) do
+                    if pos % 2 == 1 then
+                        topCount = topCount + 1
+                        laneOf[childIdx] = -topCount
+                    else
+                        bottomCount = bottomCount + 1
+                        laneOf[childIdx] = bottomCount
+                    end
+                    columnOf[childIdx] = columnOf[parentIdx] or 1
+                    labelOf[childIdx] = safeString(labelOf[parentIdx], "1") .. lettersForIndex(pos)
+                    assignChildren(childIdx)
+                end
+            else
+                local sign = laneOf[parentIdx] < 0 and -1 or 1
+                local base = math.abs(laneOf[parentIdx])
+                for pos, childIdx in ipairs(children) do
+                    laneOf[childIdx] = sign * (base + pos)
+                    columnOf[childIdx] = columnOf[parentIdx] or 1
+                    labelOf[childIdx] = safeString(labelOf[parentIdx], "1") .. lettersForIndex(pos)
+                    assignChildren(childIdx)
+                end
+            end
         end
-      end
 
-      -- Info panel
-      local infoY = PY + PH + 16
-      local arc2  = catalog[_stState.arcIdx]
-      local ml2, _ = buildLayout(arc2)
-      local focusedIdx = _stState.focusSide and _stState.sideCapIdx or (ml2[_stState.mainIdx] or 1)
-
-      if focusedIdx and arc2.chapters[focusedIdx] then
-        local cap       = arc2.chapters[focusedIdx]
-        local unlocked  = story.isChapterUnlocked(catalog, _stState.arcIdx, focusedIdx, progress)
-        local cleared   = story.isChapterCleared(arc2.id, cap.id, progress)
-        local typeNames = {normal="Capitulo", sidestory="Historia Paralela", midboss="Mid-Boss", finalboss="Jefe Final"}
-        local typeName  = typeNames[cap.type or "normal"] or "Capitulo"
-        local statusTxt = cleared and "COMPLETADO" or (unlocked and "DISPONIBLE" or "BLOQUEADO")
-        local statusCol = cleared and C.tCleared or (unlocked and C.tTitle or C.tLocked)
-
-        drawText(2, cap.title or "", W/2, infoY, C.tLight, 0.98, 0.98, "center")
-        local subLine = typeName
-        if cap.subtitle and cap.subtitle ~= "" then
-          subLine = subLine .. " - " .. cap.subtitle
+        for _, idx in ipairs(mainOrder) do
+            assignChildren(idx)
         end
-        drawText(3, subLine, W/2, infoY+22, C.tMuted, 0.76, 0.76, "center")
-        drawText(4, statusTxt, W/2, infoY+40, statusCol, 0.82, 0.82, "center")
-      end
 
-      drawText(6, "Izq/Der: Navegar - Arriba/Abajo: Side Story - A: Iniciar - B: Volver", W/2, H-18, C.tMuted, 0.74, 0.74, "center")
+        for i, idx in ipairs(orphanSides) do
+            columnOf[idx] = 1
+            laneOf[idx] = (i % 2 == 1) and -math.ceil(i / 2) or math.ceil(i / 2)
+            labelOf[idx] = "1" .. lettersForIndex(i)
+            assignChildren(idx)
+        end
+
+        local nodes = {}
+        local maxAbsLane = 0
+        for i, chapter in ipairs(chapters) do
+            nodes[i] = {
+                idx = i,
+                chapter = chapter,
+                col = columnOf[i] or clamp(i, 1, math.max(1, #mainOrder)),
+                lane = laneOf[i] or 0,
+                parent = parentOf[i],
+                label = safeString(labelOf[i], tostring(i)),
+            }
+            maxAbsLane = math.max(maxAbsLane, math.abs(nodes[i].lane))
+        end
+
+        return {
+            nodes = nodes,
+            mainOrder = mainOrder,
+            columns = math.max(1, #mainOrder),
+            maxAbsLane = maxAbsLane,
+        }
     end
 
-    -- ─── STATE ───────────────────────────────────────────────────────────
-    _stState = {
-      screen     = "arcs",
-      arcIdx     = 1,
-      mainIdx    = 1,
-      focusSide  = false,
-      sideCapIdx = nil,
+    local function buildArcStats(arc, progress)
+        local normalCount = 0
+        local sideCount = 0
+        local bossCount = 0
+        local clearedCount = 0
+        local total = #(arc.chapters or {})
+        for _, chapter in ipairs(arc.chapters or {}) do
+            local chapterType = chapter.type or "normal"
+            if chapterType == "sidestory" then
+                sideCount = sideCount + 1
+            elseif chapterType == "midboss" or chapterType == "finalboss" then
+                bossCount = bossCount + 1
+            else
+                normalCount = normalCount + 1
+            end
+            if story.isChapterCleared(arc.id, chapter.id, progress) then
+                clearedCount = clearedCount + 1
+            end
+        end
+        return {
+            normalCount = normalCount,
+            sideCount = sideCount,
+            bossCount = bossCount,
+            clearedCount = clearedCount,
+            total = total,
+        }
+    end
+
+    local function findInitialChapter(arcIdx, progress)
+        local arc = catalog[arcIdx]
+        if not arc then
+            return 1
+        end
+        local layout = buildLayout(arc)
+        for _, idx in ipairs(layout.mainOrder) do
+            local chapter = arc.chapters[idx]
+            if chapter
+                and story.isChapterUnlocked(catalog, arcIdx, idx, progress)
+                and not story.isChapterCleared(arc.id, chapter.id, progress) then
+                return idx
+            end
+        end
+        for _, idx in ipairs(layout.mainOrder) do
+            local chapter = arc.chapters[idx]
+            if chapter and story.isChapterUnlocked(catalog, arcIdx, idx, progress) then
+                return idx
+            end
+        end
+        return 1
+    end
+
+    local function moveHorizontal(layout, currentIdx, dir)
+        local current = layout.nodes[currentIdx]
+        if not current then
+            return currentIdx
+        end
+        local bestIdx = currentIdx
+        local bestScore = nil
+        for idx, node in pairs(layout.nodes) do
+            if dir < 0 and node.col < current.col or dir > 0 and node.col > current.col then
+                local sameLanePenalty = node.lane == current.lane and 0 or 1000
+                local score = sameLanePenalty + math.abs(node.col - current.col) * 10 + math.abs(node.lane - current.lane)
+                if bestScore == nil or score < bestScore then
+                    bestScore = score
+                    bestIdx = idx
+                end
+            end
+        end
+        return bestIdx
+    end
+
+    local function moveVertical(layout, currentIdx, dir)
+        local current = layout.nodes[currentIdx]
+        if not current then
+            return currentIdx
+        end
+        local bestIdx = currentIdx
+        local bestScore = nil
+        for idx, node in pairs(layout.nodes) do
+            if dir < 0 and node.lane < current.lane or dir > 0 and node.lane > current.lane then
+                local sameColPenalty = node.col == current.col and 0 or 100
+                local score = sameColPenalty + math.abs(node.lane - current.lane) * 10 + math.abs(node.col - current.col)
+                if bestScore == nil or score < bestScore then
+                    bestScore = score
+                    bestIdx = idx
+                end
+            end
+        end
+        return bestIdx
+    end
+
+    local state = {
+        screen = "arcs",
+        arcIdx = 1,
+        chapterIdx = 1,
     }
 
-    local function firstAvailableMain(aIdx, ml, progress)
-      local arc = catalog[aIdx]
-      for mi, capIdx in ipairs(ml) do
-          local cap = arc.chapters[capIdx]
-        if cap and not story.isChapterCleared(arc.id, cap.id, progress) then
-          return mi
-        end
-      end
-      return math.max(1, #ml)
-    end
-
-    log("Initializing State")
-    local initProg = story.loadProgress()
+    local initProgress = story.loadProgress()
     for i = 1, #catalog do
-      if story.isArcUnlocked(catalog, i, initProg) then
-        _stState.arcIdx = i
-      end
+        if story.isArcUnlocked(catalog, i, initProgress) then
+            state.arcIdx = i
+        end
+    end
+    state.chapterIdx = findInitialChapter(state.arcIdx, initProgress)
+    local function drawArcSelect(progress)
+        local listX = 28
+        local listY = 88
+        local listW = math.floor(W * 0.38)
+        local listH = H - 136
+        local detailX = listX + listW + 16
+        local detailY = listY
+        local detailW = W - detailX - 28
+        local detailH = listH
+        local rowHeight = 44
+        local rowsVisible = math.max(4, math.min(7, math.floor((listH - 40) / rowHeight)))
+        local startRow = clamp(state.arcIdx - math.floor(rowsVisible / 2), 1, math.max(1, #catalog - rowsVisible + 1))
+        local endRow = math.min(#catalog, startRow + rowsVisible - 1)
+
+        drawText("CRONICAS NINJA", W / 2, 18, C.accent, SCALE.title, SCALE.title, "center", fntTitle)
+        drawText("Modo historia", W / 2, 46, C.text, SCALE.subtitle, SCALE.subtitle, "center", fntBody)
+
+        panel(listX, listY, listW, listH, "SAGAS", C.panel_hi)
+        panel(detailX, detailY, detailW, detailH, "DETALLES", C.panel_hi)
+
+        local rowY = listY + 30
+        for i = startRow, endRow do
+            local arc = catalog[i]
+            local y = rowY + (i - startRow) * rowHeight
+            local selected = i == state.arcIdx
+            local unlocked = story.isArcUnlocked(catalog, i, progress)
+            local cleared = story.isArcCleared(catalog, arc.id, progress)
+            local stats = buildArcStats(arc, progress)
+
+            rect(listX + 8, y, listW - 16, rowHeight - 4, selected and C.panel_hi or C.panel_alt, selected and 230 or 170)
+            if selected then
+                rect(listX + 8, y, 3, rowHeight - 4, C.accent, 255)
+            end
+
+            local titleCol = unlocked and C.text or C.text_muted
+            if selected and unlocked then
+                titleCol = C.accent
+            end
+
+            drawText(trimLabel(arc.title or ("Saga " .. i), 22), listX + 18, y + 6, titleCol, SCALE.rowTitle, SCALE.rowTitle, "left", fntBody)
+
+            local sub = stats.total .. " caps"
+            if stats.sideCount > 0 then
+                sub = sub .. " / " .. stats.sideCount .. " ramas"
+            end
+            drawText(sub, listX + 18, y + 22, C.text_muted, SCALE.rowMeta, SCALE.rowMeta, "left", fntBody)
+        end
+
+        local arc = catalog[state.arcIdx]
+        if arc then
+            local unlocked = story.isArcUnlocked(catalog, state.arcIdx, progress)
+            local cleared = story.isArcCleared(catalog, arc.id, progress)
+            local stats = buildArcStats(arc, progress)
+            local progressRatio = stats.total > 0 and (stats.clearedCount / stats.total) or 0
+            local barW = detailW - 40
+
+            drawText(trimLabel(safeString(arc.title, "Saga"), 28), detailX + 18, detailY + 38, C.text, SCALE.detailTitle, SCALE.detailTitle, "left", fntBody)
+            drawText(trimLabel(safeString(arc.subtitle, "Sin descripcion"), 62), detailX + 18, detailY + 62, C.text_muted, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
+
+            drawText("ESTADO", detailX + 18, detailY + 100, C.text_muted, SCALE.detailLabel, SCALE.detailLabel, "left", fntBody)
+            drawText(unlocked and (cleared and "Completada" or "Disponible") or "Bloqueada", detailX + 18, detailY + 114, unlocked and (cleared and C.cleared or C.accent) or C.locked, SCALE.detailTitle, SCALE.detailTitle, "left", fntBody)
+
+            drawText("PROGRESO", detailX + 18, detailY + 148, C.text_muted, SCALE.detailLabel, SCALE.detailLabel, "left", fntBody)
+            frame(detailX + 18, detailY + 164, barW, 12, C.border, C.panel_alt, 220, 160)
+            rect(detailX + 20, detailY + 166, math.floor((barW - 4) * progressRatio), 8, C.accent, 240)
+            drawText(stats.clearedCount .. " / " .. stats.total .. " capitulos", detailX + 18, detailY + 184, C.text, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
+
+            drawText("RESUMEN", detailX + 18, detailY + 224, C.text_muted, SCALE.detailLabel, SCALE.detailLabel, "left", fntBody)
+            drawText("Principales: " .. stats.normalCount, detailX + 18, detailY + 238, C.text, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
+            drawText("Side stories: " .. stats.sideCount, detailX + 18, detailY + 252, C.side, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
+            drawText("Bosses: " .. stats.bossCount, detailX + 18, detailY + 266, C.mid, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
+
+            if not unlocked and state.arcIdx > 1 then
+                drawText("REQUISITO", detailX + 18, detailY + 300, C.text_muted, SCALE.detailLabel, SCALE.detailLabel, "left", fntBody)
+                drawText("Completa la saga anterior para desbloquearla.", detailX + 18, detailY + 314, C.locked, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
+            end
+        end
+
+        drawText("Arriba/Abajo: Navegar  A: Entrar  B: Volver", W / 2, H - 18, C.text_muted, SCALE.footer, SCALE.footer, "center", fntBody)
     end
 
-    local function inp(cmds) return main.f_input(main.t_players, cmds) end
-    local function rbuf() main.f_cmdBufReset() end
+    local function drawNode(node, x, y, selected, unlocked, cleared)
+        local nodeType = node.chapter.type or "normal"
+        local fill, border, textCol = typeColors(nodeType, unlocked, cleared)
+        local size = nodeSize(nodeType)
 
-    -- ─── MAIN LOOP ───────────────────────────────────────────────────────
-    log("Entering Main Loop")
+        if selected then
+            rect(x - 3, y - 3, size + 6, size + 6, C.select, 230)
+        end
+        frame(x, y, size, size, border, fill)
+
+        local badge = safeString(node.label, "?")
+        local badgeScale = SCALE.node
+        if #badge >= 4 then
+            badgeScale = 0.82
+        elseif #badge >= 3 then
+            badgeScale = 0.94
+        end
+        drawText(badge, x + size / 2, y + math.floor(size / 2) - 7, textCol, badgeScale, badgeScale, "center", fntBody)
+        return size
+    end
+
+    local function drawMap(progress)
+        local arc = catalog[state.arcIdx]
+        local layout = buildLayout(arc)
+        local currentNode = layout.nodes[state.chapterIdx] or layout.nodes[1]
+        local visibleCols = clamp(math.floor((W - 120) / 104), 4, 6)
+        local focusCol = currentNode and currentNode.col or 1
+        local firstCol = clamp(focusCol - math.floor(visibleCols / 2), 1, math.max(1, layout.columns - visibleCols + 1))
+        local lastCol = math.min(layout.columns, firstCol + visibleCols - 1)
+        local colCount = math.max(1, lastCol - firstCol + 1)
+
+        local mapX = 24
+        local mapY = 78
+        local mapW = W - 48
+        local mapH = math.floor(H * 0.40)
+        local infoY = mapY + mapH + 16
+        local infoH = H - infoY - 28
+        local visibleMaxLane = 0
+
+        local visibleNodes = {}
+        for idx, node in pairs(layout.nodes) do
+            if node.col >= firstCol and node.col <= lastCol then
+                visibleNodes[idx] = node
+                visibleMaxLane = math.max(visibleMaxLane, math.abs(node.lane))
+            end
+        end
+
+        local laneSpacing = math.max(46, math.min(76, math.floor((mapH - 64) / math.max(1, visibleMaxLane * 2 + 1))))
+        local midY = mapY + math.floor(mapH / 2) - 8
+        local colSpacing = colCount > 1 and math.max(84, math.floor((mapW - 96) / (colCount - 1))) or 0
+        local startX = colCount > 1 and math.floor(mapX + (mapW - ((colCount - 1) * colSpacing)) / 2) or math.floor(mapX + mapW / 2)
+        local pos = {}
+
+        for idx, node in pairs(visibleNodes) do
+            local slot = node.col - firstCol
+            pos[idx] = {
+                x = startX + slot * colSpacing,
+                y = midY + node.lane * laneSpacing,
+            }
+        end
+
+        drawText("CRONICAS NINJA", W / 2, 16, C.accent, SCALE.title, SCALE.title, "center", fntTitle)
+        drawText(safeString(arc.title, "Saga"), W / 2, 42, C.text, SCALE.subtitle, SCALE.subtitle, "center", fntBody)
+
+        panel(mapX, mapY, mapW, mapH, "TIMELINE", C.panel_hi)
+        panel(mapX, infoY, mapW, infoH, "DETALLES", C.panel_hi)
+
+        if #layout.mainOrder == 0 then
+            drawText("Esta saga no tiene capitulos.", W / 2, mapY + math.floor(mapH / 2), C.text_muted, 0.76, 0.76, "center")
+        else
+            for i = 1, #layout.mainOrder - 1 do
+                local aIdx = layout.mainOrder[i]
+                local bIdx = layout.mainOrder[i + 1]
+                if pos[aIdx] and pos[bIdx] then
+                    local ax = pos[aIdx].x
+                    local bx = pos[bIdx].x
+                    local aHalf = math.floor(nodeSize(layout.nodes[aIdx].chapter.type or "normal") / 2)
+                    local bHalf = math.floor(nodeSize(layout.nodes[bIdx].chapter.type or "normal") / 2)
+                    rect(ax + aHalf, pos[aIdx].y + aHalf, math.max(0, (bx + bHalf) - (ax + aHalf)), 3, C.track, 230)
+                end
+            end
+
+            for idx, node in pairs(visibleNodes) do
+                if node.parent and pos[node.parent] then
+                    local from = pos[node.parent]
+                    local to = pos[idx]
+                    local fromHalf = math.floor(nodeSize(layout.nodes[node.parent].chapter.type or "normal") / 2)
+                    local toHalf = math.floor(nodeSize(node.chapter.type or "normal") / 2)
+                    local lineX = to.x + toHalf
+                    local y1 = math.min(from.y + fromHalf, to.y + toHalf)
+                    local y2 = math.max(from.y + fromHalf, to.y + toHalf)
+                    rect(lineX, y1, 3, math.max(0, y2 - y1), C.track, 230)
+                end
+            end
+
+            for idx, node in pairs(visibleNodes) do
+                local chapter = node.chapter
+                local unlocked = story.isChapterUnlocked(catalog, state.arcIdx, idx, progress)
+                local cleared = story.isChapterCleared(arc.id, chapter.id, progress)
+                local selected = idx == state.chapterIdx
+                drawNode(node, pos[idx].x, pos[idx].y, selected, unlocked, cleared)
+            end
+
+            if firstCol > 1 then
+                drawText("<", mapX + 14, midY + 8, C.accent, 0.92, 0.92, "center")
+            end
+            if lastCol < layout.columns then
+                drawText(">", mapX + mapW - 14, midY + 8, C.accent, 0.92, 0.92, "center")
+            end
+        end
+
+        local chapter = arc.chapters[state.chapterIdx]
+        if chapter then
+            local unlocked = story.isChapterUnlocked(catalog, state.arcIdx, state.chapterIdx, progress)
+            local cleared = story.isChapterCleared(arc.id, chapter.id, progress)
+            local statusText = cleared and "COMPLETADO" or (unlocked and "DISPONIBLE" or "BLOQUEADO")
+            local statusCol = cleared and C.cleared or (unlocked and C.accent or C.locked)
+            local typeText = typeLabel(chapter.type or "normal")
+
+            drawText(trimLabel(safeString(chapter.title, chapter.id or "Capitulo"), 38), mapX + 16, infoY + 36, C.text, SCALE.detailTitle, SCALE.detailTitle, "left", fntBody)
+            drawText(typeText, mapX + 16, infoY + 56, C.text_muted, SCALE.detailLabel, SCALE.detailLabel, "left", fntBody)
+            drawText(statusText, mapX + mapW - 16, infoY + 36, statusCol, SCALE.detailTitle, SCALE.detailTitle, "right", fntBody)
+
+            local subtitle = safeString(chapter.subtitle, "Sin descripcion.")
+            drawText(trimLabel(subtitle, 72), mapX + 16, infoY + 84, C.text, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
+
+            drawText("P1: " .. summarizeTeam(chapter.p1, 54), mapX + 16, infoY + 116, C.text_muted, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
+            drawText("P2: " .. summarizeTeam(chapter.p2, 54), mapX + 16, infoY + 132, C.text_muted, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
+
+            if chapter.type == "sidestory" and chapter.sideUnlockAfter and chapter.sideUnlockAfter ~= "" then
+                drawText("Se desbloquea tras: " .. trimLabel(chapter.sideUnlockAfter, 40), mapX + 16, infoY + 148, C.side, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
+            end
+        end
+
+        drawText("Izq/Der: Timeline  Arriba/Abajo: Ramas  A: Iniciar  B: Volver", W / 2, H - 16, C.text_muted, SCALE.footer, SCALE.footer, "center", fntBody)
+    end
+
+    local function inp(keys)
+        return main.f_input(main.t_players, keys)
+    end
+
+    local function resetBuf()
+        main.f_cmdBufReset()
+    end
+
+    log("Entering story loop")
     while true do
-      main.f_cmdInput()
-      local progress = story.loadProgress()
+        main.f_cmdInput()
+        local progress = story.loadProgress()
 
-      clearColor(C.bg[1], C.bg[2], C.bg[3])
-      fillRect(0, 0, W, 3, 255, 128, 0, 255, 0)
-      fillRect(0, H-3, W, 3, 255, 128, 0, 255, 0)
+        drawBackground()
+        rect(0, 0, W, 3, C.accent, 255)
+        rect(0, H - 3, W, 3, C.accent_dim, 255)
+        beginTextFrame()
 
-      if _stState.screen == "arcs" then
-        drawArcSelect(progress)
-      else
-        drawChapterMap(progress)
-      end
-
-      -- INPUT: ARC SELECT
-      if _stState.screen == "arcs" then
-        if inp({"$U","u"}) then
-          _stState.arcIdx = _stState.arcIdx - 1
-          if _stState.arcIdx < 1 then _stState.arcIdx = #catalog end
-          rbuf()
-        elseif inp({"$D","d"}) then
-          _stState.arcIdx = _stState.arcIdx + 1
-          if _stState.arcIdx > #catalog then _stState.arcIdx = 1 end
-          rbuf()
-        elseif inp({"pal","a"}) then
-          if story.isArcUnlocked(catalog, _stState.arcIdx, progress) then
-            log("Entering Saga: " .. _stState.arcIdx)
-            local arc = catalog[_stState.arcIdx]
-            local ml  = buildLayout(arc)
-            _stState.mainIdx   = firstAvailableMain(_stState.arcIdx, ml, progress)
-            _stState.focusSide = false
-            _stState.sideCapIdx = nil
-            _stState.screen = "map"
-          end
-          rbuf()
-        elseif esc() or inp({"b","s"}) then
-          log("Exiting Story Mode (Select Screen)")
-          esc(false); setMatchNo(-1); break
+        if state.screen == "arcs" then
+            drawArcSelect(progress)
+        else
+            drawMap(progress)
         end
 
-      -- INPUT: CHAPTER MAP
-      else
-        local arc = catalog[_stState.arcIdx]
-        local ml, sb = buildLayout(arc)
-
-        if inp({"$B","l"}) then
-          if not _stState.focusSide then
-            _stState.mainIdx = _stState.mainIdx - 1
-            if _stState.mainIdx < 1 then _stState.mainIdx = #ml end
-          end
-          rbuf()
-        elseif inp({"$F","r"}) then
-          if not _stState.focusSide then
-            _stState.mainIdx = _stState.mainIdx + 1
-            if _stState.mainIdx > #ml then _stState.mainIdx = 1 end
-          end
-          rbuf()
-        elseif inp({"$U","u"}) then
-          if not _stState.focusSide then
-            if sb[_stState.mainIdx] then
-              for si, sCapIdx in ipairs(sb[_stState.mainIdx]) do
-                if si % 2 == 1 then
-                  _stState.focusSide  = true
-                  _stState.sideCapIdx = sCapIdx
-                  break
+        if state.screen == "arcs" then
+            if inp({"$U", "u"}) then
+                state.arcIdx = state.arcIdx - 1
+                if state.arcIdx < 1 then
+                    state.arcIdx = #catalog
                 end
-              end
-            end
-          else
-            _stState.focusSide = false; _stState.sideCapIdx = nil
-          end
-          rbuf()
-        elseif inp({"$D","d"}) then
-          if not _stState.focusSide then
-            if sb[_stState.mainIdx] then
-              for si, sCapIdx in ipairs(sb[_stState.mainIdx]) do
-                if si % 2 == 0 then
-                  _stState.focusSide  = true
-                  _stState.sideCapIdx = sCapIdx
-                  break
+                resetBuf()
+            elseif inp({"$D", "d"}) then
+                state.arcIdx = state.arcIdx + 1
+                if state.arcIdx > #catalog then
+                    state.arcIdx = 1
                 end
-              end
+                resetBuf()
+            elseif inp({"pal", "a"}) then
+                if story.isArcUnlocked(catalog, state.arcIdx, progress) then
+                    state.chapterIdx = findInitialChapter(state.arcIdx, progress)
+                    state.screen = "map"
+                    log("Entering arc " .. tostring(state.arcIdx))
+                end
+                resetBuf()
+            elseif esc() or inp({"b", "x", "s"}) then
+                log("Exiting Story Mode from arc select")
+                esc(false)
+                setMatchNo(-1)
+                break
             end
-          else
-            _stState.focusSide = false; _stState.sideCapIdx = nil
-          end
-          rbuf()
-        elseif inp({"pal","a"}) then
-          local capIdx = _stState.focusSide and _stState.sideCapIdx or ml[_stState.mainIdx]
-          if capIdx and arc.chapters[capIdx] then
-            local cap = arc.chapters[capIdx]
-            if story.isChapterUnlocked(catalog, _stState.arcIdx, capIdx, progress) then
-              log("Starting Chapter: " .. cap.id)
-              story.playChapter(arc.id, cap.id, cap)
-              main.f_cmdBufReset()
+        else
+            local arc = catalog[state.arcIdx]
+            local layout = buildLayout(arc)
+            if inp({"$B", "l"}) then
+                state.chapterIdx = moveHorizontal(layout, state.chapterIdx, -1)
+                resetBuf()
+            elseif inp({"$F", "r"}) then
+                state.chapterIdx = moveHorizontal(layout, state.chapterIdx, 1)
+                resetBuf()
+            elseif inp({"$U", "u"}) then
+                state.chapterIdx = moveVertical(layout, state.chapterIdx, -1)
+                resetBuf()
+            elseif inp({"$D", "d"}) then
+                state.chapterIdx = moveVertical(layout, state.chapterIdx, 1)
+                resetBuf()
+            elseif inp({"pal", "a"}) then
+                local chapter = arc.chapters[state.chapterIdx]
+                if chapter and story.isChapterUnlocked(catalog, state.arcIdx, state.chapterIdx, progress) then
+                    log("Starting chapter " .. tostring(chapter.id))
+                    story.playChapter(arc.id, chapter.id, chapter)
+                    resetBuf()
+                end
+            elseif esc() or inp({"b", "x", "s"}) then
+                state.screen = "arcs"
+                resetBuf()
             end
-          end
-          rbuf()
-        elseif esc() or inp({"b","s"}) then
-          log("Back to Arc Selection")
-          esc(false); _stState.screen = "arcs"; rbuf()
         end
-      end
 
-      refresh()
+        refresh()
     end
 end
 
--- SAFETY WRAPPER
 local ok, err = pcall(main_execution)
 if not ok then
     log("CRITICAL LUA ERROR: " .. tostring(err))
-    -- Attempt to return to menu instead of crashing hard
     main.f_bgReset(motif[main.background].bg)
-    main.f_fadeReset('fadein', motif[main.group])
+    main.f_fadeReset("fadein", motif[main.group])
     setMatchNo(-1)
 end
