@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>IKEMEN GO — Editor Integral</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <style>
+        * { font-family: 'Inter', system-ui, sans-serif; box-sizing: border-box; }
+        body { background: #0a0e14; color: #c8d1dc; margin:0; }
+        .top-bar { background: linear-gradient(135deg, #12171f 0%, #161d28 100%); border-bottom: 2px solid #ea580c; }
+        .card { background: #131a24; border-radius: 0.5rem; border: 1px solid #1e2a3a; }
+        .input-dark { background: #0d1219; border: 1px solid #1e2a3a; color: #e2e8f0; padding: 0.45rem 0.6rem; border-radius: 0.3rem; width: 100%; font-size: 13px; transition: border-color 0.2s; }
+        .input-dark:focus { outline: none; border-color: #ea580c; box-shadow: 0 0 0 2px rgba(234,88,12,0.15); }
+        .btn-primary { background: linear-gradient(135deg, #ea580c, #dc2626); color: white; padding: 0.45rem 1rem; border-radius: 0.3rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-size: 13px; border: none; }
+        .btn-primary:hover { filter: brightness(1.15); transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-danger { background: #7f1d1d; border: 1px solid #991b1b; color: #fca5a5; padding: 0.4rem 1rem; border-radius: 0.3rem; font-weight: 600; cursor: pointer; transition: all 0.15s; font-size: 12px; }
+        .btn-danger:hover { background: #991b1b; }
+        .btn-secondary { background: #1a2332; border: 1px solid #2a3a4e; color: #c8d1dc; padding: 0.45rem 1rem; border-radius: 0.3rem; cursor: pointer; transition: all 0.15s; font-size: 13px; }
+        .btn-secondary:hover { background: #243044; border-color: #3a5068; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #2a3a4e; border-radius: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #ea580c; }
+        .row-item { transition: background 0.1s; cursor: pointer; user-select: none; }
+        .row-item:hover { background: #1a2332 !important; }
+        .row-item.selected { background: rgba(139,92,246,0.12) !important; border-color: rgba(139,92,246,0.4) !important; }
+        .row-item.drag-over { border-top: 2px solid #ea580c !important; }
+        .badge { display: inline-flex; align-items: center; padding: 1px 7px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+        .badge-green { background: #16a34a22; color: #4ade80; }
+        .badge-red { background: #dc262622; color: #f87171; }
+        .badge-yellow { background: #ca8a0422; color: #fbbf24; }
+        .badge-blue { background: #2563eb22; color: #60a5fa; }
+        .badge-purple { background: #7c3aed22; color: #a78bfa; }
+        .tab-btn { padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; transition: all 0.15s; cursor: pointer; border: 1px solid transparent; }
+        .tab-btn.active { background: rgba(234,88,12,0.15); color: #fb923c; border-color: rgba(234,88,12,0.3); }
+        .tab-btn:not(.active) { color: #64748b; }
+        .tab-btn:not(.active):hover { color: #94a3b8; background: rgba(255,255,255,0.04); }
+        .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #475569; margin-bottom: 8px; display:block; }
+        .upload-zone { border: 2px dashed #2a3a4e; border-radius: 8px; padding: 16px; text-align: center; transition: all 0.2s; cursor: pointer; }
+        .upload-zone:hover, .upload-zone.drag-active { border-color: #ea580c; background: rgba(234,88,12,0.05); }
+        select.input-dark { appearance: auto; }
+        .panel-header { padding: 10px 14px; background: #0d1219; border-bottom: 1px solid #1e2a3a; }
+        .saga-item { transition: all 0.1s; cursor: pointer; user-select: none; }
+        .saga-item:hover { background: #1a2332; }
+        .saga-item.active { background: rgba(234,88,12,0.08); border-left: 3px solid #ea580c; }
+        .chapter-item, .sb-item { transition: all 0.1s; cursor: pointer; user-select: none; }
+        .chapter-item:hover, .sb-item:hover { background: #1a2332; }
+        .chapter-item.active { background: rgba(96,165,250,0.08); border-left: 3px solid #60a5fa; }
+        .sb-item.active { background: rgba(234,88,12,0.08); border-left: 3px solid #ea580c; }
+        /* No-select on disk list items */
+        .disk-item { cursor: default !important; user-select: none; }
+
+        /* ── Historia Visual ── */
+        .scroll-bg {
+            background-image: url('/storymode/legacy_tests/story_menu.png');
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+        }
+        .chapter-node {
+            width: 80px; flex-shrink: 0;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            cursor: pointer; transition: transform 0.15s;
+            user-select: none;
+        }
+        .chapter-node:hover { transform: scale(1.08); }
+        .chapter-node.active .node-circle { box-shadow: 0 0 0 3px #fff, 0 0 12px rgba(255,200,0,0.8); }
+        .node-circle {
+            width: 52px; height: 52px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px; font-weight: 700; border: 3px solid;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            transition: box-shadow 0.15s;
+        }
+        .node-label {
+            font-size: 9px; font-weight: 700; text-align: center;
+            color: #1a0a00; text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+            max-width: 72px; line-height: 1.2;
+        }
+        .node-normal { background: radial-gradient(circle at 35% 35%, #fef9d0, #c8a84b); border-color: #8b6914; }
+        .node-sidestory { background: radial-gradient(circle at 35% 35%, #d0e8ff, #5b9ed6); border-color: #2563ab; }
+        .node-midboss { background: radial-gradient(circle at 35% 35%, #ffd0d0, #d66565); border-color: #991b1b; }
+        .node-finalboss { background: radial-gradient(circle at 35% 35%, #f0d0ff, #9b59d6); border-color: #7c2fa8; }
+        .node-empty { background: #3d3020; border-color: #5a4a2a; border-style: dashed; opacity: 0.5; }
+        .connector { height: 3px; background: linear-gradient(90deg,#8b6914,#c8a84b,#8b6914); flex: 1; min-width: 10px; border-radius: 2px; margin-top: -28px; }
+        .format-btn { padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; }
+        .format-btn.active { background: rgba(234,88,12,0.2); border-color: #ea580c; color: #fb923c; }
+        .format-btn:not(.active) { background: #1a2332; border-color: #2a3a4e; color: #64748b; }
+        .format-btn:not(.active):hover { color: #94a3b8; background: #243044; }
+    </style>
+</head>
+<body>
+<div id="app" class="flex flex-col h-screen overflow-hidden">
+
+    <!-- ═══ WELCOME MODAL ═══ -->
+    <div v-if="!projectRoot" class="fixed inset-0 bg-black/85 flex items-center justify-center z-50">
+        <div class="card p-8 max-w-lg w-full shadow-2xl border-orange-600/40 border">
+            <h2 class="text-xl font-bold text-orange-500 mb-1">⚡ IKEMEN GO Editor</h2>
+            <p class="text-gray-400 mb-5 text-sm">Selecciona la carpeta raíz de tu motor Ikemen GO.</p>
+            <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                    <button @click="navigatePicker(pickerParent)" class="btn-secondary p-2 text-sm">⬅</button>
+                    <input v-model="pickerCurrent" type="text" class="input-dark flex-1 text-xs" readonly>
+                </div>
+                <div class="h-44 overflow-y-auto border border-gray-800 bg-[#0a0e14] rounded p-1 custom-scroll">
+                    <div v-if="pickerLoading" class="text-gray-500 text-center py-10 text-sm">Cargando...</div>
+                    <div v-else-if="pickerDirs.length===0" class="text-gray-600 text-center py-10 text-sm">Sin subcarpetas</div>
+                    <div v-for="d in pickerDirs" :key="d"
+                         @click="navigatePicker(pickerCurrent==='/'?d:pickerCurrent+(pickerCurrent.endsWith('/')?'':'/')+d)"
+                         class="p-2 hover:bg-gray-800 cursor-pointer flex items-center gap-2 rounded text-sm">📁 {{ d }}</div>
+                </div>
+                <div v-if="rootError" class="text-red-400 text-xs font-bold bg-red-900/20 p-2 rounded">{{ rootError }}</div>
+                <button @click="submitRoot" class="btn-primary w-full py-3" :disabled="loading">{{ loading?'Conectando...':'Vincular Proyecto' }}</button>
+            </div>
+        </div>
+    </div>
+
+    <template v-else>
+    <!-- ═══ HEADER ═══ -->
+    <header class="top-bar flex justify-between items-center px-5 py-3 flex-shrink-0">
+        <div class="flex items-center gap-5">
+            <h1 class="text-lg font-bold flex items-center gap-2">
+                <span class="text-orange-500">⚡</span><span class="text-white">IKEMEN</span><span class="text-gray-500 font-normal text-sm">Editor</span>
+            </h1>
+            <nav class="flex gap-1">
+                <button @click="activeTab='editor'" :class="{active:activeTab==='editor'}" class="tab-btn">📚 Historia</button>
+                <button @click="activeTab='creator';loadStoryboards()" :class="{active:activeTab==='creator'}" class="tab-btn">🎬 Storyboard</button>
+                <button @click="activeTab='chars';loadChars()" :class="{active:activeTab==='chars'}" class="tab-btn">🥷 Personajes</button>
+                <button @click="activeTab='stages';loadStages()" :class="{active:activeTab==='stages'}" class="tab-btn">🏟️ Stages</button>
+            </nav>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 bg-[#0d1219] rounded-lg px-3 py-1.5 border border-[#1e2a3a]">
+                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span class="text-sm font-semibold text-gray-200">{{ projectName }}</span>
+            </div>
+            <button v-if="activeTab==='editor'" @click="saveData" class="btn-primary">💾 Guardar Historia</button>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- HISTORIA TAB — Visual node-based editor                       -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div v-show="activeTab==='editor'" class="flex flex-1 overflow-hidden">
+
+        <!-- LEFT: Saga list -->
+        <div class="w-52 border-r border-[#1e2a3a] bg-[#0a0e14] flex flex-col overflow-hidden flex-shrink-0">
+            <div class="panel-header flex justify-between items-center">
+                <span class="font-bold text-sm text-orange-400">📚 Sagas</span>
+                <button @click="addArc" class="text-[10px] bg-orange-600/70 px-2 py-0.5 rounded font-bold text-white hover:bg-orange-500">+ Nueva</button>
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scroll">
+                <div v-if="catalog.length===0" class="text-xs text-gray-600 text-center p-6">Sin sagas.</div>
+                <div v-for="(arc,aI) in catalog" :key="aI"
+                     class="saga-item px-3 py-2.5 border-b border-[#1e2a3a]/50"
+                     :class="{active:selectedArcIndex===aI}"
+                     @click="selectedArcIndex=aI;selectedChapterIndex=-1">
+                    <div class="text-sm font-medium truncate">{{ arc.title||'Sin nombre' }}</div>
+                    <div class="text-[10px] text-gray-600">{{ (arc.chapters||[]).length }} caps · {{ arcBossCount(arc) }} jefes</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CENTER: Visual saga editor (scroll/pergamino) -->
+        <div class="flex-1 flex flex-col overflow-hidden bg-[#0c1018]">
+            <template v-if="selectedArcIndex>=0 && currentArc">
+                <!-- Saga controls bar -->
+                <div class="flex items-center gap-3 px-4 py-2 border-b border-[#1e2a3a] bg-[#0d1219] flex-shrink-0">
+                    <span class="font-bold text-orange-400">{{ currentArc.title||'Saga' }}</span>
+                    <div class="flex gap-1 ml-2">
+                        <button @click="addChapter('normal')" class="text-[10px] bg-yellow-700/60 text-yellow-200 px-2 py-0.5 rounded font-bold hover:bg-yellow-700">+ Capítulo</button>
+                        <button @click="addChapter('sidestory')" class="text-[10px] bg-blue-700/60 text-blue-200 px-2 py-0.5 rounded font-bold hover:bg-blue-700">+ Side Story</button>
+                        <button @click="addChapter('midboss')" class="text-[10px] bg-red-700/60 text-red-200 px-2 py-0.5 rounded font-bold hover:bg-red-700">+ Mid-Boss</button>
+                        <button @click="addChapter('finalboss')" class="text-[10px] bg-purple-700/60 text-purple-200 px-2 py-0.5 rounded font-bold hover:bg-purple-700">+ Final Boss</button>
+                    </div>
+                    <div class="ml-auto flex items-center gap-2 text-[10px] text-gray-500">
+                        <span class="w-3 h-3 rounded-full bg-yellow-500/70 inline-block"></span>Cap
+                        <span class="w-3 h-3 rounded-full bg-blue-500/70 inline-block ml-2"></span>Side
+                        <span class="w-3 h-3 rounded-full bg-red-500/70 inline-block ml-2"></span>Mid-Boss
+                        <span class="w-3 h-3 rounded-full bg-purple-500/70 inline-block ml-2"></span>Final-Boss
+                    </div>
+                </div>
+
+                <!-- Scroll canvas -->
+                <div class="flex-1 overflow-auto custom-scroll p-6 flex flex-col gap-4">
+                    <!-- Pergamino background wrapping chapters -->
+                    <div class="scroll-bg rounded-lg p-6 min-h-[200px] relative">
+                        <div class="text-[10px] font-bold text-[#6b4c1e] uppercase tracking-widest mb-4 text-center" style="font-family:'Cinzel',serif;">
+                            {{ currentArc.title||'Saga' }}
+                        </div>
+                        <!-- Chapter nodes row -->
+                        <div class="flex items-center flex-wrap gap-y-6 gap-x-0 px-2" style="min-height:100px;">
+                            <template v-for="(cap,cI) in currentArc.chapters" :key="'n'+cI">
+                                <!-- Connector except before first -->
+                                <div v-if="cI>0 && cap.type!=='sidestory'" class="connector" style="min-width:18px;max-width:32px;"></div>
+                                <div v-if="cI>0 && cap.type==='sidestory'" class="w-4"></div>
+                                <!-- Node -->
+                                <div class="chapter-node" :class="{active:selectedChapterIndex===cI}" @click="selectedChapterIndex=cI">
+                                    <div class="node-circle" :class="nodeClass(cap.type)">
+                                        <span>{{ nodeEmoji(cap.type) }}</span>
+                                    </div>
+                                    <div class="node-label">
+                                        <div class="text-[8px] text-[#8b6014] uppercase font-bold">{{ nodeTypeLabel(cap.type) }}</div>
+                                        {{ cap.title||('Cap '+(cI+1)) }}
+                                    </div>
+                                </div>
+                            </template>
+                            <div v-if="!currentArc.chapters||currentArc.chapters.length===0" class="text-sm text-[#8b6914] text-center w-full py-4 opacity-70">
+                                Usa los botones de arriba para agregar capítulos a esta saga.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chapter editor appears below the visual when a node is selected -->
+                    <div v-if="currentChapter" class="card p-5 space-y-5">
+                        <div class="flex items-center justify-between border-b border-[#1e2a3a] pb-2">
+                            <h3 class="font-bold text-gray-200 flex items-center gap-2">
+                                <span>{{ nodeEmoji(currentChapter.type) }}</span>
+                                <span>{{ nodeTypeLabel(currentChapter.type) }} — {{ currentChapter.title||'Sin título' }}</span>
+                                <span class="badge" :class="typeBadgeClass(currentChapter.type)">{{ currentChapter.type||'normal' }}</span>
+                            </h3>
+                            <button @click="deleteCurrentChapter" class="btn-danger text-xs">🗑️ Eliminar Capítulo</button>
+                        </div>
+
+                        <!-- Basic info -->
+                        <div class="grid grid-cols-3 gap-4">
+                            <div><label class="section-title">ID</label><input v-model="currentChapter.id" class="input-dark"></div>
+                            <div><label class="section-title">Título</label><input v-model="currentChapter.title" class="input-dark"></div>
+                            <div><label class="section-title">Subtítulo / Misión</label><input v-model="currentChapter.subtitle" class="input-dark"></div>
+                        </div>
+
+                        <!-- Battle format -->
+                        <div class="card p-4 space-y-4">
+                            <div class="flex justify-between items-start gap-6">
+                                <!-- Format selector -->
+                                <div class="flex-shrink-0">
+                                    <label class="section-title">Formato de Batalla</label>
+                                    <div class="flex gap-2 mt-1">
+                                        <button @click="setBattleFormat('1v1')" :class="{active:battleFormat==='1v1'}" class="format-btn">⚔️ 1 vs 1</button>
+                                        <button @click="setBattleFormat('3v3')" :class="{active:battleFormat==='3v3'}" class="format-btn">👥 3 vs 3</button>
+                                        <button @click="setBattleFormat('tag')" :class="{active:battleFormat==='tag'}" class="format-btn">🔄 Tag (cambios)</button>
+                                    </div>
+                                </div>
+                                <!-- Stage + Cutscene -->
+                                <div class="flex gap-4 flex-1">
+                                    <div class="flex-1"><label class="section-title">Escenario</label>
+                                        <select v-model="currentChapter.stage" class="input-dark"><option value="random">Aleatorio</option><option v-for="s in assets.stages" :value="s">{{ stageNameMap[s]||stageName(s) }}</option></select></div>
+                                    <div class="flex-1"><label class="section-title">Cinemática Inicial</label>
+                                        <select v-model="currentChapter.introStoryboard" class="input-dark"><option value="">Ninguna</option><option v-for="d in assets.storyboard_defs" :value="d">{{ storyboardDisplayName(d) }}</option></select></div>
+                                </div>
+                            </div>
+
+                            <!-- Teams -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="p-3 border border-blue-900/30 rounded bg-blue-950/10">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <h4 class="font-semibold text-blue-400 text-sm">Equipo P1 <span class="text-[10px] text-blue-600">({{ currentChapter.p1.length }}/{{ maxTeamSize }})</span></h4>
+                                        <button @click="addP1" v-if="currentChapter.p1.length<maxTeamSize" class="text-[10px] bg-blue-600/60 px-2 py-0.5 rounded text-white">+</button>
+                                    </div>
+                                    <div v-for="(_,i) in currentChapter.p1" :key="'p1'+i" class="flex gap-2 mb-1.5 items-center">
+                                        <select v-model="currentChapter.p1[i]" class="input-dark text-sm flex-1"><option v-for="c in assets.chars" :value="c">{{c}}</option></select>
+                                        <button @click="removeP1(i)" v-if="currentChapter.p1.length>1" class="text-red-400 text-xs">✕</button>
+                                    </div>
+                                </div>
+                                <div class="p-3 border border-red-900/30 rounded bg-red-950/10">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <h4 class="font-semibold text-red-400 text-sm">Equipo P2 / CPU <span class="text-[10px] text-red-600">({{ currentChapter.p2.length }}/{{ maxTeamSize }})</span></h4>
+                                        <button @click="addP2" v-if="currentChapter.p2.length<maxTeamSize" class="text-[10px] bg-red-600/60 px-2 py-0.5 rounded text-white">+</button>
+                                    </div>
+                                    <div v-for="(_,i) in currentChapter.p2" :key="'p2'+i" class="flex gap-2 mb-1.5 items-center">
+                                        <select v-model="currentChapter.p2[i]" class="input-dark text-sm flex-1"><option v-for="c in assets.chars" :value="c">{{c}}</option></select>
+                                        <div class="flex items-center gap-1"><span class="text-[10px] text-gray-500">IA</span><input type="number" min="1" max="8" v-model.number="currentChapter.p2ai[i]" class="input-dark w-12 text-xs py-0.5"></div>
+                                        <button @click="removeP2(i)" v-if="currentChapter.p2.length>1" class="text-red-400 text-xs">✕</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dialogues -->
+                        <div class="card p-4 space-y-3">
+                            <div class="flex justify-between items-center border-b border-[#1e2a3a] pb-2">
+                                <h3 class="font-semibold text-orange-400 text-sm">💬 Diálogos Pre-Pelea</h3>
+                                <button @click="addDialogue" class="text-[10px] bg-gray-700 px-3 py-1 rounded font-bold hover:bg-gray-600">+ Texto</button>
+                            </div>
+                            <div v-if="!currentChapter.dialogues||currentChapter.dialogues.length===0" class="text-xs text-gray-600 text-center py-3">Sin diálogos. El speaker puede ser cualquier nombre.</div>
+                            <div v-for="(dlg,dI) in currentChapter.dialogues" :key="'d'+dI" class="flex gap-2 items-start bg-[#0a0e14] border border-[#1e2a3a] p-2.5 rounded">
+                                <span class="text-[10px] text-gray-600 w-5 text-center pt-2">{{dI+1}}</span>
+                                <div class="flex flex-col gap-1.5 flex-1">
+                                    <input v-model="dlg.speaker" class="input-dark text-xs py-1 w-44" placeholder="Naruto, Kakashi, Narrador…">
+                                    <textarea v-model="dlg.text" rows="2" class="input-dark text-xs" placeholder="Texto del diálogo..."></textarea>
+                                </div>
+                                <button @click="currentChapter.dialogues.splice(dI,1)" class="text-red-400 hover:text-red-300 px-1 pt-2 text-xs flex-shrink-0">✕</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div v-else-if="currentArc.chapters&&currentArc.chapters.length>0" class="text-center text-sm text-gray-600 py-4">
+                        ↑ Haz clic en un nodo del pergamino para editar ese capítulo
+                    </div>
+                </div>
+            </template>
+            <div v-else class="flex-1 flex items-center justify-center text-gray-600 text-sm">← Selecciona una saga</div>
+        </div>
+
+        <!-- RIGHT: Saga metadata panel -->
+        <div v-if="selectedArcIndex>=0 && currentArc" class="w-60 border-l border-[#1e2a3a] bg-[#0a0e14] flex flex-col overflow-y-auto custom-scroll flex-shrink-0">
+            <div class="panel-header"><span class="font-bold text-sm text-orange-400">⚙️ Datos de la Saga</span></div>
+            <div class="p-4 space-y-4 flex-1">
+                <div><label class="section-title">ID</label><input v-model="currentArc.id" class="input-dark"></div>
+                <div><label class="section-title">Título</label><input v-model="currentArc.title" class="input-dark"></div>
+                <div><label class="section-title">Subtítulo</label><input v-model="currentArc.subtitle" class="input-dark"></div>
+                <div class="border-t border-[#1e2a3a] pt-3 space-y-1">
+                    <p class="section-title">Estadísticas</p>
+                    <div class="text-xs text-gray-500">Capítulos: <span class="text-gray-200 font-bold">{{ arcChapterCount(currentArc,'normal') }}</span></div>
+                    <div class="text-xs text-gray-500">Side Stories: <span class="text-blue-300 font-bold">{{ arcChapterCount(currentArc,'sidestory') }}</span></div>
+                    <div class="text-xs text-gray-500">Mid-Bosses: <span class="text-red-300 font-bold">{{ arcChapterCount(currentArc,'midboss') }}</span></div>
+                    <div class="text-xs text-gray-500">Final Bosses: <span class="text-purple-300 font-bold">{{ arcChapterCount(currentArc,'finalboss') }}</span></div>
+                    <div class="text-xs text-gray-500">Enemigos únicos: <span class="text-gray-200 font-bold">{{ uniqueEnemies }}</span></div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-[#1e2a3a]">
+                <button @click="deleteCurrentArc" class="btn-danger w-full">🗑️ Eliminar esta Saga</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- STORYBOARD TAB                                                 -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div v-if="activeTab==='creator'" class="flex flex-1 overflow-hidden">
+        <!-- LEFT: list -->
+        <div class="w-60 border-r border-[#1e2a3a] bg-[#0a0e14] flex flex-col overflow-hidden flex-shrink-0">
+            <div class="panel-header flex justify-between items-center">
+                <span class="font-bold text-sm text-orange-400">🎬 Storyboards</span>
+                <button @click="newStoryboard" class="text-[10px] bg-orange-600/70 px-2 py-0.5 rounded font-bold text-white hover:bg-orange-500">+ Nuevo</button>
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scroll">
+                <div v-if="storyboardList.length===0" class="text-xs text-gray-600 text-center p-6">Sin storyboards.</div>
+                <template v-for="saga in storyboardSagas" :key="saga">
+                    <div class="px-3 py-1.5 bg-[#0d1219] border-b border-[#1e2a3a]">
+                        <span class="text-[10px] font-bold text-gray-500 uppercase">{{ saga }}</span>
+                    </div>
+                    <div v-for="sb in storyboardsBySaga(saga)" :key="sb.path"
+                         class="sb-item px-3 py-2 border-b border-[#1e2a3a]/50"
+                         :class="{active:selectedSBPath===sb.path}"
+                         @click="selectStoryboard(sb)">
+                        <div class="text-sm font-medium truncate">{{ sb.name }}</div>
+                        <div class="text-[10px] text-gray-600 truncate">{{ sb.path }}</div>
+                    </div>
+                </template>
+            </div>
+        </div>
+        <!-- CENTER: editor -->
+        <div class="flex-1 overflow-y-auto custom-scroll p-5">
+            <div v-if="selectedSB" class="max-w-2xl mx-auto space-y-5">
+                <h2 class="text-lg font-bold text-gray-300 border-b border-[#1e2a3a] pb-2">🎬 {{ selectedSB.name }}</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="section-title">Nombre (sin ext)</label><input v-model="sbForm.name" class="input-dark"></div>
+                    <div><label class="section-title">Saga destino</label>
+                        <select v-model="sbForm.saga" class="input-dark">
+                            <option value="General">General</option>
+                            <option v-for="arc in catalog" :value="arc.title||'General'">{{ arc.title||'Saga' }}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card p-4 space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="section-title">Sprites (.SFF)</label>
+                            <div class="flex gap-2 items-center">
+                                <input :value="sbForm.spr" class="input-dark flex-1 text-xs" readonly placeholder="Sin sprite">
+                                <label class="btn-secondary text-xs cursor-pointer flex-shrink-0">📤 .SFF<input type="file" accept=".sff" @change="uploadSBAsset($event,'sff')" class="hidden"></label>
+                            </div>
+                        </div>
+                        <div><label class="section-title">Audio (.OGG / .MP3)</label>
+                            <div class="flex gap-2 items-center">
+                                <input :value="sbForm.snd" class="input-dark flex-1 text-xs" readonly placeholder="Sin audio">
+                                <label class="btn-secondary text-xs cursor-pointer flex-shrink-0">📤 Audio<input type="file" accept=".ogg,.mp3" @change="uploadSBAsset($event,'snd')" class="hidden"></label>
+                            </div>
+                        </div>
+                    </div>
+                    <div><label class="section-title">Duración (frames, 60=1s)</label><input type="number" v-model.number="sbForm.duration" class="input-dark"></div>
+                </div>
+                <button @click="saveStoryboard" class="btn-primary w-full">💾 {{ selectedSB.isNew?'Crear':'Guardar' }} Storyboard</button>
+                <div v-if="sbMsg" class="text-center text-sm font-bold" :class="sbMsgOk?'text-green-400':'text-red-400'">{{ sbMsg }}</div>
+            </div>
+            <div v-else class="flex h-full items-center justify-center text-gray-600 text-sm">← Selecciona o crea un storyboard</div>
+        </div>
+        <!-- RIGHT: assets -->
+        <aside class="w-64 border-l border-[#1e2a3a] bg-[#0a0e14] overflow-y-auto custom-scroll flex-shrink-0">
+            <div class="panel-header"><span class="font-bold text-sm text-gray-300">📁 Assets</span></div>
+            <div class="p-3 space-y-1">
+                <div v-if="sbAssetList.length===0" class="text-xs text-gray-600 text-center py-4">Sin assets.</div>
+                <div v-for="a in sbAssetList" :key="a" class="text-xs bg-[#131a24] border border-[#1e2a3a] rounded px-2 py-1.5 truncate text-gray-400 disk-item">
+                    {{ a.endsWith('.sff')?'🖼️':a.endsWith('.ogg')||a.endsWith('.mp3')?'🎵':'📄' }} {{ a }}
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- PERSONAJES TAB                                                 -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div v-if="activeTab==='chars'" class="flex flex-1 overflow-hidden">
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <div class="panel-header flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <h2 class="font-bold text-purple-400">🥷 Roster</h2>
+                    <span class="badge badge-blue">{{ charRoster.length }}</span>
+                    <span v-if="sel.chars.size>0" class="badge badge-yellow">{{ sel.chars.size }} sel.</span>
+                </div>
+                <div class="flex gap-2">
+                    <input v-model="charSearch" placeholder="Buscar..." class="input-dark py-1 w-40">
+                    <button @click="saveChars" class="btn-primary text-xs">💾 Guardar</button>
+                </div>
+            </div>
+            <div v-if="sel.chars.size>0" class="px-4 py-1.5 bg-purple-950/30 border-b border-purple-800/40 flex items-center gap-2 text-xs">
+                <span class="text-purple-300 font-bold">{{ sel.chars.size }} sel:</span>
+                <button @click="bulkAction('chars','delete')" class="bg-red-900/40 text-red-300 px-2 py-0.5 rounded font-bold">🗑 Quitar</button>
+                <button @click="bulkAction('chars','lock')" class="bg-gray-700 text-gray-300 px-2 py-0.5 rounded font-bold">🔒</button>
+                <button @click="bulkAction('chars','unlock')" class="bg-gray-700 text-gray-300 px-2 py-0.5 rounded font-bold">🔓</button>
+                <button @click="clearSel('chars')" class="text-gray-500 hover:text-white px-2 ml-auto">✕</button>
+            </div>
+            <div class="text-[10px] text-gray-500 px-4 py-1 flex items-center gap-2 border-b border-[#1e2a3a] bg-[#0d1219]">
+                <input type="checkbox" @change="toggleAll('chars',$event)" class="mr-1">
+                <span class="w-8 text-center">#</span><span class="flex-1">Personaje</span>
+                <span class="w-14 text-center">Orden</span><span class="w-20 text-center">Estado</span><span class="w-28 text-center">Acciones</span>
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scroll">
+                <div v-for="(ch,idx) in filteredCharRoster" :key="'c'+idx+tick"
+                     class="row-item flex items-center gap-2 px-4 py-1.5 border-b border-[#1e2a3a]/50"
+                     :class="{'bg-[#0d1219]':idx%2===0, selected:isSel('chars',idx)}"
+                     draggable="true" @dragstart="onDragStart('chars',idx,$event)" @dragover.prevent="onDragOver($event)" @dragleave="onDragLeave($event)" @drop="onDrop('chars',idx,$event)"
+                     @click="handleRowClick('chars',idx,$event)">
+                    <input type="checkbox" :checked="isSel('chars',idx)" @click.stop @change="toggleSel('chars',idx)" class="mr-1">
+                    <span class="w-8 text-center text-gray-600 text-[11px] font-mono">{{idx+1}}</span>
+                    <div class="flex-1 flex items-center gap-1.5">
+                        <span v-if="editIdx.chars!==idx" class="text-sm hover:text-orange-400" @dblclick.stop="startEdit('chars',idx)">{{ ch.name }}</span>
+                        <input v-else v-model="editName" @blur="finishEdit('chars',idx)" @keyup.enter="finishEdit('chars',idx)" @keyup.escape="editIdx.chars=-1" class="input-dark text-sm py-0 px-2 w-44" autofocus>
+                        <span v-if="ch.name==='null'" class="badge badge-yellow">vacío</span>
+                        <span v-if="ch.name==='randomselect'" class="badge badge-blue">random</span>
+                    </div>
+                    <div class="w-14 text-center"><select v-model.number="ch.order" class="input-dark text-[11px] py-0 px-1 w-11 text-center" @click.stop><option v-for="o in 10" :value="o">{{o}}</option></select></div>
+                    <div class="w-20 text-center">
+                        <button @click.stop="toggleLock('chars',idx)" class="text-[10px] px-1.5 py-0.5 rounded"
+                                :class="ch.hidden>0?'bg-red-900/30 text-red-400':'bg-green-900/20 text-green-400'">
+                            {{ ch.hidden>0?'🔒 Oculto':'🔓 Visible' }}
+                        </button>
+                    </div>
+                    <div class="w-28 flex justify-center gap-1">
+                        <button @click.stop="moveItem('chars',idx,-1)" v-if="idx>0" class="text-gray-500 hover:text-white text-[10px]">▲</button>
+                        <button @click.stop="moveItem('chars',idx,1)" v-if="idx<charRoster.length-1" class="text-gray-500 hover:text-white text-[10px]">▼</button>
+                        <button @click.stop="dupItem('chars',idx)" class="text-blue-400 hover:text-blue-300 text-[10px]">📋</button>
+                        <button @click.stop="removeItem('chars',idx)" class="text-red-400 hover:text-red-300 text-[10px]">✕</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <aside class="w-80 border-l border-[#1e2a3a] bg-[#0a0e14] overflow-y-auto custom-scroll flex-shrink-0">
+            <div class="p-3 border-b border-[#1e2a3a]">
+                <p class="section-title">📦 Disponibles en disco</p>
+                <div class="max-h-[28vh] overflow-y-auto custom-scroll space-y-1">
+                    <div v-if="charUnused.length===0" class="text-xs text-gray-600 py-3 text-center disk-item">Todos en roster 👍</div>
+                    <div v-for="u in charUnused" :key="u.name" class="disk-item flex items-center justify-between bg-[#131a24] border border-[#1e2a3a] rounded px-2 py-1 hover:border-purple-600/50 text-xs">
+                        <span class="truncate mr-1 select-none">{{ u.name }}</span>
+                        <button @click="addToRoster('chars',u.name)" class="text-purple-400 hover:text-purple-300 font-bold px-1 flex-shrink-0">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="p-3 border-b border-[#1e2a3a] space-y-2">
+                <p class="section-title">🛠️ Herramientas</p>
+                <button @click="addNull()" class="btn-secondary w-full text-xs">➕ Slot Vacío</button>
+                <button @click="addRandom()" class="btn-secondary w-full text-xs">🎲 Random Select</button>
+                <button @click="fillRow()" class="btn-secondary w-full text-xs">📐 Completar Fila (21)</button>
+            </div>
+            <div class="p-3 border-b border-[#1e2a3a] space-y-2">
+                <p class="section-title">✏️ Renombrar</p>
+                <select v-model="renameOld" class="input-dark text-xs"><option value="">-- Char --</option><option v-for="u in charAvailable" :value="u.name">{{u.name}}</option></select>
+                <input v-model="renameNew" placeholder="Nuevo nombre" class="input-dark text-xs">
+                <label class="flex items-center gap-2 text-[11px] text-gray-500 cursor-pointer"><input type="checkbox" v-model="renameDisk" class="accent-orange-500"> Renombrar carpeta en disco</label>
+                <button @click="renameChar" class="btn-primary w-full text-xs" :disabled="!renameOld||!renameNew">{{ renameDisk?'Renombrar (Disco+Roster)':'Renombrar (Solo Roster)' }}</button>
+            </div>
+            <div class="p-3 space-y-2">
+                <p class="section-title">📥 Subir ZIP</p>
+                <div class="upload-zone" @click="$refs.charZipInput.click()" @dragover.prevent="$event.currentTarget.classList.add('drag-active')" @dragleave="$event.currentTarget.classList.remove('drag-active')" @drop.prevent="handleFileDrop('chars',$event)">
+                    <p class="text-xs text-gray-500">Arrastra .zip aquí o clic</p>
+                    <input type="file" ref="charZipInput" accept=".zip" @change="handleFileSelect('chars',$event)" class="hidden">
+                </div>
+            </div>
+            <div class="p-3 border-t border-[#1e2a3a] space-y-2">
+                <p class="section-title">⚡ Generar Move List</p>
+                <select v-model="mlGenChar" class="input-dark text-xs">
+                    <option value="">-- Personaje --</option>
+                    <option v-for="u in charAvailable" :value="u.name">{{ u.name }}</option>
+                </select>
+                    {{ mlGenLoading ? '⏳ Analizando .cmd...' : '⚡ Generar desde .cmd' }}
+                </button>
+                <div v-if="mlGenResult" class="text-[10px] bg-green-900/20 text-green-400 p-2 rounded">{{ mlGenResult }}</div>
+                <div v-if="mlGenError" class="text-[10px] bg-red-900/20 text-red-400 p-2 rounded">{{ mlGenError }}</div>
+            </div>
+            <div v-if="msg.chars" class="p-3"><div class="text-xs font-bold text-center rounded py-2 px-2" :class="msgType.chars==='ok'?'bg-green-900/20 text-green-400':'bg-red-900/20 text-red-400'">{{msg.chars}}</div></div>
+        </aside>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- STAGES TAB                                                     -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div v-if="activeTab==='stages'" class="flex flex-1 overflow-hidden">
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <div class="panel-header flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <h2 class="font-bold text-emerald-400">🏟️ Stages</h2>
+                    <span class="badge badge-green">{{ stageRoster.length }}</span>
+                    <span v-if="sel.stages.size>0" class="badge badge-yellow">{{ sel.stages.size }} sel.</span>
+                </div>
+                <div class="flex gap-2">
+                    <input v-model="stageSearch" placeholder="Buscar..." class="input-dark py-1 w-40">
+                    <button @click="saveStages" class="btn-primary text-xs">💾 Guardar</button>
+                </div>
+            </div>
+            <div v-if="sel.stages.size>0" class="px-4 py-1.5 bg-emerald-950/20 border-b border-emerald-800/30 flex items-center gap-2 text-xs">
+                <span class="text-emerald-300 font-bold">{{ sel.stages.size }} sel:</span>
+                <button @click="bulkAction('stages','delete')" class="bg-red-900/40 text-red-300 px-2 py-0.5 rounded font-bold">🗑 Quitar</button>
+                <button @click="clearSel('stages')" class="text-gray-500 hover:text-white px-2 ml-auto">✕</button>
+            </div>
+            <div class="text-[10px] text-gray-500 px-4 py-1 flex items-center gap-2 border-b border-[#1e2a3a] bg-[#0d1219]">
+                <input type="checkbox" @change="toggleAll('stages',$event)" class="mr-1">
+                <span class="w-8 text-center">#</span><span class="flex-1">Stage</span><span class="w-44 text-center text-gray-600">Ruta</span><span class="w-24 text-center">Acciones</span>
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scroll">
+                <div v-for="(st,idx) in filteredStageRoster" :key="'s'+idx+tick"
+                     class="row-item flex items-center gap-2 px-4 py-1.5 border-b border-[#1e2a3a]/50"
+                     :class="{'bg-[#0d1219]':idx%2===0, selected:isSel('stages',idx)}"
+                     draggable="true" @dragstart="onDragStart('stages',idx,$event)" @dragover.prevent="onDragOver($event)" @dragleave="onDragLeave($event)" @drop="onDrop('stages',idx,$event)"
+                     @click="handleRowClick('stages',idx,$event)">
+                    <input type="checkbox" :checked="isSel('stages',idx)" @click.stop @change="toggleSel('stages',idx)" class="mr-1">
+                    <span class="w-8 text-center text-gray-600 text-[11px] font-mono">{{idx+1}}</span>
+                    <span class="flex-1 text-sm font-medium">{{ stageNameMap[st]||stageName(st) }}</span>
+                    <span class="w-44 text-center text-[10px] text-gray-600 truncate">{{ st }}</span>
+                    <div class="w-24 flex justify-center gap-1">
+                        <button @click.stop="moveItem('stages',idx,-1)" v-if="idx>0" class="text-gray-500 hover:text-white text-[10px]">▲</button>
+                        <button @click.stop="moveItem('stages',idx,1)" v-if="idx<stageRoster.length-1" class="text-gray-500 hover:text-white text-[10px]">▼</button>
+                        <button @click.stop="removeItem('stages',idx)" class="text-red-400 hover:text-red-300 text-[10px]">✕</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <aside class="w-80 border-l border-[#1e2a3a] bg-[#0a0e14] overflow-y-auto custom-scroll flex-shrink-0">
+            <div class="p-3 border-b border-[#1e2a3a]">
+                <p class="section-title">📦 Stages en disco</p>
+                <div class="max-h-[40vh] overflow-y-auto custom-scroll space-y-1">
+                    <div v-if="stageUnused.length===0" class="text-xs text-gray-600 py-3 text-center disk-item">Todos registrados 👍</div>
+                    <div v-for="u in stageUnused" :key="u.name" class="disk-item flex items-center justify-between bg-[#131a24] border border-[#1e2a3a] rounded px-2 py-1 hover:border-emerald-600/50 text-xs">
+                        <span class="truncate mr-1 select-none">{{ u.display }}</span>
+                        <button @click="addToRoster('stages',u.name)" class="text-emerald-400 hover:text-emerald-300 font-bold px-1 flex-shrink-0">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="p-3 border-b border-[#1e2a3a] space-y-2">
+                <p class="section-title">📥 Subir Stage ZIP</p>
+                <div class="upload-zone" @click="$refs.stageZipInput.click()" @dragover.prevent="$event.currentTarget.classList.add('drag-active')" @dragleave="$event.currentTarget.classList.remove('drag-active')" @drop.prevent="handleFileDrop('stages',$event)">
+                    <p class="text-xs text-gray-500">Arrastra .zip aquí o clic</p>
+                    <input type="file" ref="stageZipInput" accept=".zip" @change="handleFileSelect('stages',$event)" class="hidden">
+                </div>
+            </div>
+            <div class="p-3">
+                <button @click="loadStages" class="btn-secondary w-full text-xs">🔄 Escanear stages/</button>
+            </div>
+            <div v-if="msg.stages" class="p-3"><div class="text-xs font-bold text-center rounded py-2 px-2" :class="msgType.stages==='ok'?'bg-green-900/20 text-green-400':'bg-red-900/20 text-red-400'">{{msg.stages}}</div></div>
+        </aside>
+    </div>
+
+    </template>
+</div>
+
+<script>
+const {createApp} = Vue;
+createApp({
+    data() { return {
+        projectRoot:null, pickerCurrent:"~", pickerParent:"~", pickerDirs:[], pickerLoading:false, rootError:"", loading:false,
+        catalog:[], assets:{chars:[],stages:[],storyboard_defs:[],storyboard_sffs:[],storyboard_sounds:[]},
+        selectedArcIndex:-1, selectedChapterIndex:-1, activeTab:'editor',
+        // Storyboard tab
+        storyboardList:[], selectedSBPath:'', selectedSB:null,
+        sbForm:{name:'',saga:'General',spr:'',snd:'',duration:300},
+        sbMsg:'', sbMsgOk:true,
+        // Chars/Stages
+        charRoster:[], charAvailable:[], charUnused:[], charSearch:'',
+        stageRoster:[], stageAvailable:[], stageUnused:[], stageSearch:'', stageNameMap:{},
+        sel:{chars:new Set(),stages:new Set()}, lastClicked:{chars:-1,stages:-1}, tick:0,
+        editIdx:{chars:-1,stages:-1}, editName:'',
+        renameOld:'', renameNew:'', renameDisk:false,
+        msg:{chars:'',stages:''}, msgType:{chars:'ok',stages:'ok'},
+        dragState:{type:null,idx:null},
+        mlGenChar:'', mlGenLoading:false, mlGenResult:'', mlGenError:''
+    }},
+    computed: {
+        currentArc(){ return this.selectedArcIndex>=0?this.catalog[this.selectedArcIndex]:null },
+        currentChapter(){ return this.currentArc&&this.currentArc.chapters&&this.selectedChapterIndex>=0&&this.selectedChapterIndex<this.currentArc.chapters.length?this.currentArc.chapters[this.selectedChapterIndex]:null },
+        battleFormat(){
+            if(!this.currentChapter)return '1v1';
+            return this.currentChapter.battleFormat||'1v1';
+        },
+        maxTeamSize(){
+            const f=this.battleFormat;
+            if(f==='3v3'||f==='tag')return 3;
+            return 1;
+        },
+        projectName(){ if(!this.projectRoot)return''; const p=this.projectRoot.replace(/\\/g,'/').split('/').filter(Boolean); return p[p.length-1]||'Proyecto' },
+        filteredCharRoster(){ if(!this.charSearch)return this.charRoster; const q=this.charSearch.toLowerCase();return this.charRoster.filter(c=>c.name.toLowerCase().includes(q)) },
+        filteredStageRoster(){ if(!this.stageSearch)return this.stageRoster; const q=this.stageSearch.toLowerCase();return this.stageRoster.filter(s=>(this.stageNameMap[s]||s).toLowerCase().includes(q)) },
+        uniqueEnemies(){ if(!this.currentArc||!this.currentArc.chapters)return 0;const s=new Set();this.currentArc.chapters.forEach(ch=>(ch.p2||[]).forEach(p=>s.add(p)));return s.size },
+        storyboardSagas(){ const s=new Set();this.storyboardList.forEach(x=>s.add(x.saga));return Array.from(s).sort() },
+        sbAssetList(){ const a=[];this.storyboardList.forEach(sb=>{if(sb.spr)a.push(sb.spr);if(sb.snd)a.push(sb.snd)});return[...new Set(a)].sort() }
+    },
+    methods: {
+        // ── Node helpers ──
+        nodeClass(type){
+            const m={normal:'node-normal',sidestory:'node-sidestory',midboss:'node-midboss',finalboss:'node-finalboss'};
+            return m[type]||'node-normal';
+        },
+        nodeEmoji(type){
+            const m={normal:'📖',sidestory:'🌿',midboss:'💀',finalboss:'👑'};
+            return m[type]||'📖';
+        },
+        nodeTypeLabel(type){
+            const m={normal:'Capítulo',sidestory:'Side Story',midboss:'Mid-Boss',finalboss:'Final Boss'};
+            return m[type]||'Capítulo';
+        },
+        typeBadgeClass(type){
+            const m={normal:'badge-yellow',sidestory:'badge-blue',midboss:'badge-red',finalboss:'badge-purple'};
+            return m[type]||'badge-yellow';
+        },
+        arcChapterCount(arc,type){ return (arc.chapters||[]).filter(c=>c.type===type).length },
+        arcBossCount(arc){ return (arc.chapters||[]).filter(c=>c.type==='midboss'||c.type==='finalboss').length },
+
+        // ── Battle format ──
+        setBattleFormat(fmt){
+            if(!this.currentChapter)return;
+            this.currentChapter.battleFormat=fmt;
+            const max=fmt==='1v1'?1:3;
+            while(this.currentChapter.p1.length>max)this.currentChapter.p1.pop();
+            while(this.currentChapter.p2.length>max){this.currentChapter.p2.pop();this.currentChapter.p2ai.pop();}
+        },
+
+        // ── Utility ──
+        stageName(path){
+            if(!path)return'';
+            const parts=path.replace(/\\/g,'/').split('/');
+            const file=parts[parts.length-1]||'';
+            const folder=parts.length>2?parts[parts.length-2]:'';
+            let name=folder&&folder.toLowerCase()!=='stages'?folder:file.replace(/\.def$/i,'');
+            return name.replace(/_/g,' ');
+        },
+        storyboardDisplayName(path){
+            if(!path)return'';
+            const parts=path.replace(/\\/g,'/').split('/');
+            return parts[parts.length-1].replace(/\.def$/i,'')||path;
+        },
+        storyboardsBySaga(saga){ return this.storyboardList.filter(s=>s.saga===saga) },
+
+        // ── Setup ──
+        async navigatePicker(p){ this.pickerLoading=true;try{let r=await fetch('/api/list_dir?path='+encodeURIComponent(p));let d=await r.json();if(d.current){this.pickerCurrent=d.current;this.pickerParent=d.parent;this.pickerDirs=d.dirs}}catch(e){}this.pickerLoading=false },
+        async checkStatus(){ let r=await fetch('/api/status');let d=await r.json();if(d.root){this.projectRoot=d.root;this.loadData()}else this.navigatePicker('~') },
+        async submitRoot(){ if(!this.pickerCurrent)return;this.loading=true;this.rootError="";try{let r=await fetch('/api/set_root',{method:'POST',body:JSON.stringify({path:this.pickerCurrent}),headers:{'Content-Type':'application/json'}});let o=await r.json();if(o.success)this.checkStatus();else this.rootError=o.error||"Inválida"}catch(e){this.rootError="Error"}this.loading=false },
+        async loadData(){
+            try{
+                let r=await fetch('/api/catalog');let cd=await r.json();
+                (cd||[]).forEach(a=>{
+                    (a.chapters||[]).forEach(ch=>{
+                        if(!ch.p2ai)ch.p2ai=(ch.p2||[]).map(()=>6);
+                        if(!ch.introStoryboard)ch.introStoryboard='';
+                        if(!ch.dialogues)ch.dialogues=[];
+                        if(!ch.type)ch.type='normal';
+                        if(!ch.battleFormat)ch.battleFormat='1v1';
+                    });
+                });
+                this.catalog=cd||[];
+                let r2=await fetch('/api/assets');this.assets=await r2.json();
+            }catch(e){}
+        },
+        async saveData(){ try{await fetch('/api/catalog',{method:'POST',body:JSON.stringify(this.catalog),headers:{'Content-Type':'application/json'}});alert('¡Guardado!')}catch(e){alert('Error')} },
+
+        // ── Arc/Chapter ──
+        addArc(){
+            this.catalog.push({id:'saga_'+Date.now(),title:'Nueva Saga',subtitle:'',chapters:[]});
+            this.selectedArcIndex=this.catalog.length-1;this.selectedChapterIndex=-1;
+        },
+        addChapter(type='normal'){
+            if(!this.currentArc)return;
+            if(!this.currentArc.chapters)this.currentArc.chapters=[];
+            const first=this.assets.chars[0]||'';
+            this.currentArc.chapters.push({
+                id:'cap_'+Date.now(),title:'',subtitle:'',type,
+                battleFormat:'1v1',introStoryboard:'',
+                p1:[first],p2:[first],p2ai:[6],
+                stage:'random',dialogues:[]
+            });
+            this.selectedChapterIndex=this.currentArc.chapters.length-1;
+        },
+        deleteCurrentChapter(){
+            if(!this.currentArc||this.selectedChapterIndex<0)return;
+            if(!confirm('¿Eliminar este capítulo?'))return;
+            this.currentArc.chapters.splice(this.selectedChapterIndex,1);
+            this.selectedChapterIndex=Math.min(this.selectedChapterIndex,this.currentArc.chapters.length-1);
+            if(this.currentArc.chapters.length===0)this.selectedChapterIndex=-1;
+        },
+        deleteCurrentArc(){
+            if(this.selectedArcIndex<0)return;
+            if(!confirm('¿Eliminar "'+this.currentArc.title+'"?'))return;
+            this.catalog.splice(this.selectedArcIndex,1);
+            this.selectedArcIndex=this.catalog.length>0?0:-1;
+            this.selectedChapterIndex=-1;
+        },
+        addDialogue(){ if(!this.currentChapter.dialogues)this.currentChapter.dialogues=[];this.currentChapter.dialogues.push({speaker:'',text:''}) },
+        addP1(){ const m=this.maxTeamSize;if(this.currentChapter.p1.length<m)this.currentChapter.p1.push(this.assets.chars[0]||'') },
+        removeP1(i){ this.currentChapter.p1.splice(i,1) },
+        addP2(){ const m=this.maxTeamSize;if(this.currentChapter.p2.length<m){this.currentChapter.p2.push(this.assets.chars[0]||'');this.currentChapter.p2ai.push(6)} },
+        removeP2(i){ this.currentChapter.p2.splice(i,1);this.currentChapter.p2ai.splice(i,1) },
+
+        // ── Storyboard ──
+        async loadStoryboards(){ try{let r=await fetch('/api/storyboards');let d=await r.json();if(!d.error)this.storyboardList=d.storyboards||[]}catch(e){} },
+        newStoryboard(){ this.selectedSBPath='__new__';this.selectedSB={name:'',isNew:true};this.sbForm={name:'',saga:'General',spr:'',snd:'',duration:300} },
+        selectStoryboard(sb){ this.selectedSBPath=sb.path;this.selectedSB={...sb,isNew:false};this.sbForm={name:sb.name,saga:sb.saga,spr:sb.spr,snd:sb.snd,duration:sb.duration} },
+        async saveStoryboard(){
+            if(!this.sbForm.name){this.sbMsg='Nombre requerido';this.sbMsgOk=false;return}
+            try{
+                let r=await fetch('/api/create_storyboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(this.sbForm)});
+                let d=await r.json();
+                if(d.success){this.sbMsg='Guardado ✓';this.sbMsgOk=true;await this.loadStoryboards();await this.loadData();setTimeout(()=>this.sbMsg='',3000)}
+                else{this.sbMsg=d.error||'Error';this.sbMsgOk=false}
+            }catch(e){this.sbMsg='Error';this.sbMsgOk=false}
+        },
+        async uploadSBAsset(ev,type){
+            const file=ev.target.files[0];if(!file)return;
+            const fd=new FormData();fd.append('file',file);fd.append('type','storyboard_asset');fd.append('saga',this.sbForm.saga||'General');
+            try{
+                let r=await fetch('/api/upload',{method:'POST',body:fd});let d=await r.json();
+                if(d.success){if(type==='sff')this.sbForm.spr=d.path;else this.sbForm.snd=d.path;this.sbMsg=file.name+' subido';this.sbMsgOk=true;setTimeout(()=>this.sbMsg='',3000)}
+                else{this.sbMsg=d.error;this.sbMsgOk=false}
+            }catch(e){this.sbMsg='Error upload';this.sbMsgOk=false}
+            ev.target.value='';
+        },
+
+        // ── Shared roster ──
+        getList(t){ return t==='chars'?this.charRoster:this.stageRoster },
+        isSel(t,i){ void this.tick;return this.sel[t].has(i) },
+        toggleSel(t,i){ this.sel[t].has(i)?this.sel[t].delete(i):this.sel[t].add(i);this.lastClicked[t]=i;this.tick++ },
+        clearSel(t){ this.sel[t].clear();this.tick++ },
+        toggleAll(t,ev){ const l=t==='chars'?this.filteredCharRoster:this.filteredStageRoster;if(ev.target.checked)l.forEach((_,i)=>this.sel[t].add(i));else this.sel[t].clear();this.tick++ },
+        handleRowClick(t,i,ev){
+            if(['INPUT','SELECT','BUTTON','TEXTAREA'].includes(ev.target.tagName))return;
+            if(ev.ctrlKey||ev.metaKey){this.toggleSel(t,i);return}
+            if(ev.shiftKey&&this.lastClicked[t]>=0){const a=Math.min(this.lastClicked[t],i),b=Math.max(this.lastClicked[t],i);for(let x=a;x<=b;x++)this.sel[t].add(x);this.tick++;return}
+            this.sel[t].clear();this.sel[t].add(i);this.lastClicked[t]=i;this.tick++
+        },
+        moveItem(t,i,d){ const l=this.getList(t);const n=i+d;if(n<0||n>=l.length)return;const it=l.splice(i,1)[0];l.splice(n,0,it) },
+        dupItem(t,i){ const l=this.getList(t);l.splice(i+1,0,t==='chars'?JSON.parse(JSON.stringify(l[i])):l[i]);this.showMsg(t,'Duplicado','ok') },
+        removeItem(t,i){ const l=this.getList(t);if(t==='chars'){const ch=l[i];if(ch.name!=='null'&&ch.name!=='randomselect')this.charUnused.push({name:ch.name,type:'folder'})}l.splice(i,1) },
+        bulkAction(t,a){
+            const idx=Array.from(this.sel[t]).sort((a,b)=>b-a);
+            if(a==='delete'){if(!confirm(`¿Quitar ${idx.length} items?`))return;const l=this.getList(t);idx.forEach(i=>{if(t==='chars'){const ch=l[i];if(ch&&ch.name!=='null'&&ch.name!=='randomselect')this.charUnused.push({name:ch.name,type:'folder'})}l.splice(i,1)});this.showMsg(t,idx.length+' removidos','ok')}
+            else if(a==='lock'){idx.forEach(i=>{if(this.charRoster[i])this.charRoster[i].hidden=2});this.showMsg(t,'Ocultados','ok')}
+            else if(a==='unlock'){idx.forEach(i=>{if(this.charRoster[i]){this.charRoster[i].hidden=0;this.charRoster[i].unlock=''}});this.showMsg(t,'Visibles','ok')}
+            this.clearSel(t)
+        },
+        toggleLock(t,i){ const c=this.charRoster[i];if(c.hidden>0){c.hidden=0;c.unlock=''}else c.hidden=2 },
+        startEdit(t,i){ this.editIdx[t]=i;this.editName=this.charRoster[i].name },
+        finishEdit(t,i){ const o=this.charRoster[i].name,n=this.editName.trim();this.editIdx[t]=-1;if(!n||n===o)return;this.charRoster.forEach(c=>{if(c.name===o)c.name=n});this.showMsg(t,`${o} → ${n}`,'ok') },
+        addToRoster(t,name){
+            if(t==='chars'){this.charRoster.push({name,stage:"",hidden:0,order:1,music:"",ai:0,includestage:1,unlock:"",extra_params:[]});this.charUnused=this.charUnused.filter(u=>u.name!==name)}
+            else{this.stageRoster.push(name);this.stageUnused=this.stageUnused.filter(u=>u.name!==name)}
+            this.showMsg(t,'Agregado','ok')
+        },
+        addNull(){ this.charRoster.push({name:"null",stage:"",hidden:0,order:1,music:"",ai:0,includestage:1,unlock:"",extra_params:[]}) },
+        addRandom(){ this.charRoster.push({name:"randomselect",stage:"",hidden:0,order:1,music:"",ai:0,includestage:1,unlock:"",extra_params:[]}) },
+        fillRow(){ const r=this.charRoster.length%21;if(r===0)return this.showMsg('chars','Ya alineado','ok');const n=21-r;for(let i=0;i<n;i++)this.addNull();this.showMsg('chars',n+' nulls','ok') },
+
+        async loadChars(){ try{let r=await fetch('/api/chars');let d=await r.json();if(d.error)return this.showMsg('chars',d.error,'err');this.charRoster=d.roster||[];this.charAvailable=d.available||[];this.charUnused=d.unused||[]}catch(e){this.showMsg('chars','Error','err')} },
+        async saveChars(){ try{let r=await fetch('/api/chars/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roster:this.charRoster})});let d=await r.json();if(d.success){this.showMsg('chars','Guardado ✓','ok');this.loadData()}else this.showMsg('chars',d.error,'err')}catch(e){this.showMsg('chars','Error','err')} },
+        async loadStages(){ try{let r=await fetch('/api/stages');let d=await r.json();if(d.error)return this.showMsg('stages',d.error,'err');this.stageRoster=d.roster||[];this.stageAvailable=d.available||[];this.stageUnused=d.unused||[];this.stageNameMap=d.name_map||{}}catch(e){this.showMsg('stages','Error','err')} },
+        async saveStages(){ try{let r=await fetch('/api/stages/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({stages:this.stageRoster})});let d=await r.json();if(d.success){this.showMsg('stages','Guardado ✓','ok');this.loadData()}else this.showMsg('stages',d.error,'err')}catch(e){this.showMsg('stages','Error','err')} },
+        async renameChar(){ if(!this.renameOld||!this.renameNew)return;try{let r=await fetch('/api/chars/rename',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({old_name:this.renameOld,new_name:this.renameNew,rename_disk:this.renameDisk})});let d=await r.json();if(d.success){this.showMsg('chars',`${this.renameOld} → ${this.renameNew}`,'ok');this.renameOld='';this.renameNew='';this.loadChars()}else this.showMsg('chars',d.error,'err')}catch(e){this.showMsg('chars','Error','err')} },
+        async handleFileSelect(t,ev){ const f=ev.target.files[0];if(f)await this.uploadZip(t,f);ev.target.value='' },
+        async handleFileDrop(t,ev){ ev.currentTarget.classList.remove('drag-active');const f=ev.dataTransfer.files[0];if(f&&f.name.endsWith('.zip'))await this.uploadZip(t,f);else this.showMsg(t,'Solo .zip','err') },
+        async uploadZip(t,file){
+            this.showMsg(t,'Subiendo…','ok');
+            const fd=new FormData();fd.append('zipfile',file);fd.append('type',t);
+            try{let r=await fetch('/api/upload',{method:'POST',body:fd});let d=await r.json();
+                if(d.success){this.showMsg(t,`${d.name} instalado`,'ok');if(t==='chars')this.loadChars();else this.loadStages()}
+                else this.showMsg(t,d.error,'err')
+            }catch(e){this.showMsg(t,'Error','err')}
+        },
+        onDragStart(t,i,ev){ this.dragState={type:t,idx:i};ev.dataTransfer.effectAllowed='move' },
+        onDragOver(ev){ ev.currentTarget.classList.add('drag-over') },
+        onDragLeave(ev){ ev.currentTarget.classList.remove('drag-over') },
+        onDrop(t,i,ev){ ev.currentTarget.classList.remove('drag-over');if(!this.dragState.type||this.dragState.type!==t||this.dragState.idx===i)return;const l=this.getList(t);const it=l.splice(this.dragState.idx,1)[0];l.splice(i,0,it);this.dragState={type:null,idx:null} },
+        async generateMovelist(){
+            this.mlGenLoading=true;this.mlGenResult='';this.mlGenError='';
+            try{
+                let r=await fetch('/api/movelist/generate?char='+encodeURIComponent(this.mlGenChar));
+                let d=await r.json();
+                if(d.success){
+                    let total=0;(d.movelist.sections||[]).forEach(s=>total+=s.moves.length);
+                    this.mlGenResult=total+' movimientos generados ✓ → moves/'+this.mlGenChar+'/movelist.json';
+                }else this.mlGenError=d.error||'Error';
+            }catch(e){this.mlGenError='Error de conexión'}
+            this.mlGenLoading=false;
+        },
+        showMsg(t,m,tp){ this.msg[t]=m;this.msgType[t]=tp;setTimeout(()=>this.msg[t]='',4000) }
+    },
+    mounted(){ this.checkStatus() }
+}).mount('#app');
+</script>
+</body>
+</html>

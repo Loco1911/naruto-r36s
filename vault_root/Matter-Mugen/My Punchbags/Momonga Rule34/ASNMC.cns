@@ -1,0 +1,196 @@
+; Barney the Dinosaur by Jay_High19's constants.
+; Format (case insensitive):
+;  [groupname]
+;  constname = value
+
+[Data]
+life = 1000;Amount of life to start with
+attack = 100;100% attack power (more is stronger)
+defence = 100;100% defensive power (more is stronger)
+fall.defence_up = 50;Def goes up by 50% everytime player is hit on ground
+liedown.time= 60;Time player takes before getting up from HIT_LIEDOWN
+airjuggle = 15;Can do 15 points of juggling
+sparkno = 2;Default spark number
+guard.sparkno = 40;Default guard spark number
+KO.echo = 0;1 to enable echo on KO
+volume = 225;Volume offset (negative for softer)
+
+[Size]
+xscale = 0.8;Horizontal scaling factor.
+yscale = 0.8;Vertical scaling factor.
+ground.back = 15;Player width (back, ground)
+ground.front = 15;Player width (front, ground)
+air.back = 12;Player width (back, air)
+air.front = 12;Player width (front, air)
+z.width = 3;Player width (into and out)
+height = 60	;Height of player (for opponent to jump over)
+attack.width = 4,4;Default attack width: back, front
+attack.dist = 160;Default attack distance
+proj.attack.dist = 90;Default attack distance for projectiles
+proj.doscale = 0;Set to 1 to scale projectiles too
+head.pos = -5, -90   ;Approximate position of head
+mid.pos = -5, -60    ;Approximate position of midsection
+
+[Velocity]
+walk.fwd  = 0		;Walk forward
+walk.back = 0		;Walk backward
+run.fwd  = 0, 0		;Run forward (x, y)
+run.back = 0,0		;Hop backward (x, y)
+jump.neu = 0,0		;Neutral jumping velocity (x, y)
+jump.back = 0		;Jump back Speed (x, y)
+jump.fwd = 0		;Jump forward Speed (x, y)
+runjump.back = 0,0	;Running jump speeds (opt)
+runjump.fwd = 0,0	;.
+airjump.neu = 0,0	;.
+airjump.back = 0	;Air jump speeds (opt)
+airjump.fwd = 0		;.
+
+[Movement]
+airjump.num = 0;Number of air jumps allowed (opt)
+airjump.height = 35;Minimum distance from ground before you can air jump (opt)
+yaccel =.43;Vertical acceleration
+stand.friction =.85;Friction coefficient when standing
+crouch.friction =.82;Friction coefficient when crouching
+
+;---------------------------------------------------------------------------
+; Format:
+; [Statedef STATENO]
+; type = ?      S/C/A/L  stand/crouch/air/liedown
+; movetype = ?  I/A/H    idle/attack/gethit
+; physics = ?   S/C/A/N  stand/crouch/air/none
+; juggle = ?             air juggle points move requires
+;
+; [State STATENO, ?]     ? - any number you choose
+; type = ?
+; ...
+
+;---------------------------------------------------------------------------
+; LOSE (Time over)
+[Statedef 170]
+type = S
+ctrl = 0
+anim = 170
+velset = 0,0
+
+[State 170, 1]
+type = NotHitBy
+trigger1 = Time>= 0
+value = SCA
+time= 1
+
+;---------------------------------------------------------------------------
+; WIN
+[Statedef 180]
+type = S
+
+[State 180, 1]
+type = ChangeState
+trigger1 = Time= 0
+value =181
+
+[State 180, 1];Uncomment if you want to play a sound
+type = PlaySnd; PlaySnd
+trigger1 = Time= 9
+value = 1,0
+
+;---------------------------------------------------------------------------
+; WIN1
+[Statedef 181]
+type = S
+ctrl = 0
+anim = 181
+velset = 0,0
+
+[State 181, 1]
+type = NotHitBy
+trigger1 = Time>= 0
+value = SCA
+time= 1
+
+[State 181, 1];Uncomment if you want to play a sound
+type = PlaySnd; PlaySnd
+trigger1 = Time= 9
+value = 1,0
+
+;---------------------------------------------------------------------------
+; INTRO
+[Statedef 191]
+type = S
+ctrl = 0
+anim = 190
+velset = 0,0
+
+[State 191, 1];Intro not yet over
+type = VarSet
+trigger1 = Time= 0
+v = 9
+value = 1
+
+[State 191, 7];Intro over, set v9 to 1
+type = VarSet
+trigger1 = Time= 60
+v = 9
+value = 0
+;---------------------------------------------------------------------------
+; Crouch
+[Statedef 10]
+
+[State 10, 0]
+type = ChangeState
+trigger1 = 1
+value = 0
+ctrl = 1
+
+;---------------------------------------------------------------------------
+; Walk
+[Statedef 20]
+
+[State 20, 0]
+type = ChangeState
+trigger1 = 1
+value = 0
+ctrl = 1
+
+;---------------------------------------------------------------------------
+; Jump
+[Statedef 40]
+
+[State 40, 0]
+type = ChangeState
+trigger1 = 1
+value = 0
+ctrl = 1
+
+;---------------------------------------------------------------------------
+; Dash
+[Statedef 100]
+
+[State 100, 0]
+type = ChangeState
+trigger1 = 1
+value = 0
+ctrl = 1
+
+;---------------------------------------------------------------------------
+[Statedef -2]
+
+[State -2]
+type = PlaySnd
+triggerall = alive
+triggerall = Time = 1
+trigger1 = stateno = 5000
+trigger2 = stateno = 5010
+trigger3 = stateno = 5020
+trigger4 = stateno = 5070
+channel = 0
+volume = 225
+value = 5000, random % 3
+
+[State -2, NoGuard]
+type = AssertSpecial
+trigger1 = 1
+flag = NoStandGuard
+flag2 = NoCrouchGuard
+flag3 = NoAirGuard
+
+

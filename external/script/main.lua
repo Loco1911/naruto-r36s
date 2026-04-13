@@ -3282,11 +3282,13 @@ function main.f_start()
 				for k = 1, #main.t_bonusChars do
 					local name = start.f_getCharData(main.t_bonusChars[k]).name
 					local itemname = 'bonus_' .. name:gsub('%s+', '_')
+					local pname = 'menu_itemname_' .. suffix:gsub('back$', itemname)
+					if motif[main.group][pname] == nil then pname = 'menu_itemname_' .. suffix end
 					table.insert(t_pos.items, {
 						data = text:create({window = t_menuWindow}),
 						itemname = itemname,
 						displayname = main.f_itemnameUpper(name, bonusUpper),
-						paramname = 'menu_itemname_' .. suffix:gsub('back$', itemname),
+						paramname = pname,
 					})
 					--creating anim data out of appended menu items
 					motif.f_loadSprData(motif[main.group], {s = 'menu_bg_' .. suffix:gsub('back$', itemname) .. '_', x = motif[main.group].menu_pos[1], y = motif[main.group].menu_pos[2]})
@@ -3297,11 +3299,15 @@ function main.f_start()
 			if suffix:match('storymode_back$') and c == 'storymode' then --j == main.f_countSubstring(suffix, '_') then
 				for k, v in ipairs(main.t_selStoryMode) do
 					local itemname = v.name:gsub('%s+', '_')
+					print("DEBUG: Adding story mode item: " .. itemname)
+					local pname = 'menu_itemname_' .. suffix:gsub('back$', itemname)
+					if motif[main.group][pname] == nil then pname = 'menu_itemname_' .. suffix end
+					print("DEBUG: Using paramname: " .. pname)
 					table.insert(t_pos.items, {
 						data = text:create({window = t_menuWindow}),
 						itemname = itemname,
 						displayname = v.displayname,
-						paramname = 'menu_itemname_' .. suffix:gsub('back$', itemname),
+						paramname = pname,
 					})
 					--creating anim data out of appended menu items
 					motif.f_loadSprData(motif[main.group], {s = 'menu_bg_' .. suffix:gsub('back$', itemname) .. '_', x = motif[main.group].menu_pos[1], y = motif[main.group].menu_pos[2]})
@@ -3854,8 +3860,11 @@ function main.f_menuCommonDraw(t, item, cursorPosY, moveTxt, section, bgdef, tit
 			if i == item then
 				--Draw active item background
 				if t[i].paramname ~= nil then
-					animDraw(motif[section][t[i].paramname:gsub('menu_itemname_', 'menu_bg_active_') .. '_data'])
-					animUpdate(motif[section][t[i].paramname:gsub('menu_itemname_', 'menu_bg_active_') .. '_data'])
+					local anim_name = t[i].paramname:gsub('menu_itemname_', 'menu_bg_active_') .. '_data'
+					if motif[section][anim_name] ~= nil then
+						animDraw(motif[section][anim_name])
+						animUpdate(motif[section][anim_name])
+					end
 				end
 				--Draw active item font
 				if t[i].selected then
@@ -3874,7 +3883,7 @@ function main.f_menuCommonDraw(t, item, cursorPosY, moveTxt, section, bgdef, tit
 						height = motif[section].menu_item_selected_active_font[7],
 						defsc =  defsc,
 					})
-					t[i].data:draw()
+					if t[i].data ~= nil then t[i].data:draw() end
 				else
 					t[i].data:update({
 						font =   motif[section].menu_item_active_font[1],
@@ -3914,8 +3923,11 @@ function main.f_menuCommonDraw(t, item, cursorPosY, moveTxt, section, bgdef, tit
 			else
 				--Draw not active item background
 				if t[i].paramname ~= nil then
-					animDraw(motif[section][t[i].paramname:gsub('menu_itemname_', 'menu_bg_') .. '_data'])
-					animUpdate(motif[section][t[i].paramname:gsub('menu_itemname_', 'menu_bg_') .. '_data'])
+					local anim_name = t[i].paramname:gsub('menu_itemname_', 'menu_bg_') .. '_data'
+					if motif[section][anim_name] ~= nil then
+						animDraw(motif[section][anim_name])
+						animUpdate(motif[section][anim_name])
+					end
 				end
 				--Draw not active item font
 				if t[i].selected then
@@ -3934,7 +3946,7 @@ function main.f_menuCommonDraw(t, item, cursorPosY, moveTxt, section, bgdef, tit
 						height = motif[section].menu_item_selected_font[7],
 						defsc =  defsc,
 					})
-					t[i].data:draw()
+					if t[i].data ~= nil then t[i].data:draw() end
 				else
 					t[i].data:update({
 						font =   motif[section].menu_item_font[1],
