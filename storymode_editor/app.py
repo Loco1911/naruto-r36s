@@ -291,50 +291,124 @@ def extract_zip_to(zip_path, dest_dir):
 # ─── .CMD → MOVELIST PARSER ─────────────────────────────────────────
 
 DIR_MAP = {
-    'UB': '↖', 'UF': '↗', 'DB': '↙', 'DF': '↘',
-    'U': '↑',  'D': '↓',  'B': '←',  'F': '→',
+    'UB': 'UB', 'UF': 'UF', 'DB': 'DB', 'DF': 'DF',
+    'U': 'U',   'D': 'D',   'B': 'B',   'F': 'F',
 }
 BTN_MAP = {'a': 'A', 'b': 'B', 'c': 'C', 'x': 'X', 'y': 'Y', 'z': 'Z',
            'start': 'St', 'back': 'Bk'}
+MOTION_MAP = {
+    ('D', 'DF', 'F'): 'QCF',
+    ('D', 'DB', 'B'): 'QCB',
+    ('F', 'D', 'DF'): 'DP',
+    ('B', 'D', 'DB'): 'RDP',
+    ('B', 'DB', 'D', 'DF', 'F'): 'HCF',
+    ('F', 'DF', 'D', 'DB', 'B'): 'HCB',
+}
+IMPORTANT_NAME_KEYWORDS = (
+    'jutsu', 'special', 'super', 'ultimate', 'secret', 'ougi', 'art',
+    'skill', 'technique', 'awakening', 'finisher'
+)
+TRIVIAL_NAME_PATTERNS = [
+    re.compile(r'^(ff|bb|dash|run|walk|recovery|taunt)$', re.I),
+    re.compile(r'^[abcxyzswd]$', re.I),
+    re.compile(r'^(up|down|back|fwd|forward|air|jump|crouch|stand)[_-]?[abcxyz]$', re.I),
+    re.compile(r'^(hold|release)[_-]?[abcxyzbdfu]+$', re.I),
+]
+
+
+def _parse_cmd_token(tok):
+    tok = tok.strip()
+    if not tok:
+        return None
+    hold = False
+    release = False
+    if tok.startswith('~'):
+        hold = True
+        tok = tok[1:]
+    tok = re.sub(r'^\d+', '', tok)
+    tok = tok.lstrip('>')
+    if tok.startswith('/'):
+        release = True
+        tok = tok[1:]
+    tok = tok.lstrip('$').strip()
+    if not tok:
+        return None
+    upper = tok.upper()
+    if upper in DIR_MAP:
+        return {'kind': 'dir', 'value': DIR_MAP[upper], 'hold': hold, 'release': release}
+    btn_parts = [part.strip().lower() for part in tok.split('+') if part.strip()]
+    if btn_parts and all(part in BTN_MAP for part in btn_parts):
+        label = '+'.join(BTN_MAP[part] for part in btn_parts)
+        if release:
+            label = 'Release ' + label
+        elif hold:
+            label = 'Hold ' + label
+        return {'kind': 'btn', 'value': label, 'hold': hold, 'release': release}
+    raw = tok.upper()
+    if release:
+        raw = 'Release ' + raw
+    elif hold:
+        raw = 'Hold ' + raw
+    return {'kind': 'raw', 'value': raw, 'hold': hold, 'release': release}
+
+
+def _format_dir_sequence(dir_tokens):
+    if not dir_tokens:
+        return ''
+    if all(not token['hold'] and not token['release'] for token in dir_tokens):
+        values = tuple(token['value'] for token in dir_tokens)
+        if values in MOTION_MAP:
+            return MOTION_MAP[values]
+    parts = []
+    for token in dir_tokens:
+        value = token['value']
+        if token['hold']:
+            parts.append('Charge ' + value)
+        elif token['release']:
+            parts.append('Release ' + value)
+        else:
+            parts.append(value)
+    return ', '.join(parts)
 
 
 def _convert_token(tok):
-    """Convert a single .cmd token to a human-readable symbol."""
-    tok = tok.strip()
-    if not tok:
+    parsed = _parse_cmd_token(tok)
+    if not parsed:
         return ''
-    prefix = ''
-    if tok.startswith('~'):
-        prefix = 'Hold '
-        tok = tok[1:]
-    if tok.startswith('/'):
-        prefix = 'rel '
-        tok = tok[1:]
-    upper = tok.upper()
-    if upper in DIR_MAP:
-        return prefix + DIR_MAP[upper]
-    if tok.lower() in BTN_MAP:
-        return '+' + BTN_MAP[tok.lower()]
-    return prefix + tok
+    if parsed['kind'] == 'dir':
+        return _format_dir_sequence([parsed])
+    return parsed['value']
 
 
 def cmd_to_human(cmd_str):
-    """Convert a MUGEN .cmd command string to human-readable input notation."""
+    """Convert a MUGEN .cmd command string to readable fighting notation."""
     if not cmd_str:
         return ''
-    parts = [t.strip() for t in cmd_str.split(',')]
-    tokens = [_convert_token(t) for t in parts if t.strip()]
+    tokens = [_parse_cmd_token(t) for t in cmd_str.split(',')]
+    tokens = [token for token in tokens if token]
     result = []
-    for t in tokens:
-        if t.startswith('+'):
-            result.append(t)
-        else:
-            result.append(' ' + t if result else t)
-    return ''.join(result).strip()
+    dir_buffer = []
+    for token in tokens:
+        if token['kind'] == 'dir':
+            dir_buffer.append(token)
+            continue
+        if dir_buffer:
+            motion = _format_dir_sequence(dir_buffer)
+            dir_buffer = []
+            if token['kind'] == 'btn':
+                result.append(f"{motion} + {token['value'].replace('Hold ', '')}")
+                continue
+            result.append(motion)
+        result.append(token['value'])
+    if dir_buffer:
+        result.append(_format_dir_sequence(dir_buffer))
+    text = ' , '.join(part for part in result if part)
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
 
 
 def parse_cmd_file(cmd_path):
-    """Parse a .cmd file and return list of (name, input_human) tuples."""
+    """Parse a .cmd file and return list of (name, input_human, raw_command) tuples."""
     moves = []
     try:
         with open(cmd_path, 'r', encoding='utf-8', errors='replace') as f:
@@ -355,7 +429,7 @@ def parse_cmd_file(cmd_path):
         if stripped.lower() == '[command]':
             # Save previous
             if current_name and current_cmd:
-                moves.append((current_name, cmd_to_human(current_cmd)))
+                moves.append((current_name, cmd_to_human(current_cmd), current_cmd))
             current_name = None
             current_cmd  = None
         elif stripped.lower().startswith('name') and '=' in stripped:
@@ -366,8 +440,64 @@ def parse_cmd_file(cmd_path):
             current_cmd = val
     # Last block
     if current_name and current_cmd:
-        moves.append((current_name, cmd_to_human(current_cmd)))
+        moves.append((current_name, cmd_to_human(current_cmd), current_cmd))
     return moves
+
+
+def _command_metrics(raw_cmd):
+    tokens = [_parse_cmd_token(t) for t in (raw_cmd or '').split(',')]
+    tokens = [token for token in tokens if token]
+    dir_count = sum(1 for token in tokens if token['kind'] == 'dir')
+    btn_tokens = [token for token in tokens if token['kind'] == 'btn']
+    button_count = 0
+    multi_button = False
+    for token in btn_tokens:
+        button_count += len(token['value'].replace('Release ', '').replace('Hold ', '').split('+'))
+        if '+' in token['value']:
+            multi_button = True
+    charge = any(token['kind'] == 'dir' and token['hold'] for token in tokens)
+    return {
+        'dir_count': dir_count,
+        'button_count': button_count,
+        'multi_button': multi_button,
+        'charge': charge,
+    }
+
+
+def _is_trivial_move_name(name):
+    clean = (name or '').strip()
+    if not clean:
+        return True
+    for pattern in TRIVIAL_NAME_PATTERNS:
+        if pattern.match(clean):
+            return True
+    return False
+
+
+def _is_important_move(name, raw_cmd):
+    if _is_trivial_move_name(name):
+        return False
+    metrics = _command_metrics(raw_cmd)
+    lower_name = (name or '').lower()
+    if any(keyword in lower_name for keyword in IMPORTANT_NAME_KEYWORDS):
+        return True
+    if metrics['charge'] and metrics['button_count'] >= 1:
+        return True
+    if metrics['dir_count'] >= 2 and metrics['button_count'] >= 1:
+        return True
+    if metrics['multi_button'] and metrics['button_count'] >= 2:
+        return True
+    return False
+
+
+def _move_type(name, raw_cmd):
+    metrics = _command_metrics(raw_cmd)
+    lower_name = (name or '').lower()
+    if any(keyword in lower_name for keyword in ('super', 'ultimate', 'secret', 'ougi', 'awakening', 'finisher')):
+        return 'super'
+    if metrics['dir_count'] >= 4 or metrics['multi_button']:
+        return 'super'
+    return 'special'
 
 
 def generate_movelist_json(root, char_name):
@@ -403,24 +533,29 @@ def generate_movelist_json(root, char_name):
 
     raw_moves = parse_cmd_file(cmd_file)
 
-    # Group into sections: normal (single button), special (direction+button), super (3+ tokens)
-    normals, specials, supers = [], [], []
+    # Keep only commands that look like meaningful techniques.
+    specials, supers = [], []
     seen = set()
-    for name, inp in raw_moves:
-        if name in seen:
+    fallback_moves = []
+    for name, inp, raw_cmd in raw_moves:
+        key = (name or '').strip().lower()
+        if key in seen:
             continue
-        seen.add(name)
-        # Heuristic: count direction arrows
-        arrows = sum(1 for ch in inp if ch in '↑↓←→↖↗↙↘')
-        if arrows == 0:
-            normals.append({'name': name, 'input': inp, 'type': 'normal'})
-        elif arrows >= 4:
-            supers.append({'name': name, 'input': inp, 'type': 'super'})
+        seen.add(key)
+        move = {'name': name, 'input': inp, 'type': _move_type(name, raw_cmd)}
+        if _is_important_move(name, raw_cmd):
+            if move['type'] == 'super':
+                supers.append(move)
+            else:
+                specials.append(move)
         else:
-            specials.append({'name': name, 'input': inp, 'type': 'special'})
+            metrics = _command_metrics(raw_cmd)
+            if not _is_trivial_move_name(name) and metrics['dir_count'] >= 1 and metrics['button_count'] >= 1:
+                fallback_moves.append(move)
 
     sections = []
-    if normals:  sections.append({'name': 'Normales',   'moves': normals})
+    if not specials and not supers and fallback_moves:
+        specials = fallback_moves
     if specials: sections.append({'name': 'Especiales', 'moves': specials})
     if supers:   sections.append({'name': 'Supers',     'moves': supers})
 
@@ -428,7 +563,7 @@ def generate_movelist_json(root, char_name):
         'character': display_name,
         'charFolder': char_name,
         'version': '1.0',
-        'generated': 'auto',
+        'generated': 'auto-important',
         'sections': sections,
     }
     return result, None

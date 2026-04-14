@@ -74,50 +74,35 @@ local function main_execution()
         boss_bd    = {102, 48, 140},
         select     = {255, 210, 64},
     }
+    local PANEL_HEADER_H = 24
+    local PANEL_INSET = 16
 
     local SCALE = {
-        title = 1.00,
-        subtitle = 1.00,
-        panel = 1.00,
-        rowTitle = 1.00,
-        rowMeta = 0.84,
-        detailTitle = 1.40,
-        detailLabel = 0.84,
-        detailBody = 1.00,
-        footer = 0.92,
-        node = 1.10,
-        nodeMeta = 0.74,
+        title = 0.68,
+        subtitle = 0.50,
+        panel = 0.58,
+        rowTitle = 0.54,
+        rowMeta = 0.46,
+        detailTitle = 0.58,
+        detailLabel = 0.50,
+        detailBody = 0.48,
+        footer = 0.46,
+        node = 0.62,
+        nodeMeta = 0.60,
     }
 
-    local fntTitle = fontNew("font/8-BIT WONDER_STORY.def", -1)
-    if not fntTitle then
-        fntTitle = fontNew("font/8-BIT WONDER.def", -1)
-    end
-    if not fntTitle then
-        fntTitle = fontNew("font/arcade.def", -1)
-    end
-
-    local fntBody = fontNew("font/f-6x9.def", -1)
+    local fntBody = fontNew("font/BigBlueTermPlusNerdFont-Regular.def", -1)
     if not fntBody then
-        fntBody = fontNew("font/Open_Sans.def", -1)
+        fntBody = fontNew("font/FORCED SQUARE.def", -1)
     end
     if not fntBody and motif.title_info and motif.title_info.menu_item_font then
         local key = motif.title_info.menu_item_font[1] .. motif.title_info.menu_item_font[7]
         fntBody = main.font[key]
     end
-    fntTitle = fntTitle or fntBody
+    local fntTitle = fntBody
+    local fntSmall = fntBody
 
-    local storyBgAnim = nil
-    if motif.files and motif.files.spr_data then
-        local ok, anim = pcall(function()
-            return animNew(motif.files.spr_data, "0,0, 0,0, -1")
-        end)
-        if ok and anim ~= nil then
-            storyBgAnim = anim
-            animSetScale(storyBgAnim, W / 640, H / 480)
-            animUpdate(storyBgAnim)
-        end
-    end
+    local storyBg = story.createMotifSpriteBackground(0, 0, W, H, 320, 240)
 
     local ti = {}
     for i = 1, 48 do
@@ -150,14 +135,14 @@ local function main_execution()
     end
 
     local function panel(x, y, w, h, title, accent)
-        frame(x, y, w, h, C.border, C.panel, 245, 232)
-        rect(x, y, w, 22, accent or C.panel_hi, 228)
+        frame(x, y, w, h, C.border, C.panel, 245, 242)
+        rect(x, y, w, PANEL_HEADER_H, accent or C.panel_hi, 236)
         if title and title ~= "" then
             local obj = nextText()
-            textImgSetFont(obj, fntBody)
+            textImgSetFont(obj, fntSmall)
             textImgSetAlign(obj, 1)
             textImgSetText(obj, tostring(title))
-            textImgSetPos(obj, x + 10 + main.f_alignOffset(1), y + 6)
+            textImgSetPos(obj, x + 10 + main.f_alignOffset(1), y + 5)
             textImgSetColor(obj, C.text[1], C.text[2], C.text[3])
             textImgSetScale(obj, SCALE.panel, SCALE.panel)
             textImgSetWindow(obj, 0, 0, W, H)
@@ -185,16 +170,112 @@ local function main_execution()
         textImgDraw(obj)
     end
 
+    local function wrapText(str, maxChars, maxLines)
+        local text = tostring(str or ""):gsub("%s+", " "):match("^%s*(.-)%s*$")
+        if text == "" then
+            return {""}
+        end
+        local words = {}
+        for word in text:gmatch("%S+") do
+            table.insert(words, word)
+        end
+        local lines = {}
+        local line = ""
+        for _, word in ipairs(words) do
+            local candidate = line == "" and word or (line .. " " .. word)
+            if #candidate <= maxChars then
+                line = candidate
+            else
+                if line ~= "" then
+                    table.insert(lines, line)
+                end
+                line = word
+            end
+            if maxLines and #lines >= maxLines then
+                break
+            end
+        end
+        if line ~= "" and (not maxLines or #lines < maxLines) then
+            table.insert(lines, line)
+        end
+        if maxLines and #lines > maxLines then
+            while #lines > maxLines do
+                table.remove(lines)
+            end
+        end
+        if maxLines and #lines == maxLines and #words > 0 then
+            local consumed = 0
+            for _, wrapped in ipairs(lines) do
+                for _ in wrapped:gmatch("%S+") do
+                    consumed = consumed + 1
+                end
+            end
+            if consumed < #words then
+                lines[#lines] = trimLabel(lines[#lines], math.max(1, maxChars - 1))
+            end
+        end
+        return lines
+    end
+
+    local function drawWrappedText(str, x, y, maxChars, maxLines, lineHeight, col, sx, sy, align, font)
+        local lines = wrapText(str, maxChars, maxLines)
+        for i, line in ipairs(lines) do
+            drawText(line, x, y + (i - 1) * lineHeight, col, sx, sy, align, font)
+        end
+        return y + (#lines * lineHeight)
+    end
+
+    local function arcHeader(index)
+        return "SAGA " .. tostring(index)
+    end
+
+    local function arcName(index, title)
+        local raw = safeString(title, "Saga " .. tostring(index))
+        local stripped = raw:gsub("^%s*[Ss]aga%s*[%w]+%s*[:%-]?%s*", "")
+        if stripped == "" or stripped == raw then
+            return raw
+        end
+        return stripped
+    end
+
     local function drawBackground()
         clearColor(0, 0, 0)
-        if storyBgAnim ~= nil then
-            animSetPos(storyBgAnim, 0, 0)
-            animDraw(storyBgAnim)
-        end
+        story.drawMotifSpriteBackground(storyBg, 0, 0)
+        rect(0, 0, W, H, C.bg, 112)
     end
 
     local function summarizeTeam(list, maxLen)
         return trimLabel(table.concat(list or {}, ", "), maxLen or 42)
+    end
+
+    local function stageLabel(path)
+        local raw = safeString(path, "No definido"):gsub("\\", "/")
+        local name = raw:match("([^/]+)%.def$") or raw:match("([^/]+)$") or raw
+        name = name:gsub("_", " ")
+        name = name:gsub("%s+", " ")
+        return trimLabel(name, 28)
+    end
+
+    local function battleFormat(chapter)
+        local p1Count = math.max(1, #(chapter.p1 or {}))
+        local p2Count = math.max(1, #(chapter.p2 or {}))
+        return tostring(p1Count) .. " VS " .. tostring(p2Count)
+    end
+
+    local function battleTimeLabel()
+        local roundTime = type(config) == "table" and config.RoundTime or 99
+        if roundTime == nil or roundTime == -1 then
+            return "SIN LIMITE"
+        end
+        return tostring(roundTime) .. " SEG"
+    end
+
+    local function cpuLabel(chapter)
+        local ai = tonumber(chapter.p2ai or chapter.ai or 0) or 0
+        if ai <= 0 then
+            return "CPU AUTO"
+        end
+        return "CPU NIVEL " .. tostring(ai)
     end
 
     local function typeColors(chapterType, unlocked, cleared)
@@ -476,50 +557,39 @@ local function main_execution()
     state.chapterIdx = findInitialChapter(state.arcIdx, initProgress)
     local function drawArcSelect(progress)
         local listX = 28
-        local listY = 88
+        local listY = 92
         local listW = math.floor(W * 0.38)
-        local listH = H - 136
+        local listH = H - 132
         local detailX = listX + listW + 16
         local detailY = listY
         local detailW = W - detailX - 28
         local detailH = listH
-        local rowHeight = 44
-        local rowsVisible = math.max(4, math.min(7, math.floor((listH - 40) / rowHeight)))
+        local rowHeight = 62
+        local rowsVisible = math.max(3, math.min(5, math.floor((listH - 42) / rowHeight)))
         local startRow = clamp(state.arcIdx - math.floor(rowsVisible / 2), 1, math.max(1, #catalog - rowsVisible + 1))
         local endRow = math.min(#catalog, startRow + rowsVisible - 1)
 
-        drawText("CRONICAS NINJA", W / 2, 18, C.accent, SCALE.title, SCALE.title, "center", fntTitle)
-        drawText("Modo historia", W / 2, 46, C.text, SCALE.subtitle, SCALE.subtitle, "center", fntBody)
+        drawText("MODO HISTORIA", W / 2, 24, C.accent, SCALE.title, SCALE.title, "center", fntTitle)
 
         panel(listX, listY, listW, listH, "SAGAS", C.panel_hi)
         panel(detailX, detailY, detailW, detailH, "DETALLES", C.panel_hi)
 
-        local rowY = listY + 30
+        local rowY = listY + PANEL_HEADER_H + 8
         for i = startRow, endRow do
             local arc = catalog[i]
             local y = rowY + (i - startRow) * rowHeight
             local selected = i == state.arcIdx
             local unlocked = story.isArcUnlocked(catalog, i, progress)
-            local cleared = story.isArcCleared(catalog, arc.id, progress)
-            local stats = buildArcStats(arc, progress)
 
-            rect(listX + 8, y, listW - 16, rowHeight - 4, selected and C.panel_hi or C.panel_alt, selected and 230 or 170)
+            rect(listX + 8, y, listW - 16, rowHeight - 6, selected and C.panel_hi or C.panel_alt, selected and 238 or 198)
             if selected then
-                rect(listX + 8, y, 3, rowHeight - 4, C.accent, 255)
+                rect(listX + 8, y, 3, rowHeight - 6, C.accent, 255)
             end
 
+            local headerCol = unlocked and (selected and C.accent or C.text_muted) or C.locked
             local titleCol = unlocked and C.text or C.text_muted
-            if selected and unlocked then
-                titleCol = C.accent
-            end
-
-            drawText(trimLabel(arc.title or ("Saga " .. i), 22), listX + 18, y + 6, titleCol, SCALE.rowTitle, SCALE.rowTitle, "left", fntBody)
-
-            local sub = stats.total .. " caps"
-            if stats.sideCount > 0 then
-                sub = sub .. " / " .. stats.sideCount .. " ramas"
-            end
-            drawText(sub, listX + 18, y + 22, C.text_muted, SCALE.rowMeta, SCALE.rowMeta, "left", fntBody)
+            drawText(arcHeader(i), listX + PANEL_INSET, y + 8, headerCol, SCALE.rowMeta, SCALE.rowMeta, "left", fntSmall)
+            drawWrappedText(arcName(i, arc.title), listX + PANEL_INSET, y + 24, 17, 2, 13, titleCol, SCALE.rowTitle, SCALE.rowTitle, "left", fntBody)
         end
 
         local arc = catalog[state.arcIdx]
@@ -530,29 +600,35 @@ local function main_execution()
             local progressRatio = stats.total > 0 and (stats.clearedCount / stats.total) or 0
             local barW = detailW - 40
 
-            drawText(trimLabel(safeString(arc.title, "Saga"), 28), detailX + 18, detailY + 38, C.text, SCALE.detailTitle, SCALE.detailTitle, "left", fntBody)
-            drawText(trimLabel(safeString(arc.subtitle, "Sin descripcion"), 62), detailX + 18, detailY + 62, C.text_muted, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
+            local contentY = detailY + PANEL_HEADER_H + 8
+            drawText(arcHeader(state.arcIdx), detailX + PANEL_INSET, contentY, C.text_muted, SCALE.rowMeta, SCALE.rowMeta, "left", fntSmall)
+            local titleBottom = drawWrappedText(arcName(state.arcIdx, arc.title), detailX + PANEL_INSET, contentY + 18, 22, 2, 15, C.text, SCALE.detailTitle, SCALE.detailTitle, "left", fntBody)
+            local descY = titleBottom + 2
+            local descBottom = drawWrappedText(safeString(arc.subtitle, "Sin descripcion"), detailX + PANEL_INSET, descY, 33, 4, 12, C.text_muted, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
 
-            drawText("ESTADO", detailX + 18, detailY + 100, C.text_muted, SCALE.detailLabel, SCALE.detailLabel, "left", fntBody)
-            drawText(unlocked and (cleared and "Completada" or "Disponible") or "Bloqueada", detailX + 18, detailY + 114, unlocked and (cleared and C.cleared or C.accent) or C.locked, SCALE.detailTitle, SCALE.detailTitle, "left", fntBody)
+            local statusY = math.max(contentY + 98, descBottom + 14)
+            drawText("ESTADO", detailX + PANEL_INSET, statusY, C.text_muted, SCALE.detailLabel, SCALE.detailLabel, "left", fntSmall)
+            drawText(unlocked and (cleared and "COMPLETADA" or "DISPONIBLE") or "BLOQUEADA", detailX + PANEL_INSET, statusY + 18, unlocked and (cleared and C.cleared or C.accent) or C.locked, SCALE.detailTitle, SCALE.detailTitle, "left", fntBody)
 
-            drawText("PROGRESO", detailX + 18, detailY + 148, C.text_muted, SCALE.detailLabel, SCALE.detailLabel, "left", fntBody)
-            frame(detailX + 18, detailY + 164, barW, 12, C.border, C.panel_alt, 220, 160)
-            rect(detailX + 20, detailY + 166, math.floor((barW - 4) * progressRatio), 8, C.accent, 240)
-            drawText(stats.clearedCount .. " / " .. stats.total .. " capitulos", detailX + 18, detailY + 184, C.text, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
+            local progressY = statusY + 50
+            drawText("PROGRESO", detailX + PANEL_INSET, progressY, C.text_muted, SCALE.detailLabel, SCALE.detailLabel, "left", fntSmall)
+            frame(detailX + PANEL_INSET, progressY + 18, barW, 10, C.border, C.panel_alt, 220, 180)
+            rect(detailX + PANEL_INSET + 2, progressY + 20, math.floor((barW - 4) * progressRatio), 6, C.accent, 240)
+            drawText(stats.clearedCount .. " / " .. stats.total .. " CAPITULOS", detailX + PANEL_INSET, progressY + 34, C.text, SCALE.rowMeta, SCALE.rowMeta, "left", fntSmall)
 
-            drawText("RESUMEN", detailX + 18, detailY + 224, C.text_muted, SCALE.detailLabel, SCALE.detailLabel, "left", fntBody)
-            drawText("Principales: " .. stats.normalCount, detailX + 18, detailY + 238, C.text, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
-            drawText("Side stories: " .. stats.sideCount, detailX + 18, detailY + 252, C.side, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
-            drawText("Bosses: " .. stats.bossCount, detailX + 18, detailY + 266, C.mid, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
+            local summaryY = progressY + 62
+            drawText("RESUMEN", detailX + PANEL_INSET, summaryY, C.text_muted, SCALE.detailLabel, SCALE.detailLabel, "left", fntSmall)
+            drawText("PRINCIPALES: " .. stats.normalCount, detailX + PANEL_INSET, summaryY + 18, C.text, SCALE.rowMeta, SCALE.rowMeta, "left", fntSmall)
+            drawText("SIDE STORIES: " .. stats.sideCount, detailX + PANEL_INSET, summaryY + 32, C.side, SCALE.rowMeta, SCALE.rowMeta, "left", fntSmall)
+            drawText("BOSSES: " .. stats.bossCount, detailX + PANEL_INSET, summaryY + 46, C.mid, SCALE.rowMeta, SCALE.rowMeta, "left", fntSmall)
 
             if not unlocked and state.arcIdx > 1 then
-                drawText("REQUISITO", detailX + 18, detailY + 300, C.text_muted, SCALE.detailLabel, SCALE.detailLabel, "left", fntBody)
-                drawText("Completa la saga anterior para desbloquearla.", detailX + 18, detailY + 314, C.locked, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
+                drawText("REQUISITO", detailX + PANEL_INSET, summaryY + 72, C.text_muted, SCALE.detailLabel, SCALE.detailLabel, "left", fntSmall)
+                drawWrappedText("COMPLETA LA SAGA ANTERIOR PARA DESBLOQUEARLA.", detailX + PANEL_INSET, summaryY + 90, 30, 2, 14, C.locked, SCALE.rowMeta, SCALE.rowMeta, "left", fntSmall)
             end
         end
 
-        drawText("Arriba/Abajo: Navegar  A: Entrar  B: Volver", W / 2, H - 18, C.text_muted, SCALE.footer, SCALE.footer, "center", fntBody)
+        drawText("Arriba/Abajo: Navegar  A: Entrar  B: Volver", W / 2, H - 18, C.text_muted, SCALE.footer, SCALE.footer, "center", fntSmall)
     end
 
     local function drawNode(node, x, y, selected, unlocked, cleared)
@@ -568,11 +644,15 @@ local function main_execution()
         local badge = safeString(node.label, "?")
         local badgeScale = SCALE.node
         if #badge >= 4 then
-            badgeScale = 0.82
+            badgeScale = 0.38
         elseif #badge >= 3 then
-            badgeScale = 0.94
+            badgeScale = 0.46
+        elseif #badge >= 2 then
+            badgeScale = 0.54
+        else
+            badgeScale = 0.62
         end
-        drawText(badge, x + size / 2, y + math.floor(size / 2) - 7, textCol, badgeScale, badgeScale, "center", fntBody)
+        drawText(badge, x + math.floor(size / 2), y + math.floor(size / 2) - math.floor(5 * badgeScale), textCol, badgeScale, badgeScale, "center", fntBody)
         return size
     end
 
@@ -587,11 +667,11 @@ local function main_execution()
         local colCount = math.max(1, lastCol - firstCol + 1)
 
         local mapX = 24
-        local mapY = 78
+        local mapY = 96
         local mapW = W - 48
-        local mapH = math.floor(H * 0.40)
-        local infoY = mapY + mapH + 16
-        local infoH = H - infoY - 28
+        local mapH = math.floor(H * 0.31)
+        local infoY = mapY + mapH + 10
+        local infoH = H - infoY - 34
         local visibleMaxLane = 0
 
         local visibleNodes = {}
@@ -602,8 +682,8 @@ local function main_execution()
             end
         end
 
-        local laneSpacing = math.max(46, math.min(76, math.floor((mapH - 64) / math.max(1, visibleMaxLane * 2 + 1))))
-        local midY = mapY + math.floor(mapH / 2) - 8
+        local laneSpacing = math.max(34, math.min(50, math.floor((mapH - 52) / math.max(1, visibleMaxLane * 2 + 1))))
+        local midY = mapY + math.floor(mapH / 2) - math.floor(nodeSize("normal") / 2)
         local colSpacing = colCount > 1 and math.max(84, math.floor((mapW - 96) / (colCount - 1))) or 0
         local startX = colCount > 1 and math.floor(mapX + (mapW - ((colCount - 1) * colSpacing)) / 2) or math.floor(mapX + mapW / 2)
         local pos = {}
@@ -616,8 +696,8 @@ local function main_execution()
             }
         end
 
-        drawText("CRONICAS NINJA", W / 2, 16, C.accent, SCALE.title, SCALE.title, "center", fntTitle)
-        drawText(safeString(arc.title, "Saga"), W / 2, 42, C.text, SCALE.subtitle, SCALE.subtitle, "center", fntBody)
+        drawText("MODO HISTORIA", W / 2, 24, C.accent, SCALE.title, SCALE.title, "center", fntTitle)
+        drawWrappedText(arcName(state.arcIdx, arc.title), W / 2, 50, 28, 2, 14, C.text, SCALE.subtitle, SCALE.subtitle, "center", fntBody)
 
         panel(mapX, mapY, mapW, mapH, "TIMELINE", C.panel_hi)
         panel(mapX, infoY, mapW, infoH, "DETALLES", C.panel_hi)
@@ -659,10 +739,10 @@ local function main_execution()
             end
 
             if firstCol > 1 then
-                drawText("<", mapX + 14, midY + 8, C.accent, 0.92, 0.92, "center")
+                drawText("<", mapX + 14, midY + 10, C.accent, 0.74, 0.74, "center", fntBody)
             end
             if lastCol < layout.columns then
-                drawText(">", mapX + mapW - 14, midY + 8, C.accent, 0.92, 0.92, "center")
+                drawText(">", mapX + mapW - 14, midY + 10, C.accent, 0.74, 0.74, "center", fntBody)
             end
         end
 
@@ -674,22 +754,40 @@ local function main_execution()
             local statusCol = cleared and C.cleared or (unlocked and C.accent or C.locked)
             local typeText = typeLabel(chapter.type or "normal")
 
-            drawText(trimLabel(safeString(chapter.title, chapter.id or "Capitulo"), 38), mapX + 16, infoY + 36, C.text, SCALE.detailTitle, SCALE.detailTitle, "left", fntBody)
-            drawText(typeText, mapX + 16, infoY + 56, C.text_muted, SCALE.detailLabel, SCALE.detailLabel, "left", fntBody)
-            drawText(statusText, mapX + mapW - 16, infoY + 36, statusCol, SCALE.detailTitle, SCALE.detailTitle, "right", fntBody)
+            local detailBaseY = infoY + PANEL_HEADER_H + 8
+            local chapterTitleBottom = drawWrappedText(safeString(chapter.title, chapter.id or "Capitulo"), mapX + PANEL_INSET, detailBaseY, 28, 2, 14, C.text, SCALE.detailTitle, SCALE.detailTitle, "left", fntBody)
+            drawText(typeText, mapX + PANEL_INSET, chapterTitleBottom + 2, C.text_muted, SCALE.detailLabel, SCALE.detailLabel, "left", fntSmall)
+            drawText(statusText, mapX + mapW - PANEL_INSET, detailBaseY, statusCol, SCALE.detailTitle, SCALE.detailTitle, "right", fntBody)
 
             local subtitle = safeString(chapter.subtitle, "Sin descripcion.")
-            drawText(trimLabel(subtitle, 72), mapX + 16, infoY + 84, C.text, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
+            local subtitleBottom = drawWrappedText(subtitle, mapX + PANEL_INSET, chapterTitleBottom + 18, 56, 2, 13, C.text, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
 
-            drawText("P1: " .. summarizeTeam(chapter.p1, 54), mapX + 16, infoY + 116, C.text_muted, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
-            drawText("P2: " .. summarizeTeam(chapter.p2, 54), mapX + 16, infoY + 132, C.text_muted, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
+            local infoLeftX = mapX + PANEL_INSET
+            local infoRightX = mapX + math.floor(mapW * 0.54)
+            local infoY1 = subtitleBottom + 12
+            drawText("P1", infoLeftX, infoY1, C.accent, SCALE.detailLabel, SCALE.detailLabel, "left", fntSmall)
+            drawText(summarizeTeam(chapter.p1, 40), infoLeftX, infoY1 + 14, C.text_muted, SCALE.rowMeta, SCALE.rowMeta, "left", fntSmall)
+            drawText("CPU", infoRightX, infoY1, C.accent, SCALE.detailLabel, SCALE.detailLabel, "left", fntSmall)
+            drawText(summarizeTeam(chapter.p2, 34), infoRightX, infoY1 + 14, C.text_muted, SCALE.rowMeta, SCALE.rowMeta, "left", fntSmall)
+
+            local infoY2 = infoY1 + 32
+            drawText("IA", infoLeftX, infoY2, C.accent, SCALE.detailLabel, SCALE.detailLabel, "left", fntSmall)
+            drawText(cpuLabel(chapter), infoLeftX + 26, infoY2, C.text_muted, SCALE.rowMeta, SCALE.rowMeta, "left", fntSmall)
+            drawText("TIEMPO", infoRightX, infoY2, C.accent, SCALE.detailLabel, SCALE.detailLabel, "left", fntSmall)
+            drawText(battleTimeLabel(), infoRightX + 44, infoY2, C.text_muted, SCALE.rowMeta, SCALE.rowMeta, "left", fntSmall)
+
+            local infoY3 = infoY2 + 18
+            drawText("FORMATO", infoLeftX, infoY3, C.accent, SCALE.detailLabel, SCALE.detailLabel, "left", fntSmall)
+            drawText(battleFormat(chapter), infoLeftX + 56, infoY3, C.text_muted, SCALE.rowMeta, SCALE.rowMeta, "left", fntSmall)
+            drawText("ESCENARIO", infoRightX, infoY3, C.accent, SCALE.detailLabel, SCALE.detailLabel, "left", fntSmall)
+            drawText(stageLabel(chapter.stage), infoRightX + 64, infoY3, C.text_muted, SCALE.rowMeta, SCALE.rowMeta, "left", fntSmall)
 
             if chapter.type == "sidestory" and chapter.sideUnlockAfter and chapter.sideUnlockAfter ~= "" then
-                drawText("Se desbloquea tras: " .. trimLabel(chapter.sideUnlockAfter, 40), mapX + 16, infoY + 148, C.side, SCALE.detailBody, SCALE.detailBody, "left", fntBody)
+                drawText("SE DESBLOQUEA TRAS: " .. trimLabel(chapter.sideUnlockAfter, 28), mapX + PANEL_INSET, infoY3 + 20, C.side, SCALE.rowMeta, SCALE.rowMeta, "left", fntSmall)
             end
         end
 
-        drawText("Izq/Der: Timeline  Arriba/Abajo: Ramas  A: Iniciar  B: Volver", W / 2, H - 16, C.text_muted, SCALE.footer, SCALE.footer, "center", fntBody)
+        drawText("Izq/Der: Timeline  Arriba/Abajo: Ramas  A: Iniciar  B: Volver", W / 2, H - 16, C.text_muted, SCALE.footer, SCALE.footer, "center", fntSmall)
     end
 
     local function inp(keys)
@@ -776,6 +874,9 @@ end
 
 local ok, err = pcall(main_execution)
 if not ok then
+    if tostring(err):match("<game end>") then
+        os.exit()
+    end
     log("CRITICAL LUA ERROR: " .. tostring(err))
     main.f_bgReset(motif[main.background].bg)
     main.f_fadeReset("fadein", motif[main.group])

@@ -19,6 +19,57 @@ local function copyTable(t)
   return out
 end
 
+function story.createMotifSpriteBackground(group, number, width, height, fallbackW, fallbackH)
+  if motif == nil or motif.files == nil or motif.files.spr_data == nil then
+    return nil
+  end
+  local expr = string.format("%d,%d, 0,0, -1", tonumber(group) or 0, tonumber(number) or 0)
+  local ok, anim = pcall(function()
+    return animNew(motif.files.spr_data, expr)
+  end)
+  if not ok or anim == nil then
+    return nil
+  end
+  animUpdate(anim)
+  local info = animGetSpriteInfo(anim)
+  local spriteW = tonumber(fallbackW) or 320
+  local spriteH = tonumber(fallbackH) or 240
+  if type(info) == "table" and type(info.Size) == "table" then
+    spriteW = tonumber(info.Size[1]) or spriteW
+    spriteH = tonumber(info.Size[2]) or spriteH
+  end
+  if fallbackW ~= nil and spriteW > tonumber(fallbackW) then
+    spriteW = tonumber(fallbackW)
+  end
+  if fallbackH ~= nil and spriteH > tonumber(fallbackH) then
+    spriteH = tonumber(fallbackH)
+  end
+  if spriteW <= 0 then spriteW = tonumber(fallbackW) or 320 end
+  if spriteH <= 0 then spriteH = tonumber(fallbackH) or 240 end
+  local targetW = tonumber(width) or 640
+  local targetH = tonumber(height) or 480
+  local scale = math.max(targetW / spriteW, targetH / spriteH)
+  animSetScale(anim, scale, scale)
+  animSetWindow(anim, 0, 0, targetW, targetH)
+  return {
+    anim = anim,
+    width = targetW,
+    height = targetH,
+    offsetX = math.floor((targetW - spriteW * scale) / 2),
+    offsetY = math.floor((targetH - spriteH * scale) / 2),
+  }
+end
+
+function story.drawMotifSpriteBackground(bg, x, y)
+  if bg == nil or bg.anim == nil then
+    return
+  end
+  animUpdate(bg.anim)
+  animSetWindow(bg.anim, 0, 0, bg.width or 640, bg.height or 480)
+  animSetPos(bg.anim, (x or 0) + (bg.offsetX or 0), (y or 0) + (bg.offsetY or 0))
+  animDraw(bg.anim)
+end
+
 local function loadJson(path, defaultValue)
   if not main.f_fileExists(path) then
     return copyTable(defaultValue)

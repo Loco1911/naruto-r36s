@@ -59,19 +59,32 @@
             background: linear-gradient(180deg, #101722 0%, #0c1119 100%);
             border: 1px solid #1e2a3a;
         }
-        .chapter-node {
-            width: 92px; flex-shrink: 0;
-            display: flex; flex-direction: column; align-items: center; gap: 4px;
-            cursor: pointer; transition: transform 0.15s;
-            user-select: none;
+        .timeline-shell {
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 10px;
         }
-        .chapter-node:hover { transform: scale(1.08); }
+        .timeline-track {
+            min-width: max-content;
+            display: flex;
+            align-items: flex-start;
+            gap: 0;
+            padding: 10px 8px 18px;
+        }
+        .chapter-node {
+            width: 112px; min-height: 146px; flex-shrink: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 6px;
+            cursor: pointer; transition: transform 0.15s, filter 0.15s;
+            user-select: none;
+            position: relative;
+        }
+        .chapter-node:hover { transform: translateY(-2px); filter: brightness(1.04); }
         .chapter-node.active .node-circle { box-shadow: 0 0 0 3px #fff, 0 0 12px rgba(255,200,0,0.8); }
         .chapter-node.drag-over .node-circle { box-shadow: 0 0 0 3px #ea580c, 0 0 18px rgba(234,88,12,0.45); }
         .node-circle {
             width: 56px; height: 56px; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 15px; font-weight: 800; border: 3px solid;
+            font-size: 16px; font-weight: 800; border: 3px solid;
             box-shadow: 0 2px 8px rgba(0,0,0,0.5);
             transition: box-shadow 0.15s;
         }
@@ -82,7 +95,8 @@
         .node-label {
             font-size: 10px; font-weight: 700; text-align: center;
             color: #dbe5f1;
-            max-width: 86px; line-height: 1.25;
+            max-width: 104px; min-height: 52px; line-height: 1.25;
+            display: flex; flex-direction: column; justify-content: flex-start;
         }
         .node-meta {
             font-size: 9px;
@@ -101,7 +115,8 @@
         .node-midboss { background: radial-gradient(circle at 35% 35%, #ffd0d0, #d66565); border-color: #991b1b; }
         .node-finalboss { background: radial-gradient(circle at 35% 35%, #f0d0ff, #9b59d6); border-color: #7c2fa8; }
         .node-empty { background: #3d3020; border-color: #5a4a2a; border-style: dashed; opacity: 0.5; }
-        .connector { height: 3px; background: linear-gradient(90deg,#334155,#64748b,#334155); flex: 1; min-width: 10px; border-radius: 2px; margin-top: -30px; }
+        .connector { height: 4px; width: 36px; flex: 0 0 36px; background: linear-gradient(90deg,#334155,#64748b,#334155); border-radius: 2px; margin-top: 28px; }
+        .connector-side { background: linear-gradient(90deg,#1d4ed8,#60a5fa,#1d4ed8); opacity: 0.55; }
         .format-btn { padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; }
         .format-btn.active { background: rgba(234,88,12,0.2); border-color: #ea580c; color: #fb923c; }
         .format-btn:not(.active) { background: #1a2332; border-color: #2a3a4e; color: #64748b; }
@@ -145,6 +160,7 @@
                 <button @click="activeTab='editor'" :class="{active:activeTab==='editor'}" class="tab-btn">📚 Historia</button>
                 <button @click="activeTab='creator';loadStoryboards()" :class="{active:activeTab==='creator'}" class="tab-btn">🎬 Storyboard</button>
                 <button @click="activeTab='chars';loadChars()" :class="{active:activeTab==='chars'}" class="tab-btn">🥷 Personajes</button>
+                <button @click="activeTab='movelists';loadMovelistCatalog()" :class="{active:activeTab==='movelists'}" class="tab-btn">⚡ Move Lists</button>
                 <button @click="activeTab='stages';loadStages()" :class="{active:activeTab==='stages'}" class="tab-btn">🏟️ Stages</button>
             </nav>
         </div>
@@ -207,14 +223,15 @@
                             {{ currentArc.title||'Saga' }}
                         </div>
                         <div class="text-[11px] text-slate-500 text-center mb-5">
-                            Arrastra nodos para reordenar. Si arrastras una side story sobre otro nodo, se anida bajo ese capítulo.
+                            Arrastra nodos para reordenar. Las side stories bajan por nivel y puedes convertir cualquier nodo desde el editor de abajo.
                         </div>
-                        <div class="flex items-center flex-wrap gap-y-6 gap-x-0 px-2" style="min-height:100px;">
+                        <div class="timeline-shell custom-scroll">
+                            <div class="timeline-track" :style="{minHeight: currentArcTimelineHeight + 'px'}">
                             <template v-for="(cap,cI) in currentArc.chapters" :key="'n'+cI">
-                                <div v-if="cI>0 && cap.type!=='sidestory'" class="connector" style="min-width:18px;max-width:32px;"></div>
-                                <div v-if="cI>0 && cap.type==='sidestory'" class="w-4"></div>
+                                <div v-if="cI>0" class="connector" :class="cap.type==='sidestory' ? 'connector-side' : ''"></div>
                                 <div class="chapter-node"
                                      :class="{active:selectedChapterIndex===cI,'drag-over':storyDropIndex===cI}"
+                                     :style="chapterNodeStyle(cI)"
                                      draggable="true"
                                      @dragstart="onChapterDragStart(cI,$event)"
                                      @dragover.prevent="onChapterDragOver(cI,$event)"
@@ -237,6 +254,7 @@
                             <div v-if="!currentArc.chapters||currentArc.chapters.length===0" class="text-sm text-slate-500 text-center w-full py-4 opacity-70">
                                 Usa los botones de arriba para agregar capítulos a esta saga.
                             </div>
+                            </div>
                         </div>
                     </div>
 
@@ -256,6 +274,21 @@
                             <div><label class="section-title">ID</label><input v-model="currentChapter.id" class="input-dark"></div>
                             <div><label class="section-title">Título</label><input v-model="currentChapter.title" class="input-dark"></div>
                             <div><label class="section-title">Subtítulo / Misión</label><input v-model="currentChapter.subtitle" class="input-dark"></div>
+                        </div>
+
+                        <div class="card p-4 space-y-3">
+                            <div>
+                                <label class="section-title">Tipo de Nodo</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <button @click="setChapterType('normal')" :class="{active:currentChapter.type==='normal'}" class="format-btn">📖 Capítulo</button>
+                                    <button @click="setChapterType('sidestory')" :class="{active:currentChapter.type==='sidestory'}" class="format-btn">🌿 Side Story</button>
+                                    <button @click="setChapterType('midboss')" :class="{active:currentChapter.type==='midboss'}" class="format-btn">💀 Mid-Boss</button>
+                                    <button @click="setChapterType('finalboss')" :class="{active:currentChapter.type==='finalboss'}" class="format-btn">👑 Final Boss</button>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                Si conviertes un nodo en side story, el editor le asigna un capítulo padre y luego puedes reanclarlo arrastrándolo.
+                            </div>
                         </div>
 
                         <div v-if="currentChapter.type==='sidestory'" class="grid grid-cols-2 gap-4">
@@ -549,19 +582,118 @@
                     <input type="file" ref="charZipInput" accept=".zip" @change="handleFileSelect('chars',$event)" class="hidden">
                 </div>
             </div>
-            <div class="p-3 border-t border-[#1e2a3a] space-y-2">
-                <p class="section-title">⚡ Generar Move List</p>
-                <select v-model="mlGenChar" class="input-dark text-xs">
-                    <option value="">-- Personaje --</option>
-                    <option v-for="u in charAvailable" :value="u.name">{{ u.name }}</option>
-                </select>
-                    {{ mlGenLoading ? '⏳ Analizando .cmd...' : '⚡ Generar desde .cmd' }}
-                </button>
-                <div v-if="mlGenResult" class="text-[10px] bg-green-900/20 text-green-400 p-2 rounded">{{ mlGenResult }}</div>
-                <div v-if="mlGenError" class="text-[10px] bg-red-900/20 text-red-400 p-2 rounded">{{ mlGenError }}</div>
-            </div>
             <div v-if="msg.chars" class="p-3"><div class="text-xs font-bold text-center rounded py-2 px-2" :class="msgType.chars==='ok'?'bg-green-900/20 text-green-400':'bg-red-900/20 text-red-400'">{{msg.chars}}</div></div>
         </aside>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- MOVE LISTS TAB                                                 -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div v-if="activeTab==='movelists'" class="flex flex-1 overflow-hidden">
+        <aside class="w-72 border-r border-[#1e2a3a] bg-[#0a0e14] flex flex-col overflow-hidden flex-shrink-0">
+            <div class="panel-header flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-sm text-orange-400">⚡ Move Lists</span>
+                    <span class="badge badge-blue">{{ movelistChars.length }}</span>
+                </div>
+                <button @click="loadMovelistCatalog()" class="text-[10px] bg-orange-600/70 px-2 py-0.5 rounded font-bold text-white hover:bg-orange-500">↻</button>
+            </div>
+            <div class="p-3 border-b border-[#1e2a3a]">
+                <input v-model="movelistSearch" placeholder="Buscar personaje..." class="input-dark text-xs">
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scroll">
+                <div v-if="movelistLoading && movelistChars.length===0" class="text-xs text-gray-600 text-center py-8">Cargando personajes...</div>
+                <button v-for="char in filteredMovelistChars" :key="'ml-'+char.name"
+                        @click="selectMovelistChar(char.name)"
+                        class="w-full text-left px-3 py-2.5 border-b border-[#1e2a3a]/50 hover:bg-[#1a2332] transition"
+                        :class="selectedMovelistChar===char.name?'bg-orange-950/20 border-l-4 border-l-orange-500':''">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-sm font-medium truncate">{{ char.name }}</span>
+                        <span class="badge" :class="char.hasJson?'badge-green':'badge-yellow'">{{ char.hasJson ? 'json' : 'nuevo' }}</span>
+                    </div>
+                </button>
+                <div v-if="!movelistLoading && filteredMovelistChars.length===0" class="text-xs text-gray-600 text-center py-8">No hay personajes que coincidan.</div>
+            </div>
+        </aside>
+
+        <div class="flex-1 overflow-y-auto custom-scroll p-5 bg-[#0c1018]">
+            <div v-if="selectedMovelistChar" class="max-w-5xl mx-auto space-y-4">
+                <div class="card p-4 flex items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-orange-400">{{ selectedMovelistChar }}</h2>
+                        <p class="text-xs text-gray-500 mt-1">
+                            {{ selectedMovelistMeta && selectedMovelistMeta.hasJson ? 'Edita el movelist.json existente.' : 'Este personaje aún no tiene movelist.json.' }}
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap justify-end">
+                        <button @click="generateSelectedMovelist" class="btn-secondary text-xs" :disabled="movelistGenerating || !selectedMovelistChar">
+                            {{ movelistGenerating ? '⏳ Generando...' : '⚡ Generar desde .cmd' }}
+                        </button>
+                        <button @click="createEmptyMovelist" class="btn-secondary text-xs" :disabled="!selectedMovelistChar">+ Vacío</button>
+                        <button @click="saveMovelistEditor" class="btn-primary text-xs" :disabled="!movelistEditor || movelistLoading">💾 Guardar Move List</button>
+                    </div>
+                </div>
+
+                <div v-if="movelistMsg" class="text-xs font-bold rounded py-2 px-3"
+                     :class="movelistMsgOk ? 'bg-green-900/20 text-green-400' : 'bg-amber-900/20 text-amber-300'">
+                    {{ movelistMsg }}
+                </div>
+
+                <div v-if="movelistEditor" class="space-y-4">
+                    <div class="card p-4 grid grid-cols-3 gap-4">
+                        <div><label class="section-title">Nombre visible</label><input v-model="movelistEditor.character" class="input-dark"></div>
+                        <div><label class="section-title">Carpeta</label><input v-model="movelistEditor.charFolder" class="input-dark"></div>
+                        <div><label class="section-title">Versión</label><input v-model="movelistEditor.version" class="input-dark"></div>
+                    </div>
+
+                    <div class="card p-4 space-y-4">
+                        <div class="flex items-center justify-between gap-4 border-b border-[#1e2a3a] pb-3">
+                            <div>
+                                <h3 class="font-bold text-gray-200">Secciones</h3>
+                                <p class="text-xs text-gray-500 mt-1">{{ movelistTotalMoves }} movimientos en {{ movelistEditor.sections.length }} secciones.</p>
+                            </div>
+                            <button @click="addMovelistSection" class="btn-secondary text-xs">+ Sección</button>
+                        </div>
+
+                        <div v-if="movelistEditor.sections.length===0" class="text-sm text-gray-600 text-center py-6">
+                            Agrega una sección para empezar a cargar movimientos.
+                        </div>
+
+                        <div v-for="(section,sI) in movelistEditor.sections" :key="'ml-section-'+sI" class="card p-4 bg-[#0d1219] space-y-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-3 flex-1">
+                                    <input v-model="section.name" class="input-dark max-w-xs" placeholder="Nombre de sección">
+                                    <span class="badge badge-blue">{{ section.moves.length }} movs</span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button @click="addMovelistMove(sI)" class="btn-secondary text-xs">+ Movimiento</button>
+                                    <button @click="removeMovelistSection(sI)" class="btn-danger text-xs">🗑️</button>
+                                </div>
+                            </div>
+
+                            <div v-if="section.moves.length===0" class="text-xs text-gray-600 text-center py-4 bg-[#0a0e14] rounded border border-[#1e2a3a]">
+                                Esta sección aún no tiene movimientos.
+                            </div>
+
+                            <div v-for="(move,mI) in section.moves" :key="'ml-move-'+sI+'-'+mI" class="grid grid-cols-12 gap-2 items-center">
+                                <input v-model="move.name" class="input-dark col-span-5" placeholder="Nombre del movimiento">
+                                <input v-model="move.input" class="input-dark col-span-4" placeholder="Combinación">
+                                <select v-model="move.type" class="input-dark col-span-2 text-xs">
+                                    <option value="normal">Normal</option>
+                                    <option value="special">Especial</option>
+                                    <option value="super">Super</option>
+                                </select>
+                                <button @click="removeMovelistMove(sI,mI)" class="text-red-400 hover:text-red-300 text-xs">✕</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-else class="h-full flex items-center justify-center text-gray-600 text-sm">
+                ← Selecciona un personaje para editar su move list
+            </div>
+        </div>
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -655,7 +787,8 @@ createApp({
         msg:{chars:'',stages:''}, msgType:{chars:'ok',stages:'ok'},
         dragState:{type:null,idx:null},
         storyDragIndex:-1, storyDropIndex:-1,
-        mlGenChar:'', mlGenLoading:false, mlGenResult:'', mlGenError:''
+        movelistChars:[], movelistSearch:'', selectedMovelistChar:'', movelistEditor:null,
+        movelistLoading:false, movelistGenerating:false, movelistMsg:'', movelistMsgOk:true
     }},
     computed: {
         currentArc(){ return this.selectedArcIndex>=0?this.catalog[this.selectedArcIndex]:null },
@@ -694,7 +827,24 @@ createApp({
         filteredStageRoster(){ if(!this.stageSearch)return this.stageRoster; const q=this.stageSearch.toLowerCase();return this.stageRoster.filter(s=>(this.stageNameMap[s]||s).toLowerCase().includes(q)) },
         uniqueEnemies(){ if(!this.currentArc||!this.currentArc.chapters)return 0;const s=new Set();this.currentArc.chapters.forEach(ch=>(ch.p2||[]).forEach(p=>s.add(p)));return s.size },
         storyboardSagas(){ const s=new Set();this.storyboardList.forEach(x=>s.add(x.saga));return Array.from(s).sort() },
-        sbAssetList(){ const a=[];this.storyboardList.forEach(sb=>{if(sb.spr)a.push(sb.spr);if(sb.snd)a.push(sb.snd)});return[...new Set(a)].sort() }
+        sbAssetList(){ const a=[];this.storyboardList.forEach(sb=>{if(sb.spr)a.push(sb.spr);if(sb.snd)a.push(sb.snd)});return[...new Set(a)].sort() },
+        currentArcTimelineHeight(){
+            const values=Object.values(this.currentArcChapterMap||{});
+            let maxDepth=0;
+            values.forEach(info=>{ maxDepth=Math.max(maxDepth, info.depth||0); });
+            return 152 + maxDepth * 54;
+        },
+        filteredMovelistChars(){
+            const q=this.movelistSearch.trim().toLowerCase();
+            return this.movelistChars.filter(char=>!q || char.name.toLowerCase().includes(q));
+        },
+        selectedMovelistMeta(){
+            return this.movelistChars.find(char=>char.name===this.selectedMovelistChar) || null;
+        },
+        movelistTotalMoves(){
+            if(!this.movelistEditor||!Array.isArray(this.movelistEditor.sections))return 0;
+            return this.movelistEditor.sections.reduce((total, section)=>total + ((section.moves||[]).length), 0);
+        }
     },
     methods: {
         // ── Node helpers ──
@@ -764,16 +914,33 @@ createApp({
                 assignChildren(idx);
             });
 
+            const depthOf={};
+            const resolveDepth=(idx)=>{
+                if(depthOf[idx]!=null)return depthOf[idx];
+                const parentIdx=Number.isInteger(parentOf[idx])?parentOf[idx]:-1;
+                if(parentIdx<0){
+                    depthOf[idx]=0;
+                    return 0;
+                }
+                depthOf[idx]=resolveDepth(parentIdx)+1;
+                return depthOf[idx];
+            };
+
             const map={};
             chapters.forEach((chapter,idx)=>{
                 const parentIdx=Number.isInteger(parentOf[idx])?parentOf[idx]:-1;
                 map[idx]={
                     label:labels[idx]||String(idx+1),
                     parentIdx,
-                    parentLabel:parentIdx>=0?(labels[parentIdx]||String(parentIdx+1)):''
+                    parentLabel:parentIdx>=0?(labels[parentIdx]||String(parentIdx+1)):'',
+                    depth:resolveDepth(idx)
                 };
             });
             return map;
+        },
+        chapterNodeStyle(idx){
+            const info=this.currentArcChapterMap[idx]||{};
+            return {marginTop:`${(info.depth||0)*54}px`};
         },
         nodeClass(type){
             const m={normal:'node-normal',sidestory:'node-sidestory',midboss:'node-midboss',finalboss:'node-finalboss'};
@@ -850,6 +1017,22 @@ createApp({
         bulkToggleSlotLock(){
             if(this.sel.chars.size===0)return;
             this.bulkAction('chars', this.selectedCharsAllLocked() ? 'slotunlock' : 'slotlock');
+        },
+
+        setChapterType(type){
+            if(!this.currentChapter)return;
+            this.currentChapter.type=type;
+            if(type==='sidestory'){
+                const parentIdx=this.suggestedSideParentIndex();
+                if(parentIdx>=0&&parentIdx!==this.selectedChapterIndex){
+                    const parent=this.currentArc.chapters[parentIdx];
+                    this.currentChapter.sideUnlockAfter=this.ensureChapterId(parent,'cap');
+                }else{
+                    this.currentChapter.sideUnlockAfter='';
+                }
+            }else{
+                delete this.currentChapter.sideUnlockAfter;
+            }
         },
 
         // ── Battle format ──
@@ -1105,6 +1288,162 @@ createApp({
                 this.charUnused=d.unused||[];
             }catch(e){this.showMsg('chars','Error','err')}
         },
+        buildEmptyMovelist(charName){
+            return {
+                character:charName||'',
+                charFolder:charName||'',
+                version:'1.0',
+                generated:'editor',
+                sections:[{name:'Especiales',moves:[]}]
+            };
+        },
+        isImportantMovelistMove(move){
+            const name=((move&&move.name)||'').trim().toLowerCase();
+            const input=((move&&move.input)||'').trim().toUpperCase();
+            if(!name)return false;
+            if (/^(ff|bb|dash|run|walk|recovery|taunt)$/.test(name)) return false;
+            if (/^[abcxyzswd]$/.test(name)) return false;
+            if (/^(up|down|back|fwd|forward|air|jump|crouch|stand)[_-]?[abcxyz]$/.test(name)) return false;
+            if (/(jutsu|special|super|ultimate|secret|ougi|awakening|skill|technique|finisher)/.test(name)) return true;
+            if (/(QCF|QCB|DP|RDP|HCF|HCB|CHARGE)/.test(input)) return true;
+            if (((input.match(/[UDBF]/g) || []).length >= 2) && /[ABCXYZ]/.test(input)) return true;
+            if (/\+/.test(input) && /[ABCXYZ]/.test(input)) return true;
+            return false;
+        },
+        normalizeMovelistData(data,charName){
+            const base=this.buildEmptyMovelist(charName);
+            const safe={...base,...(data||{})};
+            safe.character=safe.character||charName||'';
+            safe.charFolder=safe.charFolder||charName||'';
+            safe.sections=Array.isArray(safe.sections)?safe.sections.map(section=>({
+                name:(section&&section.name)||'Nueva sección',
+                moves:Array.isArray(section&&section.moves)?section.moves.map(move=>({
+                    name:(move&&move.name)||'',
+                    input:(move&&move.input)||'',
+                    type:(move&&move.type)||'special'
+                })).filter(move=>this.isImportantMovelistMove(move)):[] 
+            })).filter(section=>section.moves.length > 0):[];
+            return safe;
+        },
+        setMovelistMsg(message,ok=true){
+            this.movelistMsg=message;
+            this.movelistMsgOk=ok;
+        },
+        async loadMovelistCatalog(){
+            this.movelistLoading=true;
+            this.movelistMsg='';
+            try{
+                const [charsResp, listResp] = await Promise.all([
+                    fetch('/api/chars'),
+                    fetch('/api/movelist/list')
+                ]);
+                const charsData = await charsResp.json();
+                const listData = await listResp.json();
+                if(charsData.error)throw new Error(charsData.error);
+                if(listData.error)throw new Error(listData.error);
+                const hasJson = new Set(listData.chars || []);
+                this.movelistChars = (charsData.available || []).map(item=>({
+                    name:item.name,
+                    hasJson:hasJson.has(item.name)
+                }));
+                if(!this.selectedMovelistChar || !this.movelistChars.some(char=>char.name===this.selectedMovelistChar)){
+                    this.selectedMovelistChar=this.movelistChars[0]?this.movelistChars[0].name:'';
+                }
+                if(this.selectedMovelistChar){
+                    await this.loadMovelistEditor(this.selectedMovelistChar);
+                }else{
+                    this.movelistEditor=null;
+                }
+            }catch(e){
+                this.setMovelistMsg('No se pudo cargar la lista de personajes.',false);
+            }
+            this.movelistLoading=false;
+        },
+        async selectMovelistChar(charName){
+            if(!charName)return;
+            this.selectedMovelistChar=charName;
+            await this.loadMovelistEditor(charName);
+        },
+        async loadMovelistEditor(charName){
+            this.movelistLoading=true;
+            try{
+                const r=await fetch('/api/movelist/get?char='+encodeURIComponent(charName));
+                const d=await r.json();
+                if(d.movelist){
+                    this.movelistEditor=this.normalizeMovelistData(d.movelist,charName);
+                    this.setMovelistMsg('Move list cargada.',true);
+                }else{
+                    this.movelistEditor=this.buildEmptyMovelist(charName);
+                    this.setMovelistMsg('Ese personaje todavía no tiene movelist.json.',false);
+                }
+            }catch(e){
+                this.movelistEditor=this.buildEmptyMovelist(charName);
+                this.setMovelistMsg('No se pudo leer la move list.',false);
+            }
+            this.movelistLoading=false;
+        },
+        createEmptyMovelist(){
+            if(!this.selectedMovelistChar)return;
+            this.movelistEditor=this.buildEmptyMovelist(this.selectedMovelistChar);
+            this.setMovelistMsg('Move list vacía creada en memoria. Guarda para escribirla.',true);
+        },
+        async generateSelectedMovelist(){
+            if(!this.selectedMovelistChar)return;
+            this.movelistGenerating=true;
+            try{
+                const r=await fetch('/api/movelist/generate?char='+encodeURIComponent(this.selectedMovelistChar));
+                const d=await r.json();
+                if(d.success){
+                    this.movelistEditor=this.normalizeMovelistData(d.movelist,this.selectedMovelistChar);
+                    this.movelistChars=this.movelistChars.map(char=>char.name===this.selectedMovelistChar?{...char,hasJson:true}:char);
+                    let total=0;(d.movelist.sections||[]).forEach(section=>total+=(section.moves||[]).length);
+                    this.setMovelistMsg(`${total} movimientos generados desde .cmd.`,true);
+                }else{
+                    this.setMovelistMsg(d.error||'No se pudo generar la move list.',false);
+                }
+            }catch(e){
+                this.setMovelistMsg('Error de conexión al generar la move list.',false);
+            }
+            this.movelistGenerating=false;
+        },
+        async saveMovelistEditor(){
+            if(!this.selectedMovelistChar||!this.movelistEditor)return;
+            try{
+                const payload=this.normalizeMovelistData(this.movelistEditor,this.selectedMovelistChar);
+                payload.generated='editor';
+                const r=await fetch('/api/movelist/save',{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({char:this.selectedMovelistChar,movelist:payload})
+                });
+                const d=await r.json();
+                if(d.success){
+                    this.movelistEditor=payload;
+                    this.movelistChars=this.movelistChars.map(char=>char.name===this.selectedMovelistChar?{...char,hasJson:true}:char);
+                    this.setMovelistMsg('Move list guardada.',true);
+                }else{
+                    this.setMovelistMsg(d.error||'No se pudo guardar la move list.',false);
+                }
+            }catch(e){
+                this.setMovelistMsg('Error al guardar la move list.',false);
+            }
+        },
+        addMovelistSection(){
+            if(!this.movelistEditor)return;
+            this.movelistEditor.sections.push({name:'Nueva sección',moves:[]});
+        },
+        removeMovelistSection(sectionIdx){
+            if(!this.movelistEditor)return;
+            this.movelistEditor.sections.splice(sectionIdx,1);
+        },
+        addMovelistMove(sectionIdx){
+            if(!this.movelistEditor||!this.movelistEditor.sections[sectionIdx])return;
+            this.movelistEditor.sections[sectionIdx].moves.push({name:'Nuevo movimiento',input:'',type:'special'});
+        },
+        removeMovelistMove(sectionIdx,moveIdx){
+            if(!this.movelistEditor||!this.movelistEditor.sections[sectionIdx])return;
+            this.movelistEditor.sections[sectionIdx].moves.splice(moveIdx,1);
+        },
         async saveChars(){ try{let r=await fetch('/api/chars/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roster:this.charRoster})});let d=await r.json();if(d.success){this.showMsg('chars','Guardado ✓','ok');this.loadChars();this.loadData()}else this.showMsg('chars',d.error,'err')}catch(e){this.showMsg('chars','Error','err')} },
         async loadStages(){ try{let r=await fetch('/api/stages');let d=await r.json();if(d.error)return this.showMsg('stages',d.error,'err');this.stageRoster=d.roster||[];this.stageAvailable=d.available||[];this.stageUnused=d.unused||[];this.stageNameMap=d.name_map||{}}catch(e){this.showMsg('stages','Error','err')} },
         async saveStages(){ try{let r=await fetch('/api/stages/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({stages:this.stageRoster})});let d=await r.json();if(d.success){this.showMsg('stages','Guardado ✓','ok');this.loadData()}else this.showMsg('stages',d.error,'err')}catch(e){this.showMsg('stages','Error','err')} },
@@ -1155,7 +1494,7 @@ createApp({
                 delete item.sideUnlockAfter;
             }
 
-            const insertAt=Math.min(chapters.length, from<i ? i : i+1);
+            const insertAt=Math.max(0, Math.min(chapters.length, i));
             chapters.splice(insertAt,0,item);
             this.selectedChapterIndex=selected?chapters.indexOf(selected):chapters.indexOf(item);
             this.onChapterDragEnd();
@@ -1185,18 +1524,6 @@ createApp({
             const it=l.splice(this.dragState.idx,1)[0];
             l.splice(i,0,it);
             this.dragState={type:null,idx:null};
-        },
-        async generateMovelist(){
-            this.mlGenLoading=true;this.mlGenResult='';this.mlGenError='';
-            try{
-                let r=await fetch('/api/movelist/generate?char='+encodeURIComponent(this.mlGenChar));
-                let d=await r.json();
-                if(d.success){
-                    let total=0;(d.movelist.sections||[]).forEach(s=>total+=s.moves.length);
-                    this.mlGenResult=total+' movimientos generados ✓ → moves/'+this.mlGenChar+'/movelist.json';
-                }else this.mlGenError=d.error||'Error';
-            }catch(e){this.mlGenError='Error de conexión'}
-            this.mlGenLoading=false;
         },
         showMsg(t,m,tp){ this.msg[t]=m;this.msgType[t]=tp;setTimeout(()=>this.msg[t]='',4000) }
     },

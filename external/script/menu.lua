@@ -483,11 +483,38 @@ end
 
 menu.movelistChar = 1
 menu.commandlistDebounce = 0
+menu.commandlistRepeatState = {u = 0, d = 0, b = 0, f = 0}
+
+function menu.f_commandlistRepeat(id, keys, delay, step)
+	local held = false
+	for _, pn in ipairs(main.t_players) do
+		for _, key in ipairs(keys) do
+			if commandGetState(main.t_cmd[pn], key) then
+				main.playerInput = pn
+				held = true
+				break
+			end
+		end
+		if held then
+			break
+		end
+	end
+	if held then
+		menu.commandlistRepeatState[id] = (menu.commandlistRepeatState[id] or 0) + 1
+		local d = delay or 10
+		local s = step or 2
+		return menu.commandlistRepeatState[id] == 1 or (menu.commandlistRepeatState[id] > d and (menu.commandlistRepeatState[id] - d) % s == 0)
+	end
+	menu.commandlistRepeatState[id] = 0
+	return false
+end
+
 function menu.f_init(initialItem)
 	esc(false)
 	togglePause(true)
 	main.pauseMenu = true
 	menu.itemname = ''
+	menu.commandlistRepeatState = {u = 0, d = 0, b = 0, f = 0}
 	main.f_bgReset(motif.optionbgdef.bg)
 	if gamemode('training') then
 		sndPlay(motif.files.snd_data, motif.training_info.enter_snd[1], motif.training_info.enter_snd[2])
@@ -553,6 +580,40 @@ local function f_hexColor(hex)
 	}
 end
 
+local function f_prettifyInput(str)
+	str = tostring(str or '')
+	local inputMap = {
+		['↖'] = 'UB',
+		['↗'] = 'UF',
+		['↙'] = 'DB',
+		['↘'] = 'DF',
+		['↑'] = 'U',
+		['↓'] = 'D',
+		['←'] = 'B',
+		['→'] = 'F',
+	}
+	for src, dst in pairs(inputMap) do
+		str = str:gsub(src, dst)
+	end
+	str = str:gsub('Hold%s+', 'Charge ')
+	str = str:gsub('rel%s+', 'Release ')
+	local motions = {
+		{'D%s*,%s*DF%s*,%s*F', 'QCF'},
+		{'D%s*,%s*DB%s*,%s*B', 'QCB'},
+		{'F%s*,%s*D%s*,%s*DF', 'DP'},
+		{'B%s*,%s*D%s*,%s*DB', 'RDP'},
+		{'B%s*,%s*DB%s*,%s*D%s*,%s*DF%s*,%s*F', 'HCF'},
+		{'F%s*,%s*DF%s*,%s*D%s*,%s*DB%s*,%s*B', 'HCB'},
+	}
+	for _, pattern in ipairs(motions) do
+		str = str:gsub(pattern[1], pattern[2])
+	end
+	str = str:gsub('%s*%+%s*', ' + ')
+	str = str:gsub('%s*,%s*', ', ')
+	str = str:gsub('%s+', ' ')
+	return str:match('^%s*(.-)%s*$')
+end
+
 local function f_movelistJson(ref)
 	local charData = start.f_getCharData(ref)
 	if type(charData) ~= 'table' then
@@ -597,24 +658,8 @@ local function f_movelistJsonToCommandlist(data)
 		special = f_hexColor('73B7FF'),
 		super = f_hexColor('FFC561'),
 	}
-	local inputMap = {
-		['↖'] = 'UB',
-		['↗'] = 'UF',
-		['↙'] = 'DB',
-		['↘'] = 'DF',
-		['↑'] = 'U',
-		['↓'] = 'D',
-		['←'] = 'B',
-		['→'] = 'F',
-	}
 	local function displayInput(str)
-		str = tostring(str or '')
-		for src, dst in pairs(inputMap) do
-			str = str:gsub(src, dst)
-		end
-		str = str:gsub('%s*%+%s*', ' + ')
-		str = str:gsub('%s+', ' ')
-		return str:match('^%s*(.-)%s*$')
+		return f_prettifyInput(str)
 	end
 	for _, section in ipairs(data.sections or {}) do
 		table.insert(out, {
@@ -730,6 +775,9 @@ end
 
 function menu.f_commandlistRender(section, t)
 	main.f_cmdInput()
+	if getKey() ~= '' then
+		resetKey()
+	end
 	local cmdList = {}
 	if t.commandlist ~= nil then
 		cmdList = t.commandlist
@@ -752,22 +800,22 @@ function menu.f_commandlistRender(section, t)
 		main.pauseMenu = false
 		menu.currentMenu[1] = menu.currentMenu[2]
 		return
-	elseif main.f_input(main.t_players, {'$B'}) and #menu.t_movelists > 1 then
+	elseif menu.f_commandlistRepeat('b', {'$B'}) and #menu.t_movelists > 1 then
 		sndPlay(motif.files.snd_data, motif[section].cursor_move_snd[1], motif[section].cursor_move_snd[2])
 		menu.movelistChar = menu.movelistChar - 1
 		if menu.movelistChar < 1 then
 			menu.movelistChar = #menu.t_movelists
 		end
-	elseif main.f_input(main.t_players, {'$F'}) and #menu.t_movelists > 1 then
+	elseif menu.f_commandlistRepeat('f', {'$F'}) and #menu.t_movelists > 1 then
 		sndPlay(motif.files.snd_data, motif[section].cursor_move_snd[1], motif[section].cursor_move_snd[2])
 		menu.movelistChar = menu.movelistChar + 1
 		if menu.movelistChar > #menu.t_movelists then
 			menu.movelistChar = 1
 		end
-	elseif main.f_input(main.t_players, {'$U'}) and t.tbl.movelistLine > 1 then
+	elseif menu.f_commandlistRepeat('u', {'$U'}) and t.tbl.movelistLine > 1 then
 		sndPlay(motif.files.snd_data, motif[section].cursor_move_snd[1], motif[section].cursor_move_snd[2])
 		t.tbl.movelistLine = t.tbl.movelistLine - 1
-	elseif main.f_input(main.t_players, {'$D'}) and t.tbl.movelistLine <= #cmdList - motif[section].movelist_window_visibleitems then
+	elseif menu.f_commandlistRepeat('d', {'$D'}) and t.tbl.movelistLine <= #cmdList - motif[section].movelist_window_visibleitems then
 		sndPlay(motif.files.snd_data, motif[section].cursor_move_snd[1], motif[section].cursor_move_snd[2])
 		t.tbl.movelistLine = t.tbl.movelistLine + 1
 	end
