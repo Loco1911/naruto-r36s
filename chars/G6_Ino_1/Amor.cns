@@ -1,0 +1,192 @@
+;===================================================================================
+;---------------- Confusion --------------------------------------------
+;---------------------------------------------------------------------------
+; Confusion - Stand
+[Statedef 16000]
+type = S
+physics = S
+sprpriority = 0
+
+[State 0, Turn]
+type = Turn
+trigger1 = p2bodydist x < -5
+
+[State 0, 1]
+type = ChangeAnim
+Triggerall = authorname = "CobraG6"
+trigger1 = (Anim != 0 && Anim != 5 && Anim != 2000 && Anim != 2005 && Anim != 11000 && Anim != 11005 && Anim != 13000 && Anim != 13005 && Anim != 15000 && Anim != 15005 && Anim != 17000 && Anim != 17005 && Anim != 19000 && Anim != 19005)
+trigger2 = (Anim = 5 || anim = 2005 || anim = 11005 || anim = 13005|| anim = 15005 || anim = 17005 || anim = 19005) && AnimTime = 0
+value = 0+var(11)
+
+[State 0, 1]
+type = ChangeAnim
+Triggerall = authorname != "CobraG6"
+trigger1 = Anim != 0 && Anim != 5
+trigger2 = Anim = 5 && AnimTime = 0
+value = 0
+
+[State 0, 2]
+type = VelSet
+trigger1 = Time = 0
+y = 0
+
+[State 0, 3]
+type = VelSet
+trigger1 = abs(vel x) < 2
+trigger2 = Time = 4
+x = 0
+
+[State 200, Andar]
+type = ChangeState
+trigger1 = random < 500;command = "a"
+value = 16020
+
+[State 0, VarAdd]
+type = VarAdd
+trigger1 = 1
+v = 6
+value = 1
+
+[State 0, SelfState]
+type = SelfState
+trigger1 = var(6) >= 150
+value = 0
+ctrl = 1
+;---------------------------------------------------------------------------
+; Confusion - Intro
+[Statedef 16002]
+type = S
+physics = S
+sprpriority = 0
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+x = 0
+y = 0
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 5
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+Triggerall = authorname != "CobraG6"
+trigger1 = time = 0
+value = 5300
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+Triggerall = authorname = "CobraG6"
+trigger1 = time = 0
+value = 5300+(var(10))
+
+[State 0, VarAdd]
+type = Varset
+trigger1 = time = 0
+v = 6
+value = 0
+
+[State 200, Stand]
+type = ChangeState
+trigger1 = time = 45
+value = 16000
+;---------------------------------------------------------------------------
+; Confusion Andar
+[Statedef 16020]
+type    = S
+movetype= H
+physics = N
+sprpriority = 1
+velset = 1.2,0
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+Triggerall = authorname != "CobraG6"
+trigger1 = time = 0
+value = 20
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+Triggerall = authorname = "CobraG6"
+trigger1 = time = 0
+value = 20+var(11)
+
+[State 0, VarAdd]
+type = VarAdd
+trigger1 = 1
+v = 6
+value = 1
+
+[State 0, VarAdd]
+type = VarAdd
+trigger1 = ailevel = 0 && command = "a" || command = "b" || command = "c"
+trigger2 = ailevel > 0 && roundstate = 2 && random = [400,600]
+v = 6
+value = 10
+
+[State 0, SelfState]
+type = SelfState
+trigger1 = var(6) >= 150
+value = 0
+ctrl = 1
+
+[State 100: ChangeState]
+type = ChangeState
+trigger1 = p2bodydist x < 5;command != "hold_b"
+value = 16021
+;---------------------------------------------------------------------------
+; Confusion - Intro
+[Statedef 16021]
+type = S
+physics = S
+sprpriority = 0
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+x = 0
+y = 0
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+Triggerall = authorname != "CobraG6"
+trigger1 = time = 0
+value = 5300
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+Triggerall = authorname = "CobraG6"
+trigger1 = time = 0
+value = 5300+(var(10))
+
+[State 0, VarAdd]
+type = VarAdd
+trigger1 = 1
+v = 6
+value = 1
+
+[State 0, VarAdd]
+type = VarAdd
+trigger1 = ailevel = 0 && command = "a" || command = "b" || command = "c"
+trigger2 = ailevel > 0 && roundstate = 2 && random = [400,600]
+v = 6
+value = 10
+
+[State 0, SelfState]
+type = SelfState
+trigger1 = var(6) >= 150
+value = 0
+ctrl = 1

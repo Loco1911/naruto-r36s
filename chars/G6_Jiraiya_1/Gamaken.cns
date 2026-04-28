@@ -1,0 +1,1220 @@
+;===================================================================================
+;---------------- Gamaken --------------------------------------------
+;===============================================================================
+; Gamaken:
+;-------------------------------------------------------------------------------
+; Gamaken - Start
+[Statedef 3400]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3400
+sprpriority = -1
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+
+[State 0, Life]
+type = ParentVarSet
+trigger1 = time = 0
+v = 19
+value = 1000
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 5
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,28
+volume = 50
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 10
+value = S0,23
+volume = 999
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = time = 0
+time = 30
+freq = 60
+ampl = -8
+phase = 90
+
+[State 1501, Explod]
+type = Explod
+trigger1 = time = 0
+anim = 3030
+ID = 9037
+pos = 0,10
+postype = p1
+facing = -1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = 1,1
+sprpriority = 7
+ontop = 0
+ownpal = 1
+removeongethit = 0
+ignorehitpause = 0
+
+[State 200, End]
+type = ChangeState
+trigger1 = time = 60
+value = 3401
+;---------------------------------------------------------------------------
+; Gamaken - Stand
+[Statedef 3401]
+type = S
+physics = S
+sprpriority = -1
+anim = 3450
+
+[State 0, Helper Tiempo]
+type = Helper
+trigger1 = prevstateno = 3400 && time = 0
+helpertype = normal
+name = "Helper Tiempo"
+ID = 33100
+stateno = 33100
+pos = 0,0
+postype = p1
+
+[State 0, Turn]
+type = Turn
+triggerall = parent,var(18) = 1 && parent,stateno = 3001
+trigger1 = p2bodydist x < -50
+
+[State 0, Turn]
+type = Turn
+triggerall = parent,var(18) = 0
+trigger1 = p2bodydist x < -50
+
+[State 0, 2]
+type = VelSet
+trigger1 = Time = 0
+y = 0
+
+[State 0, 3]
+type = VelSet
+trigger1 = abs(vel x) < 2
+trigger2 = Time = 4
+x = 0
+
+; Jiraiya Controlando:
+
+[State 0, Walk FWD]
+type = ChangeState
+Triggerall = parent,var(18) = 1 && parent,stateno != 504
+triggerall = time >= 5
+Triggerall = parent,var(18) = 1 && parent,stateno = 3001
+Trigger1 = parent,command = "holdfwd"
+value = 3420
+
+[State 0, Walk Back]
+type = ChangeState
+triggerall = time >= 5
+Triggerall = parent,var(18) = 1 && parent,stateno = 3001
+Trigger1 = parent,command = "holdback"
+value = 3421
+
+;-----------------------
+[State 0, ChangeState]
+type = Changestate
+trigger1 = parent,var(19) <= 0
+trigger2 = parent,win
+trigger3 = parent,drawgame
+trigger4 = parent,lose
+trigger5 = parent,var(2) = 1
+trigger6 = numhelper(33100) = 0
+value = 3402
+;-------------------------------------------------------------------------------
+; Helper Tiempo
+[Statedef 33100]
+type    = S
+movetype= I
+physics = N
+juggle  = 1
+anim = 9999
+
+[State 200, End]
+type = Destroyself
+trigger1 = time >= 3000
+trigger2 = root,var(2) = 1
+trigger3 = numhelper(3400) = 0
+;----------------------
+; Gamaken - Desaparecer
+;----------------------
+[Statedef 3402]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3401
+sprpriority = -1
+
+[State 0, ParentVarSet]
+type = ParentVarSet
+trigger1 = time = 0
+v = 19
+value = 0
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 10
+value = S5,28
+volume = 50
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = time = 10
+time = 30
+freq = 60
+ampl = -8
+phase = 90
+
+[State 1501, Explod]
+type = Explod
+trigger1 = time = 10
+anim =  3030
+ID = 9037
+pos = 0,10
+postype = p1
+facing = -1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = 1,1
+sprpriority = 7
+ontop = 0
+ownpal = 1
+removeongethit = 0
+ignorehitpause = 0
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 5
+
+[State 200, End]
+type = Destroyself
+trigger1 = animtime = 0
+;---------------------------------------
+; Walk FWD
+;--------------------------------------
+[Statedef 3420]
+type    = S
+physics = S
+sprpriority = -1
+
+[State 0, Walk Stop Powercharge]
+type = ChangeState
+Triggerall = parent,var(18) = 1 && parent,stateno = 504
+trigger1 = 1
+value = 3401
+
+[State 20, 1]
+type = VelSet
+trigger1 = parent,var(18) = 0
+trigger2 = parent,var(18) = 1 && parent,var(9) = 0 && parent,command = "holdfwd"
+trigger3 = parent,var(18) = 1 && parent,var(9) = 1
+x = const(velocity.walk.fwd.x)-1
+
+[State 20, 3]
+type = ChangeAnim
+triggerall = parent,var(18) = 1
+triggerall = vel x > 0
+trigger1 = (Anim != 3460 && Anim != 5)
+trigger2 = (Anim = 5) && AnimTime = 0
+value = 3460
+
+[State 20, 3]
+type = ChangeAnim
+triggerall = parent,var(18) = 0
+triggerall = vel x > 0
+trigger1 = (Anim != 34600 && Anim != 5)
+trigger2 = (Anim = 5) && AnimTime = 0
+value = 34600
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 2
+value = S20,3
+
+; Jiraiya Controlando:
+
+[State 0, Walk Back]
+type = ChangeState
+triggerall = parent,var(18) = 1 && parent,var(9) = 0
+triggerall = time >= 5
+trigger1 = command = "holdback"
+value = 3421
+
+[State 0, ChangeState]
+type = ChangeState
+trigger1 = parent,var(18) = 0 && p2bodydist x < 150
+trigger2 = parent,var(18) = 1 && parent,var(9) = 0 && parent,command != "holdfwd"
+trigger3 = parent,var(18) = 1 && parent,var(9) = 1 && p2bodydist x < 150
+value = 3401
+;---------------------------------------
+; Walk Back
+;--------------------------------------
+[Statedef 3421]
+type    = S
+physics = S
+sprpriority = -1
+
+[State 0, Walk Stop Powercharge]
+type = ChangeState
+Triggerall = parent,var(18) = 1 && parent,stateno = 504
+trigger1 = 1
+value = 3401
+
+[State 20, 1]
+type = VelSet
+trigger1 = parent,var(18) = 0
+trigger2 = parent,var(18) = 1 && parent,command = "holdback"
+x = const(velocity.walk.back.x)+1
+
+[State 20, 3]
+type = ChangeAnim
+triggerall = vel x < 0
+trigger1 = (Anim != 3461 && Anim != 5)
+trigger2 = (Anim = 5) && AnimTime = 0
+value = 3461
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 2
+value = S20,3
+
+; Jiraiya Controlando:
+
+[State 0, Walk FWD]
+type = ChangeState
+triggerall = parent,var(18) = 1
+triggerall = time >= 5
+trigger1 = command = "holdfwd"
+value = 3420
+
+[State 0, Golpe 1]
+type = ChangeState
+Triggerall = parent,var(18) = 1
+Trigger1 = parent,command = "a"
+value = 3430
+
+[State 0, Golpe 2]
+type = ChangeState
+Triggerall = parent,var(18) = 1
+Trigger1 = parent,command = "b"
+value = 3432
+
+[State 0, Golpe 3]
+type = ChangeState
+Triggerall = parent,var(18) = 1
+Trigger1 = parent,command = "c"
+value = 3433
+
+[State 0, ChangeState]
+type = ChangeState
+trigger1 = parent,var(18) = 0
+trigger2 = parent,var(18) = 1 && parent,command != "holdback"
+value = 3401
+;-------------------------------------------------------------------------------
+; Gamaken - Golpe Normal 1
+[Statedef 3430]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3420
+sprpriority = -1
+
+[State 0, Onda FX]
+type = Helper
+trigger1 = time = 0
+helpertype = normal
+name = "Onda FX"
+ID = 8510
+stateno = 8510
+pos = 0,-50
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+size.xscale = .5
+size.yscale = .5
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+
+[State 0, Pause]
+type = Pause
+trigger1 = movehit = 1
+time = 3
+movetime = 0
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 30
+value = S0,24
+volume = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 2
+value = S0,25
+volume = 999
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = time = 38
+time = 10
+ampl = -2
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = S, NA
+animtype  = heavy
+damage    = 40
+guardflag = MA
+pausetime = 0,0
+sparkno = -1
+guard.sparkno = s7000
+sparkxy = -8,-25
+hitsound   = S3,1
+guardsound = S4,1
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = -4,-5
+air.velocity = -4,-5
+Fall = 1
+getpower = 0,0
+sprpriority = -1
+
+[State 200, Spark CVS]
+type = Explod
+triggerall = Numexplod(7002) = 0
+trigger1 = Movehit = 1
+anim = 7012
+ID = 7002
+postype = P2
+pos = 0,-30
+facing = -1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = 0.5,0.5
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 200, Spark CVS]
+type = Explod
+triggerall = Numexplod(70021) = 0
+trigger1 = Movehit = 1
+anim = 7001
+ID = 70021
+postype = P2
+pos = 0,-30
+facing = -1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = .8,.8
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 200, End]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 3401
+;-------------------------------------------------------------------------------
+; Gamaken - Golpe Normal 2
+[Statedef 3432]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3430
+sprpriority = -1
+
+[State 0, Onda FX]
+type = Helper
+trigger1 = time = 0
+helpertype = normal
+name = "Onda FX"
+ID = 8510
+stateno = 8510
+pos = 0,-50
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+size.xscale = .5
+size.yscale = .5
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 30
+value = S0,24
+volume = 999
+
+[State 0, Pause]
+type = Pause
+trigger1 = movehit = 1
+time = 3
+movetime = 0
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = S, NA
+animtype  = Heavy
+damage    = 50
+guardflag = MA
+pausetime = 0,0
+sparkno = -1
+guard.sparkno = s7000
+sparkxy = -8,-25
+hitsound   = S2,3
+guardsound = S4,1
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = -2,-10
+air.velocity = -2,10
+Fall = 1
+getpower = 0,0
+sprpriority = -1
+
+[State 200, Spark CVS]
+type = Explod
+triggerall = Numexplod(7002) = 0
+trigger1 = Movehit = 1
+anim = 7012
+ID = 7002
+postype = P2
+pos = 0,-30
+facing = -1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = 0.7,0.7
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 200, Spark CVS]
+type = Explod
+triggerall = Numexplod(70021) = 0
+trigger1 = Movehit = 1
+anim = 7001
+ID = 70021
+postype = P2
+pos = 0,-30
+facing = -1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = 1,1
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 0, Suelo Roto]
+type = Explod
+trigger1 = time = 56
+anim = 360
+ID = 9031
+pos = 200,10
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .8,.8
+sprpriority = 6
+ontop = 0
+ownpal = 1
+removeongethit = 0
+supermovetime = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 56
+value = S3,1
+volume = 50
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = time = 56
+time = 10
+freq = 60
+ampl = -4
+phase = 90
+
+[State 200, End]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 3401
+;-------------------------------------------------------------------------------
+; Gamaken - Golpe Normal 3
+[Statedef 3433]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3440
+sprpriority = -1
+
+[State 0, Onda FX]
+type = Helper
+trigger1 = time = 0
+helpertype = normal
+name = "Onda FX"
+ID = 8510
+stateno = 8510
+pos = 0,-50
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+size.xscale = .5
+size.yscale = .5
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 30
+value = S0,24
+volume = 999
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = time = 50
+time = 5
+freq = 60
+ampl = -4
+phase = 90
+
+[State 0, Helper]
+type = Helper
+trigger1 = time = 50
+helpertype = normal
+name = "Suiton"
+ID = 3437
+stateno = 3437
+pos = 70,-100
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+size.xscale = .4
+size.yscale = .4
+
+[State 200, End]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 3401
+;-------------------------------------------------------------------------------
+; Waterball
+[Statedef 3437]
+type    = A
+movetype= A
+physics = N
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 1255
+sprpriority = 4
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 = 1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 3438
+time = 999999999
+ignorehitpause = 1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S4,22
+volume = 999
+
+[State 0, AngleDraw]
+type = AngleDraw
+trigger1 = 1
+value = -100
+ignorehitpause = 1
+
+[State 0, Trans]
+type = Trans
+trigger1 = 1
+trans = add
+ignorehitpause = 1
+
+[State 0, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = Noshadow
+ignorehitpause = 1
+
+[State 0, VelSet]
+type = Velset
+trigger1 = time = 0
+x = 10
+y = 2
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = A, NP
+animtype  = Heavy
+damage    = 50
+Hitflag = MAFDE
+guardflag = MA
+pausetime = 0,12
+sparkno = -1
+guard.sparkno = -1
+sparkxy = -8,-25
+hitsound   = S4,14
+guardsound = S4,1
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = -6,-8
+air.velocity = -6,-6
+Fall = 1
+getpower = 0,0
+Envshake.time = 20
+PalFX.time = 30
+PalFX.add = 0,0,100
+PalFX.mul = 256,256,256
+PalFX.sinadd = -10,-10,-10,10
+PalFX.invertall = 0
+PalFX.color = 256
+sprpriority = 3
+
+[State 0, Hit Spark]
+type = Explod
+triggerall = Numexplod(7001) = 0
+trigger1 = Movehit = 1
+anim = 7001
+ID = 7001
+postype = P2
+pos = 0,-30
+facing = -1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = .5,.5
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 0, Guard Spark]
+type = Explod
+triggerall = numexplod(7010) = 0
+trigger1 = moveguarded = 1
+anim = 7000
+ID = 7010
+postype = P2
+pos = 8,-30
+facing = 1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = .6,.6
+removeongethit = 1
+ontop = 1
+ignorehitpause = 1
+
+[State 200, End]
+type = ChangeState
+trigger1 = movecontact
+trigger2 = frontedgebodydist < 15
+trigger3 = time = 500
+trigger4 = pos y >= -20
+value = 3438
+;-------------------------------------------------------------------------------
+; Waterball Fin
+[Statedef 3438]
+type    = A
+movetype= I
+physics = N
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 9999
+sprpriority = 3
+
+[State 0, Water Explosion]
+type = Explod
+trigger1 = time = 0
+anim = 260
+ID = 260
+pos = 20,15
+postype = p1
+scale = .5,.5
+sprpriority = 3
+ontop = 1
+ownpal = 1
+ignorehitpause = 1
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = time = 0
+time = 20
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S4,25
+volume = 999
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 10
+;-------------------------------------------------------------------------------
+; Gamaken - Air Attack
+[Statedef 3439]
+type    = A
+movetype= A
+physics = A
+juggle  = 2
+ctrl = 0
+anim = 3449
+sprpriority = -1
+
+[State 0, Onda FX]
+type = Helper
+trigger1 = time = 0
+helpertype = normal
+name = "Onda FX"
+ID = 8510
+stateno = 8510
+pos = 0,-50
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+size.xscale = .5
+size.yscale = .5
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,24
+volume = 999
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+y = -4
+x = -2
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 20
+x = -4
+y = -6
+
+[State 0, Helper]
+type = Helper
+trigger1 = time = 20
+helpertype = normal
+name = "Suiton"
+ID = 3437
+stateno = 3437
+pos = 70,-100
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+size.xscale = .4
+size.yscale = .4
+
+[State 130, Stop Guarding]
+type = ChangeState
+Triggerall = time >= 5
+trigger1 = pos y >= -20
+value = 3441
+;===============================================================================
+; Escudo
+;-------------------------------------------------------------------------------
+[Statedef 3495]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3491
+sprpriority = -1
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 1
+
+[State 200, End]
+type = Changestate
+trigger1 = root,stateno != 3009
+value = 3401
+;===============================================================================
+; Escudo
+;-------------------------------------------------------------------------------
+[Statedef 3491]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3492
+sprpriority = -1
+
+[State 0]
+type = Helper
+trigger1 = time = 1
+helpertype = normal
+name = "doton"
+stateno = 3510
+ID = 3510
+pos = 0,0
+postype = p1
+facing = 1
+keyctrl = 1
+ownpal = 1
+size.xscale = 1
+size.yscale = 1
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 1
+
+[State 200, End]
+type = Changestate
+trigger1 = root,stateno != 3008
+value = 3401
+;---------------------------------------------------------------------------------------
+[Statedef 3510]
+type = S
+movetype = A
+physics = S
+anim = 3493
+sprpriority = 8
+ctrl = 0
+poweradd = 0
+
+[State 0]
+type = AngleDraw
+trigger1 = 1
+value = -20+var(1)
+scale = 1,1
+
+[State 0, PlaySnd]
+type = PlaySnd
+triggerall = time <= 140
+trigger1 = timemod = 10,0
+value = S5,51
+volume = 50
+
+[State 0]
+type = BindToParent
+trigger1 = 1
+time = 1
+pos = 60,-100
+
+[State 200, 1]
+type = HitDef
+triggerall = time <= 140
+trigger1 = timemod = 2,0
+attr = A, HP
+animtype  = Heavy
+damage    = 0,0
+Hitflag = MAFDE
+guardflag = MA
+pausetime = 0,ifelse(time > 147,12,0)
+sparkno = -1
+guard.sparkno = -1
+sparkxy = -8,-25
+hitsound   = -1
+guardsound = S4,1
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = ifelse(time > 147,-6,-1),ifelse(time > 147,-8,0)
+air.velocity = ifelse(time > 147,-6,-1),ifelse(time > 147,-8,0)
+Fall = ifelse(time > 147,1,0)
+PalFX.time = 30
+PalFX.add = -200,-200,-200
+PalFX.mul = 256,256,256
+PalFX.sinadd = 50,50,50,50
+PalFX.invertall = 0
+PalFX.color = 256
+sprpriority = 4
+getpower = 0,0
+
+[State 0]
+type = Trans
+trigger1 = time >= 150
+trans = addalpha
+alpha = 256-(10*(time-70)), 256
+
+[State 0]
+type = EnvShake
+trigger1 = timemod=5,0
+time = 20
+ampl = 3
+
+[State 0]
+type = DestroySelf
+trigger1 = parent,stateno != 3491
+;--------------------------------
+; JUMP;
+;---------------------------------
+[Statedef 3440]
+type    = S
+physics = S
+sprpriority = -1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S60,1
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 1
+y = -9
+
+[State 0, VelSet]
+type = VelSet
+triggerall = command = "holdfwd"
+trigger1 = time = 0
+x = 5
+
+[State 0, VelSet]
+type = VelSet
+triggerall = command = "holdback"
+trigger1 = time = 0
+x = -5
+
+[State 0, StateTypeSet]
+type = StateTypeSet
+trigger1 = time >= 1
+statetype = A
+physics = A
+
+[State 130, 1]
+type = ChangeAnim
+trigger1 = time = 0
+value = 3465
+
+[State 130, Stop Guarding]
+type = ChangeState
+Triggerall = time >= 5
+trigger1 = pos y >= -10
+value = 3441
+;---------------------------------
+; Land
+[Statedef 3441]
+type    = S
+physics = S
+sprpriority = -1
+
+[State 0, Explod]
+type = Explod
+trigger1 = time = 0
+anim = 9030
+ID = 9021
+pos = 50,-130
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .8,.8
+sprpriority = -1
+ontop = 0
+ownpal = 1
+removeongethit = 0
+supermovetime = 999
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S20,3
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+y = 0
+
+[State 130, 1]
+type = ChangeAnim
+trigger1 = time = 0
+value = 3450
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+trigger1 = time = 0
+id = 3447
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+trigger1 = time = 0
+id = 3446
+
+[State 130, Stop Guarding]
+type = ChangeState
+trigger1 = time = 10
+value = 3401
+;-------------------------------------------------------------------------------
+; Gamaken - Flecha P2
+[Statedef 3470]
+type    = S
+movetype= I
+physics = N
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 4070
+sprpriority = -1
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = 1
+x = enemy,pos x
+y = enemy,pos y -85
+
+[State 0, Trans]
+type = Trans
+trigger1 = 1
+trans = sub
+
+[State 0, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = noshadow
+ignorehitpause = 1
+
+[State 200, End]
+type = Destroyself
+trigger1 = root,var(18) = 0
+trigger2 = enemy,pos y < -10
+;--------------------------------
+; Golpeado
+;---------------------------------
+[Statedef 3480]
+type    = S
+physics = S
+movetype= H
+sprpriority = -1
+
+[State 0, PalFX]
+type = PalFX
+trigger1 = time = 0
+time = 15
+add = 100,0,0
+
+[State 0, ParentVaradd]
+type = ParentVaradd
+trigger1 = time = 0
+v = 19
+value = -gethitvar(damage)
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+y = 0
+
+[State 0, VelSet]
+type = Veladd
+trigger1 = time = 0
+x = ifelse(facing = 1,gethitvar(xvel)/2,-gethitvar(xvel)/2)
+
+[State 130, 1]
+type = ChangeAnim
+trigger1 = 1
+value = 3480
+
+[State 130, Hit Fin]
+type = ChangeState
+trigger1 = parent,var(19) > 0 && Hitover
+value = 3401
+
+[State 130, Hit Fin]
+type = ChangeState
+trigger1 = parent,var(19) <= 0 && Hitover
+value = 3402

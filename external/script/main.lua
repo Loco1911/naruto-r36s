@@ -46,6 +46,54 @@ end
 --Data loading from config.json
 config = json.decode(main.f_fileRead(main.flags['-config']))
 
+main.t_substitutionButtons = {
+	{command = 'a', displayname = 'A'},
+	{command = 'b', displayname = 'B'},
+	{command = 'c', displayname = 'C'},
+	{command = 'x', displayname = 'X'},
+	{command = 'y', displayname = 'Y'},
+	{command = 'z', displayname = 'Z'},
+}
+
+function main.f_getSubstitutionButtonIndex(value)
+	local defaultIndex = 4
+	if type(value) == 'number' and main.t_substitutionButtons[value] ~= nil then
+		return value
+	end
+	value = tostring(value or ''):lower()
+	for i, entry in ipairs(main.t_substitutionButtons) do
+		if entry.command == value then
+			return i
+		end
+	end
+	return defaultIndex
+end
+
+function main.f_getSubstitutionButtonCommand(value)
+	local idx = main.f_getSubstitutionButtonIndex(value)
+	return main.t_substitutionButtons[idx].command
+end
+
+function main.f_getSubstitutionButtonDisplay(value)
+	local idx = main.f_getSubstitutionButtonIndex(value)
+	return main.t_substitutionButtons[idx].displayname
+end
+
+function main.f_buildFightConfigLua(extraLua)
+	local idx = main.f_getSubstitutionButtonIndex(config.SubstitutionButton)
+	local lines = {'if roundstate() == 0 then'}
+	for i = 1, config.Players do
+		table.insert(lines, string.format('  charMapSet(%d, "_iksys_subButton", %d)', i, idx))
+	end
+	table.insert(lines, 'end')
+	if extraLua ~= nil and extraLua ~= '' then
+		table.insert(lines, extraLua)
+	end
+	return table.concat(lines, '\n')
+end
+
+config.SubstitutionButton = main.f_getSubstitutionButtonCommand(config.SubstitutionButton)
+
 --Data loading from stats.json
 stats = json.decode(main.f_fileRead(main.flags['-stats']))
 
@@ -1496,7 +1544,10 @@ function main.f_commandLine()
 	while loading() do
 		--do nothing
 	end
+	local lua = main.f_buildFightConfigLua('')
+	commonLuaInsert(lua)
 	local winner, t_gameStats = game()
+	commonLuaDelete(lua)
 	if main.flags['-log'] ~= nil then
 		main.f_printTable(t_gameStats, main.flags['-log'])
 	end
@@ -1543,6 +1594,8 @@ local function f_preloadList(v)
 end
 f_preloadList(motif.select_info.portrait_anim)
 f_preloadList(motif.select_info.portrait_spr)
+f_preloadList({9000, 2})
+f_preloadList({9000, 3})
 f_preloadList(motif.select_info.p1_face_anim)
 f_preloadList(motif.select_info.p1_face_spr)
 f_preloadList(motif.select_info.p2_face_anim)
@@ -1769,6 +1822,27 @@ function main.f_charParam(t, c)
 end
 
 main.dummySff = sffNew()
+main.t_selectSff = {}
+
+function main.f_getSelectSff(path)
+	if path == nil or path == '' then
+		return nil
+	end
+	path = tostring(path):gsub('\\', '/')
+	if main.t_selectSff[path] == nil then
+		main.t_selectSff[path] = sffNew(path)
+	end
+	return main.t_selectSff[path]
+end
+
+function main.f_getSelectSffAnim(path, group, item)
+	local sff = main.f_getSelectSff(path)
+	if sff == nil or group == nil or item == nil then
+		return nil
+	end
+	return animNew(sff, tostring(group) .. ', ' .. tostring(item) .. ', 0,0, -1')
+end
+
 function main.f_addChar(line, playable, loading, slot)
 	table.insert(main.t_selChars, {})
 	local row = #main.t_selChars
@@ -1854,17 +1928,41 @@ function main.f_addChar(line, playable, loading, slot)
 			main.t_unlockLua.chars[row] = unlock
 		end
 		--cell data
-		for _, v in pairs({{motif.select_info.portrait_anim, -1}, motif.select_info.portrait_spr}) do
-			if v[1] ~= -1 then
-				main.t_selChars[row].cell_data = animGetPreloadedData('char', main.t_selChars[row].char_ref, v[1], v[2])
-				if main.t_selChars[row].cell_data ~= nil then
-					animSetScale(
-						main.t_selChars[row].cell_data,
-						motif.select_info.portrait_scale[1] * main.t_selChars[row].portrait_scale / (main.SP_Viewport43[3] / main.SP_Localcoord[1]),
-						motif.select_info.portrait_scale[2] * main.t_selChars[row].portrait_scale / (main.SP_Viewport43[3] / main.SP_Localcoord[1]),
-						false
-					)
-					animUpdate(main.t_selChars[row].cell_data)
+		local function f_setCellData(a)
+			if a == nil then
+				return false
+			end
+			local cell_scale = tonumber(main.t_selChars[row].select_portrait_scale) or 1
+			local portrait_scale = tonumber(main.t_selChars[row].portrait_scale) or 1
+			-- Some chars report a portrait scale that is wildly larger than their actual 9000,0 icon.
+			-- Clamp those outliers for select-cell rendering and rely on per-char overrides when needed.
+			if portrait_scale > 2 then
+				portrait_scale = 1
+			end
+			animSetScale(
+				a,
+				motif.select_info.portrait_scale[1] * portrait_scale * cell_scale / (main.SP_Viewport43[3] / main.SP_Localcoord[1]),
+				motif.select_info.portrait_scale[2] * portrait_scale * cell_scale / (main.SP_Viewport43[3] / main.SP_Localcoord[1]),
+				false
+			)
+			animUpdate(a)
+			main.t_selChars[row].cell_data = a
+			return true
+		end
+		local portrait_group = tonumber(main.t_selChars[row].select_portrait_group)
+		local portrait_item = tonumber(main.t_selChars[row].select_portrait_item)
+		local portrait_sff = main.t_selChars[row].select_portrait_sff or main.t_selChars[row].select_sff
+		if main.t_selChars[row].cell_data == nil and portrait_sff ~= nil and portrait_sff ~= '' then
+			local group = portrait_group or (motif.select_info.portrait_spr and motif.select_info.portrait_spr[1])
+			local item = portrait_item or (motif.select_info.portrait_spr and motif.select_info.portrait_spr[2])
+			f_setCellData(main.f_getSelectSffAnim(portrait_sff, group, item))
+		end
+		if portrait_group ~= nil and portrait_item ~= nil then
+			f_setCellData(animGetPreloadedData('char', main.t_selChars[row].char_ref, portrait_group, portrait_item))
+		end
+		if main.t_selChars[row].cell_data == nil then
+			for _, v in pairs({{motif.select_info.portrait_anim, -1}, motif.select_info.portrait_spr}) do
+				if v[1] ~= -1 and f_setCellData(animGetPreloadedData('char', main.t_selChars[row].char_ref, v[1], v[2])) then
 					break
 				end
 			end

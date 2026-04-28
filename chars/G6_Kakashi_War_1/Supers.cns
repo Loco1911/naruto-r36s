@@ -1,0 +1,2020 @@
+;===============================================================================
+;-------------------------------------Supers------------------------------------
+;===============================================================================
+;===============================================================================
+; Kamui:
+;-------------------------------------------------------------------------------
+[Statedef 3000]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3000
+poweradd = -2000
+sprpriority = 2
+
+[State 0, Onda FX]
+type = Helper
+trigger1 = time = 60
+helpertype = normal
+name = "Onda FX"
+ID = 8510
+stateno = 8510
+pos = 3,-25
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+size.xscale = .5
+size.yscale = .5
+
+[State 0, PalFXWiz]
+type = PalFX
+trigger1 = time = 60
+time = 10
+add = 180,180,180
+mul = 256,256,256
+sinadd = 0,0,0,1
+color = 256
+removeongethit = 1
+[State 300, 1]
+type = PlaySnd
+trigger1 = time = 60
+value = S2,10
+volume = 999
+[State 300, 1]
+type = PlaySnd
+trigger1 = time = 60
+value = S2,10
+volume = 999
+
+[State 3000, SuperPause]
+type = SuperPause
+trigger1 = time = 0
+time = 30
+movetime = 30
+anim = -1
+sound = -1
+pos = 32,-80
+darken = 0
+unhittable = 1
+
+[State 3000, VarSet]
+type = Varset
+trigger1 = time = 0
+v = 12
+value = -100
+
+[State 3000, VarAdd]
+type = VarAdd
+trigger1 = time >= 20 && Var(12) < 0
+v = 12
+value = 6
+
+[State 3000, BGColorFX]
+type = BGPalFX
+trigger1 = Time > 0
+time = 1
+add = Var(12),Var(12),Var(12)
+
+[State 3000, Super Charge]
+type = Explod
+trigger1 = Time = 0
+anim = 7400
+ID = 7400
+pos = 2,-36
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = -1
+ownpal = 1
+scale = .9,.9
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 3000, PlaySnd - Super Charge]
+type = PlaySnd
+trigger1 = Time = 0
+value = S950,2
+volume = 50
+
+[State 0, Kamui]
+type = Helper
+trigger1 = animelem = 2
+helpertype = Player
+name = "Kamui"
+ID = 3050
+stateno = 3050
+pos = 60,-50
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 2
+value = S5,35
+volume = 50
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = animelem = 2
+time = 10
+freq = 60
+ampl = -2
+phase = 90
+
+[State 0, Sharingan FX]
+type = Helper
+trigger1 = animelem = 2
+helpertype = normal
+name = "Sharingan FX"
+ID = 585
+stateno = 585
+pos = 10,-35
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+trigger1 = time >= 120
+value = 3000
+elem = 3
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,51
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,51
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,51
+volume = 999
+
+[State 200, End]
+type = ChangeState
+trigger1 = time = 260
+trigger2 = helper(3050),movehit
+value = 3001
+;-------------------------------------------------------------------------------
+; Kamui - Fin
+[Statedef 3001]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+sprpriority = 2
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+trigger1 = time = 0
+value = 3000
+elem = ifelse((helper(3050),movehit),3,4)
+
+[State 200, End]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 3002
+ctrl = 0
+
+;-------------------------------------------------------------------------------
+; Kamui - Fin
+[Statedef 3002]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3002
+sprpriority = 2
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5000,3
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5000,3
+volume = 999
+
+[State 200, End]
+type = ChangeState
+trigger1 = Time = 50
+value = 0
+ctrl = 1
+;-------------------------------------------------------------------------------
+[Statedef 3005]
+type    = A
+movetype= H
+physics = N
+juggle  = 1
+velset = 0,0
+ctrl = 0
+sprpriority = 2
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 =  1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 5
+
+[State 0, AngleDraw]
+type = AngleDraw
+trigger1 = 1
+value = -1-(time*45)
+scale = 1-(time*.05),1-(time*.05)
+ignorehitpause = 1
+
+[State 0, PosAdd]
+type = PosAdd
+trigger1 = time = 20
+y = -500
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 =  1
+value = 0
+
+[State 0, AssertSpecial]
+type = AssertSpecial
+trigger1 =  time >= 20
+flag = noshadow
+ignorehitpause = 1
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+trigger1 = 1
+value = 5030+(ifelse(authorname = "CobraG6",var(10),0))
+elem = 1
+
+[State 0, PlayerPush]
+type = PlayerPush
+trigger1 = 1
+value = 0
+
+[State 0, LifeAdd]
+type = LifeAdd
+trigger1 = time = 30
+value = -250
+
+[State 200, End]
+type = changestate
+trigger1 = time = 30
+value = 3006
+;---------------------------------------------------------------------------
+; HITA_FALL (knocked up, falling)
+[Statedef 3006]
+type    = A
+movetype= H
+physics = N
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 =  1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 5
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 =  1
+value = 0
+
+[State 5050, 1] ;Change anim when done with transition
+type = ChangeAnim
+trigger1 = AnimTime = 0
+trigger1 = Anim = 5035+var(10)
+trigger2 = Time = 0     ;If no transition anim
+trigger2 = Anim != 5035+var(10)
+trigger2 = (Anim != [5051, 5059])+var(10) && (Anim != [5061, 5069])+var(10)
+trigger2 = Anim != 5090+var(10) ;Not if hit off ground anim
+value = 5050+var(10)
+
+[State 5050, 2] ;Coming down anim
+type = ChangeAnim
+trigger1 = (anim = [5050,5059])+var(10)
+trigger1 = Vel Y >= ifelse(anim = 5050+var(10), 1, -2)
+trigger1 = SelfAnimExist(anim+10)
+value = anim+10
+persistent = 0
+
+[State 5050, 3] ;Gravity
+type = VelAdd
+trigger1 = 1
+y = GetHitVar(yaccel)
+
+[State 5050, 6]
+type = Selfstate
+trigger1 = Vel Y > 0
+trigger1 = Pos Y >= ifelse((anim = [5051,5059])+var(10) || (anim = [5061,5069])+var(10), 0, 25)
+value = 5100 ;HIT_BOUNCE
+;-------------------------------------------------------------------------------
+; Kamui - Helper
+[Statedef 3050]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3050
+sprpriority = 3
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, VelSet]
+type = VelSet
+triggerall = root,var(9) = 0
+trigger1 = root,command = "holdback"
+x = -3
+
+[State 0, VelSet]
+type = VelSet
+triggerall = root,var(9) = 0
+trigger1 = root,command = "holdfwd"
+x = 3
+
+[State 0, VelSet]
+type = VelSet
+triggerall = root,var(9) = 0
+trigger1 = root,command = "holdup"
+y = -3
+
+[State 0, VelSet]
+type = VelSet
+triggerall = root,var(9) = 0
+trigger1 = root,command = "holddown"
+y = 3
+
+[State 0, VelSet]
+type = VelSet
+triggerall = root,var(9) = 0
+trigger1 = root,command != "holdfwd" && root,command != "holdback" && root,command != "holdup" && root,command != "holddown"
+x = 0
+y = 0
+
+[State 0, VelSet]
+type = VelSet
+triggerall = root,var(9) = 1
+trigger1 = 1
+x = ifelse(p2bodydist x > -10,2,-2)
+y = ifelse(p2bodydist y < 0,-2,0)
+
+[State 0, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = unguardable
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = A, HT
+animtype  = light
+damage    = 0
+Hitflag = MAFDE
+guardflag = MA
+pausetime = 0,0
+sparkno = -1
+guard.sparkno = -1
+sparkxy = -8,-45
+hitsound   = -1
+guardsound = -1
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = 0
+air.velocity = 0
+Fall = 0
+getpower = 0,0
+hitonce = 1
+sprpriority = -1
+p1stateno = 3051
+p2stateno = 3005
+
+[State 200, End]
+type = Destroyself
+trigger1 = parent,stateno != 3000
+;-------------------------------------------------------------------------------
+; Kamui - Helper - Hit
+[Statedef 3051]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3050
+sprpriority = -1
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = time% 10 = 0
+time = 6
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 25
+value = S5,33
+volume = 999
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = time = 25
+time = 20
+freq = 60
+ampl = -4
+phase = 90
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,34
+volume = 999
+
+[State 0, TargetBind]
+type = TargetBind
+trigger1 = time = 0
+pos = 0,0
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 25
+;===============================================================================
+; Raiju Hashiri no Jutsu:
+;-------------------------------------------------------------------------------
+[Statedef 3100]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3100
+poweradd = -2000
+sprpriority = 2
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,66
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,66
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,66
+volume = 999
+
+[State 3000, SuperPause]
+type = SuperPause
+trigger1 = time = 0
+time = 30
+movetime = 30
+anim = -1
+sound = -1
+pos = 32,-80
+darken = 0
+unhittable = 1
+
+[State 3000, VarSet]
+type = Varset
+trigger1 = time = 0
+v = 12
+value = -100
+
+[State 3000, VarAdd]
+type = VarAdd
+trigger1 = time >= 20 && Var(12) < 0
+v = 12
+value = 6
+
+[State 3000, BGColorFX]
+type = BGPalFX
+trigger1 = Time > 0
+time = 1
+add = Var(12),Var(12),Var(12)
+
+[State 3000, Super Charge]
+type = Explod
+trigger1 = Time = 0
+anim = 7400
+ID = 7400
+pos = 4,-30
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = -1
+ownpal = 1
+scale = 1,1
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 3000, PlaySnd - Super Charge]
+type = PlaySnd
+trigger1 = Time = 0
+value = S950,2
+volume = 50
+
+[State 0, Explod]
+type = Explod
+trigger1 = time = 30
+anim = 3180
+ID = 9025
+pos = 0,-12
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = 30
+scale = .4,.4
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 1
+[State 0, Explod]
+type = Explod
+trigger1 = time = 30
+anim = 3180
+ID = 9025
+pos = 0,-12
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = 30
+scale = .4,.4
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 1
+
+[State 0, Explod]
+type = Explod
+trigger1 = time = 60
+anim = 3180
+ID = 9025
+pos = -10,-50
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = 5
+scale = .4,.4
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 1
+[State 0, Explod]
+type = Explod
+trigger1 = time = 60
+anim = 3180
+ID = 9025
+pos = -10,-50
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = 5
+scale = .4,.4
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 30
+value = S5,43
+volume = 50
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = time = 30
+time = 10
+
+[State 0, Polvo 2]
+type = Explod
+trigger1 = time = 65
+anim = 7100
+ID = 7100
+pos = -45,10
+postype = p1
+facing = 1
+scale = .5,.5
+sprpriority = 2
+ontop = 1
+ownpal = 1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 65
+value = S5,8
+volume = 50
+
+[State 0, Pause]
+type = Pause
+trigger1 = time = [60,63]
+time = 2
+
+[State 0, Raiju Hashiri no Jutsu]
+type = Helper
+trigger1 = time = 65
+helpertype = normal
+name = "Raiju Hashiri no Jutsu"
+ID = 3150
+stateno = 3150
+pos = 20,10
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+
+[State 200, End]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+;-------------------------------------------------------------------------------
+; Raiju Hashiri no Jutsu - Perro
+[Statedef 3150]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 2890
+sprpriority = 3
+
+[State 0, Rayos]
+type = Explod
+trigger1 = time = 0 || timemod = 7,0
+anim = 9030+(RANDOM%4)
+ID = 9030
+pos = 0+random%60,-30-random%25
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 5
+removetime = -2
+scale = 1,1
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 0
+
+[State 0, Soru]
+type = Explod
+trigger1 = time = 0 || timemod = 10,0
+anim = 9028
+ID = 101
+pos = 10,-40
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .5,.5
+sprpriority = -1
+ontop = 0
+ownpal = 1
+removeongethit = 1
+ignorehitpause = 1
+trans = add
+
+[State 0, AngleDraw]
+type = AngleDraw
+trigger1 = 1
+value = 0
+scale = .6,.6
+ignorehitpause = 1
+
+[State 0, Trans]
+type = Trans
+trigger1 = 1
+trans = add
+ignorehitpause = 1
+
+[State 0, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = noshadow
+ignorehitpause = 1
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = 1
+x = 10
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,50
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,40
+volume = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,43
+volume = 50
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = time = 1
+attr = S, SP
+animtype  = Up
+damage    = 260,80
+Hitflag = MAFDE
+guardflag = MA
+pausetime = 2,10
+sparkno = -1
+guard.sparkno = -1
+sparkxy = -8,-25
+hitsound   = S5,42
+guardsound = S5,42
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = 0,-12
+air.velocity = 0,-12
+Fall = 1
+Fall.recover = 0
+envshake.time = 30
+PalFX.time = 45
+PalFX.add = 0,50,240
+PalFX.mul = 120,224,150
+PalFX.sinadd = 85,55,110,10
+PalFX.invertall = 1
+PalFX.color = 0
+getpower = 0,0
+
+[State 0, Explod]
+type = Explod
+triggerall = numexplod(9026) = 0
+trigger1 = movecontact
+anim = 3180
+ID = 9026
+pos = 0,-50
+postype = p2
+facing = 1
+vfacing = 1
+bindtime = ifelse(movehit,-1,1)
+removetime = ifelse(movehit,35,20)
+scale = .5,.5
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 0
+
+[State 0, Explosion]
+type = Explod
+triggerall = numexplod(9022) = 0
+trigger1 = movecontact
+anim = 9022
+ID = 9022
+pos = 0,0
+postype = left
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = 50
+scale = 999,999
+sprpriority = 9
+ontop = 1
+ownpal = 1
+removeongethit = 0
+ignorehitpause = 1
+supermove = 99999
+pausemove = 99999
+supermovetime = 99999
+pausemovetime = 99999
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+trigger1 = frontedgebodydist <= -100
+trigger2 = movecontact
+trigger3 = time >= 500
+id = 9028
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+trigger1 = frontedgebodydist <= -100
+trigger2 = movecontact
+trigger3 = time >= 500
+id = 9030
+
+[State 200, End]
+type = Destroyself
+trigger1 = frontedgebodydist <= -100
+trigger2 = movecontact
+trigger3 = time >= 500
+
+;===============================================================================
+; Kakashi Festival:
+;-------------------------------------------------------------------------------
+; Kakashi Festival - Start
+[Statedef 3200]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 2870
+poweradd = -1000
+sprpriority = 2
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,19
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,19
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,19
+volume = 999
+
+[State 3000, SuperPause]
+type = SuperPause
+trigger1 = time = 0
+time = 30
+movetime = 30
+anim = -1
+sound = -1
+pos = 32,-80
+darken = 0
+unhittable = 1
+
+[State 3000, VarSet]
+type = Varset
+trigger1 = time = 0
+v = 12
+value = -100
+
+[State 3000, VarAdd]
+type = VarAdd
+trigger1 = time >= 20 && Var(12) < 0
+v = 12
+value = 6
+
+[State 3000, BGColorFX]
+type = BGPalFX
+trigger1 = Time > 0
+time = 1
+add = Var(12),Var(12),Var(12)
+
+[State 3000, Super Charge]
+type = Explod
+trigger1 = Time = 0
+anim = 7400
+ID = 7400
+pos = 2,-25
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = -1
+ownpal = 1
+scale = 1,1
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 3000, PlaySnd - Super Charge]
+type = PlaySnd
+trigger1 = Time = 0
+value = S950,2
+volume = 50
+
+[State 0, Explod]
+type = Explod
+trigger1 = time = 30
+anim = 3180
+ID = 9025
+pos = 0,-12
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = 30
+scale = .35,.35
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 1
+[State 0, Explod]
+type = Explod
+trigger1 = time = 30
+anim = 3180
+ID = 9025
+pos = 0,-12
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = 30
+scale = .35,.35
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 1
+
+[State 0, Explod]
+type = Explod
+trigger1 = time = 60
+anim = 3180
+ID = 9025
+pos = -10,-50
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = 5
+scale = .4,.4
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 1
+[State 0, Explod]
+type = Explod
+trigger1 = time = 60
+anim = 3180
+ID = 9025
+pos = -10,-50
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = 5
+scale = .4,.4
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 30
+value = S5,43
+volume = 50
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = time = 30
+time = 5
+
+[State 0, Polvo 2]
+type = Explod
+trigger1 = time = 65
+anim = 7100
+ID = 7100
+pos = -35,10
+postype = p1
+facing = 1
+scale = .3,.3
+sprpriority = 2
+ownpal = 1
+supermovetime 	= 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 60
+value = S0,13
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 60
+value = S0,13
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 60
+value = S0,13
+volume = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 65
+value = S5,8
+volume = 50
+
+[State 0, Raiju Hashiri no Jutsu]
+type = Helper
+trigger1 = time = 65
+helpertype = normal
+name = "Raiju Hashiri no Jutsu"
+ID = 3250
+stateno = 3250
+pos = 20,10
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+supermovetime 	= 999
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+triggerall = time >= 65
+trigger1 = numhelper(3250) = 1
+value = 2870
+elem = 4
+
+[State 200, End]
+type = ChangeState
+triggerall = helper(3250),movehit
+trigger1 = time >= 65
+value = 3201
+
+[State 200, End]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1
+
+;-------------------------------------------------------------------------------
+; Kakashi Festival - Lanzamiento de Cuchillos
+[Statedef 3201]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 9999
+poweradd = -1500
+sprpriority = 2
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,49
+volume = 50
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 20
+value = S0,1
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 20
+value = S0,1
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 20
+value = S0,1
+volume = 999
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, Kamui FX]
+type = Helper
+trigger1 = time = 0
+helpertype = normal
+name = "Kamui FX"
+ID = 580
+stateno = 580
+pos = 5,-30
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+supermovetime = 999
+supermove = 999
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+trigger1 = time = 5
+value = 3201
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 5
+x = enemy,pos x-(ifelse(facing = 1,130,-130))
+y = 0
+
+[State 0, Kamui FX]
+type = Helper
+trigger1 = time = 5
+helpertype = normal
+name = "Kamui FX"
+ID = 580
+stateno = 581
+pos = 5,-30
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+supermovetime = 999
+supermove = 999
+
+[State 3000, SuperPause]
+type = SuperPause
+trigger1 = time = 5
+time = 30
+movetime = 30
+anim = -1
+sound = -1
+pos = 32,-80
+darken = 0
+unhittable = 1
+
+[State 0, AssertSpecial]
+type = AssertSpecial
+trigger1 = time = [5,35]
+flag = nomusic
+
+[State 3000, VarSet]
+type = Varset
+trigger1 = time = 5
+v = 12
+value = -100
+
+[State 3000, VarAdd]
+type = VarAdd
+trigger1 = time >= 30 && Var(12) < 0
+v = 12
+value = 12
+
+[State 3000, VarAdd]
+type = Varset
+trigger1 = time = 35
+v = 12
+value = 0
+
+[State 3000, BGColorFX]
+type = BGPalFX
+trigger1 = Time > 0
+time = 1
+add = Var(12),Var(12),Var(12)
+
+[State 0, PlaySnd]
+type = PlaySnd
+triggerall = time >= 37
+trigger1 = timemod = 6,0
+value = S1,23
+volume = 50
+
+[State 0, Kunais]
+type = Helper
+triggerall = time >= 37
+trigger1 = timemod = 6,0
+helpertype = normal
+name = "kunais"
+ID = 3270
+stateno = 3270
+pos = 30,-30
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+
+[State 200, End]
+type = ChangeState
+trigger1 = time = 150
+value = 3202
+;-------------------------------------------------------------------------------
+; Kakashi Festival - Remate
+[Statedef 3202]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 335
+sprpriority = 2
+
+[State 0, Explod]
+type = Explod
+trigger1 = time = 20
+anim = 3180
+ID = 90251111
+pos = 17,78
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = -1
+scale = .35,.35
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 1
+[State 0, Explod]
+type = Explod
+trigger1 = time = 20
+anim = 3180
+ID = 90251111
+pos = 17,78
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = -1
+scale = .35,.35
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 1
+
+[State 0, Explod]
+type = Explod
+trigger1 = time = 5
+anim = 3180
+ID = 9025
+pos = -3,-60
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = 15
+scale = .35,.35
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 1
+[State 0, Explod]
+type = Explod
+trigger1 = time = 5
+anim = 3180
+ID = 9025
+pos = -3,-60
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = 15
+scale = .35,.35
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 1
+
+[State 0, Polvo 2]
+type = Explod
+trigger1 = time = 5
+anim = 7100
+ID = 7100
+pos = -35,10
+postype = p1
+facing = 1
+scale = .3,.3
+sprpriority = 2
+ownpal = 1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 20
+value = S5,52
+volume = 50
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 5
+value = S60,1
+volume = 50
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 20
+value = S5,8
+volume = 50
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,44
+volume = 50
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,35
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,35
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,35
+volume = 999
+
+[State 0, PlayerPush]
+type = PlayerPush
+trigger1 = 1
+value = 0
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = time < 15
+value = 0
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+trigger1 = time < 20
+value = 335
+elem = 2
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+trigger1 = time >= 20
+value = 335
+elem = 3
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 5
+x = 6
+y = -15
+
+[State 0, PosAdd]
+type = PosAdd
+trigger1 =  time = 20
+y = -70
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 21
+x = 1
+y = 20
+
+[State 0, AngleDraw]
+type = AngleDraw
+trigger1 = time >= 20
+value = -140
+
+[State 0, StateTypeSet]
+type = StateTypeSet
+trigger1 =  time >= 5
+statetype = A
+movetype = A
+physics = A
+
+[State 0, Rayo Gigante]
+type = Explod
+triggerall = numexplod(9035) = 0
+trigger1 = time = 20
+anim = 9035
+ID = 9035
+pos = 40,270
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .6,.6
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 1
+
+[State 200, End]
+type = ChangeState
+triggerall = time >= 20
+trigger1 = pos y >= -80
+value = 3203
+;-------------------------------------------------------------------------------
+; Kakashi Festival - Remate Suelo
+[Statedef 3203]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 331
+sprpriority = 2
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+trigger1 = time = 0
+id = 90251111
+
+[State 0, Rayos en P2]
+type = Helper
+triggerall = numhelper(3280) = 0
+trigger1 =  movehit = 1
+helpertype = normal
+name = "Rayos en P2"
+ID = 3280
+stateno = 3280
+pos = 10,0
+postype = p2
+facing = -1
+keyctrl = 0
+ownpal = 1
+
+[State 0, Humo Rana]
+type = Explod
+triggerall = time < 40
+trigger1 = timemod = 10,0
+anim = 9036
+ID = 9036
+pos = 50,5
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .5,.5
+sprpriority = 1
+ontop = 0
+ownpal = 1
+removeongethit = 1
+ignorehitpause = 1
+
+[State 200, Spark CVS]
+type = Explod
+trigger1 = time = 0
+anim = 3203
+ID = 7901
+postype = P1
+pos = 10,100
+facing = 1
+sprpriority = 2
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = 1.1,1.1
+removeongethit = 1
+ontop = 1
+ignorehitpause  = 1
+
+[State 0, Helper]
+type = Helper
+triggerall = numhelper(3220) = 0
+trigger1 = movehit = 1
+helpertype = normal
+name = "Camara Lenta"
+ID = 3220
+stateno =  3220
+pos = 999,999
+postype = p1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S3,2
+volume = 50
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = time = 0
+time = 60
+ignorehitpause = 1
+
+[State 0, AngleDraw]
+type = AngleDraw
+trigger1 = 1
+value = -140
+
+[State 0, PlayerPush]
+type = PlayerPush
+trigger1 = 1
+value = 0
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = -80
+
+[State 200, 1]
+type = HitDef
+triggerall = time < 30
+trigger1 = timemod = 4,0
+attr = A, HA
+animtype  = Up
+damage    = 35
+Hitflag = MAFDE
+guardflag = MA
+pausetime = 0,10
+sparkno = -1
+guard.sparkno = s7000
+sparkxy = -8,-25
+hitsound   = S5,51
+guardsound = S4,1
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = -.5,-12
+air.velocity = -.5,-12
+Fall = 1
+Fall.recover = 0
+getpower = 0,0
+PalFX.time = 45
+PalFX.add = 0,50,240
+PalFX.mul = 120,224,150
+PalFX.sinadd = 85,55,110,10
+PalFX.invertall = 1
+PalFX.color = 0
+
+[State 200, End]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 621
+
+;-------------------------------------------------------------------------------
+; Kakashi Festival - Perro
+[Statedef 3250]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 2890
+sprpriority = 3
+
+[State 0, Helper]
+type = Helper
+triggerall = numhelper(3220) = 0
+trigger1 = movehit = 1
+helpertype = normal
+name = "Camara Lenta"
+ID = 3220
+stateno =  3220
+pos = 999,999
+postype = p1
+
+[State 0, Rayos]
+type = Explod
+trigger1 = time = 0 || timemod = 7,0
+anim = 9030+(RANDOM%4)
+ID = 9030
+pos = 0+random%60,-30-random%25
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 5
+removetime = -2
+scale = 1,1
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 0
+
+[State 0, Soru]
+type = Explod
+trigger1 = time = 0 || timemod = 10,0
+anim = 9028
+ID = 101
+pos = 10,-40
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .5,.5
+sprpriority = -1
+ontop = 0
+ownpal = 1
+removeongethit = 1
+ignorehitpause = 1
+trans = add
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 3
+value = S20,2
+volume = 50
+
+[State 0, AngleDraw]
+type = AngleDraw
+trigger1 = 1
+value = 0
+scale = .5,.5
+ignorehitpause = 1
+
+[State 0, Trans]
+type = Trans
+trigger1 = 1
+trans = add
+ignorehitpause = 1
+
+[State 0, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = noshadow
+ignorehitpause = 1
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = 1
+x = 10
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,50
+volume = 50
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,44
+volume = 50
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = time = 1
+attr = S, HP
+animtype  = Heavy
+damage    = 110
+Hitflag = MAFDE
+guardflag = MA
+pausetime = 0,35
+sparkno = -1
+guard.sparkno = -1
+sparkxy = -8,-25
+hitsound   = S5,42
+guardsound = S5,42
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = 0,0
+air.velocity = 0,0
+Fall = 0
+Fall.recover = 0
+envshake.time = 20
+PalFX.time = 45
+PalFX.add = 0,50,240
+PalFX.mul = 120,224,150
+PalFX.sinadd = 85,55,110,10
+PalFX.invertall = 1
+PalFX.color = 0
+getpower = 0,0
+kill = 0
+
+[State 0, Explod]
+type = Explod
+triggerall = numexplod(9026) = 0
+trigger1 = movecontact
+anim = 3180
+ID = 9026
+pos = 0,-40
+postype = p2
+facing = 1
+vfacing = 1
+bindtime = ifelse(movehit,-1,1)
+removetime = ifelse(movehit,35,20)
+scale = .4,.4
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 0
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+trigger1 = frontedgebodydist <= -100
+trigger2 = movecontact
+trigger3 = time >= 500
+id = 9028
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+trigger1 = frontedgebodydist <= -100
+trigger2 = movecontact
+trigger3 = time >= 500
+id = 9030
+
+[State 0, TargetBind]
+type = TargetBind
+trigger1 = movehit
+pos = 0,-10
+
+[State 200, End]
+type = Changestate
+trigger1 = movehit
+value = 3251
+
+[State 200, End]
+type = Destroyself
+trigger1 = frontedgebodydist <= -100
+trigger2 = movecontact
+trigger3 = time >= 500
+;-------------------------------------------------------------------------------
+; Kakashi Festival - Perro Kage Bunshin Cuchillos
+[Statedef 3251]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3290
+sprpriority = 2
+
+[State 0, AngleDraw]
+type = AngleDraw
+trigger1 = time < 10
+value = 0
+scale = .5,.5
+ignorehitpause = 1
+
+[State 0, AngleDraw]
+type = AngleDraw
+trigger1 = time = 10
+value = 0
+scale = 1,1
+ignorehitpause = 0
+
+[State 0, Trans]
+type = Trans
+trigger1 = time < 10
+trans = add
+ignorehitpause = 1
+
+[State 0, AssertSpecial]
+type = AssertSpecial
+trigger1 = time < 10
+flag = noshadow
+ignorehitpause = 1
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time < 10
+x = 10
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 10
+x = 0
+
+[State 0, Turn]
+type = Turn
+trigger1 = time = 10
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 10
+x = enemy,pos x-(ifelse(facing = 1,130,-130))
+y = 0
+
+[State 0, Humo]
+type = Explod
+trigger1 = time = 10
+anim = 25016
+ID = 1150
+pos = 0,-30
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .7,.7
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 0
+supermove = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 10
+value = S5,22
+volume = 50
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 = time >= 10
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15001
+time = 5
+
+[State 0, PlaySnd]
+type = PlaySnd
+triggerall = time >= 47
+trigger1 = timemod = 6,0
+value = S1,23
+volume = 50
+
+[State 0, Kunais]
+type = Helper
+triggerall = time >= 47
+trigger1 = timemod = 6,0
+helpertype = normal
+name = "kunais"
+ID = 3270
+stateno = 3270
+pos = 30,-30
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+trigger1 = time = 10
+value = 3201
+
+[State 200, End]
+type = ChangeState
+trigger1 = time = 150
+value = 15004
+;-------------------------------------------------------------------------------
+; Kakashi Festival - Kunai
+[Statedef 3270]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+ctrl = 0
+anim = 3250
+sprpriority = 2
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 = 1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 3271
+time = 9999999
+ignorehitpause = 1
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+y = 2-random%6
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = 1
+x = 10
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = A, HP
+animtype  = medium
+damage    = 3,2
+Hitflag = MAFDE
+guardflag = MA
+pausetime = 5,50
+sparkno = -1
+guard.sparkno = S7000
+sparkxy = -8,-25
+hitsound   = S1,24
+guardsound = S4,1
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = 0
+air.velocity = 0
+Fall = 0
+getpower = 0,0
+envshake.time = 5
+
+[State 200, Spark CVS]
+type = Explod
+triggerall = Numexplod(7001) = 0
+trigger1 = Movehit = 1
+anim = 7001
+ID = 7001
+postype = P1
+pos = 10,0
+facing = ifelse(random < 500,1,-1)
+vfacing = ifelse(random < 500,1,-1)
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = 0.4,0.4
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 200, End]
+type = ChangeState
+trigger1 = frontedgebodydist < -5
+trigger2 = movecontact = 1
+trigger3 = time = 500
+trigger4 = pos y >= -5
+value = 3271
+;-------------------------------------------------------------------------------
+; Kakashi Festival - Kunai si es golpeado
+[Statedef 3271]
+type    = A
+movetype= I
+physics = A
+juggle  = 1
+velset = 0,0
+ctrl = 0
+sprpriority = 3
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 999999999
+ignorehitpause = 1
+
+[State 0, Trans]
+type = Trans
+trigger1 = 1
+trans = addalpha
+alpha = 256-time*12,0+time*12
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+x = -3+random%6
+y = -6
+
+[State 0, AngleDraw]
+type = AngleDraw
+trigger1 = 1
+value = ifelse(vel x > 0,-1-time*15,1+time*15)
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 20
+;-------------------------------------------------------------------------------
+; Rayos en P2
+[Statedef 3280]
+type    = S
+movetype= I
+physics = S
+velset = 0,0
+anim = 9999
+sprpriority = 2
+
+[State 0, BindToParent]
+type = BindToParent
+trigger1 = 1
+pos = 0,0
+
+[State 0, Rayos]
+type = Explod
+trigger1 = timemod = 10,0
+anim =  9030+(random%4)
+ID = 219
+pos = -10+(random%20),-10-(random%40)
+postype = p2
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = -2
+scale = .5,.5
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 1
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 60

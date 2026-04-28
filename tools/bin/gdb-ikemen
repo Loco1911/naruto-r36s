@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/_debug_env.sh"
+
+GDB_ARGS=()
+GAME_ARGS=()
+TO_GAME_ARGS=0
+
+for arg in "$@"; do
+  if [[ "$arg" == "--" && "$TO_GAME_ARGS" -eq 0 ]]; then
+    TO_GAME_ARGS=1
+  elif [[ "$TO_GAME_ARGS" -eq 0 ]]; then
+    GDB_ARGS+=("$arg")
+  else
+    GAME_ARGS+=("$arg")
+  fi
+done
+
+if [[ "${#GAME_ARGS[@]}" -gt 0 ]]; then
+  GAME_ARGS_ESCAPED=()
+  for arg in "${GAME_ARGS[@]}"; do
+    GAME_ARGS_ESCAPED+=("$(printf '%q' "$arg")")
+  done
+  GDB_ARGS+=(-ex "set args ${GAME_ARGS_ESCAPED[*]}")
+fi
+
+exec "$DEBUG_ROOT/usr/bin/gdb" \
+  --data-directory="$DEBUG_ROOT/usr/share/gdb" \
+  "${GDB_ARGS[@]}" \
+  "$ROOT_DIR/Ikemen_GO_Linux"

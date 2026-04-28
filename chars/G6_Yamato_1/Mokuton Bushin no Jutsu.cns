@@ -1,0 +1,781 @@
+;Mokuton Bunshin - Stand
+[Statedef 15000]
+type = S
+physics = S
+anim = 15000
+sprpriority = 0
+
+[State 0, Helper Tiempo]
+type = Helper
+trigger1 = prevstateno = 15002 && time = 0
+helpertype = normal
+name = "Helper Tiempo"
+ID = 33100
+stateno = 33100
+pos = 0,0
+postype = p1
+
+[State 0, ChangeState]
+type = ChangeState
+trigger1 = parent,var(16) <= 0
+value = 15001
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15220
+time = 9999
+
+[State 0, Turn]
+type = Turn
+trigger1 = p2bodydist x < -5
+
+[State 0, 1]
+type = ChangeAnim
+trigger1 = (Anim != 0 && Anim != 5 && Anim != 15000 && Anim != 15005)
+trigger2 = (Anim = 5||Anim = 15005) && AnimTime = 0
+value = ifelse(parent,var(13) = 1||parent,var(15) = 1||parent,var(17) = 1,0+parent,var(11),0)
+
+[State 0, 2]
+type = VelSet
+trigger1 = Time = 0
+y = 0
+
+[State 0, 3]
+type = VelSet
+trigger1 = abs(vel x) < 2
+trigger2 = Time = 4
+x = 0
+
+[State 200, Eliminate]
+type = ChangeState
+trigger1 = parent,stateno = 170
+trigger2 = parent,stateno = 181
+trigger3 = parent,life = 0
+trigger4 = numhelper(33100) = 0
+value = 15001
+
+[State 200, Walk]
+type = ChangeState
+triggerall = time > 20
+trigger1 = p2bodydist x > 30 && random < 700
+value = 15020
+
+[State 200, Jump Back]
+type = ChangeState
+triggerall = time > 10
+trigger1 = p2movetype = A && random < 100 && p2bodydist x < 50
+trigger2 = random < 100 && p2bodydist x < 30
+value = 15105
+
+[State 200, Jump]
+type = ChangeState
+triggerall = time > 20
+trigger1 = p2statetype = A && random < 100 && p2bodydist x < 70
+value = 15040
+
+;-------------------------------------
+[State -1, Hit 1]
+type = changestate
+triggerall = StateType = S
+triggerall = (p2statetype = S) || (p2statetype = C)|| (p2statetype = A)
+triggerall = P2BodyDist X <= 30
+trigger1 = Random < 100
+value = 15200
+
+[State -1, Hit 2]
+type = changestate
+triggerall = StateType = S
+triggerall = (p2statetype = S) || (p2statetype = C)|| (p2statetype = A)
+triggerall = P2BodyDist X <= 30
+trigger1 = Random < 100
+value = 15210
+
+[State -1, Hit 3]
+type = changestate
+triggerall = StateType = S
+triggerall = (p2statetype = S) || (p2statetype = C)|| (p2statetype = A)
+triggerall = P2BodyDist X <= 30
+trigger1 = Random < 100
+value = 15215
+
+;-------------------------------------------------------------------------------
+; Helper Tiempo
+[Statedef 33100]
+type    = S
+movetype= I
+physics = N
+juggle  = 1
+anim = 9999
+
+[State 200, End]
+type = Destroyself
+trigger1 = time >= 750
+trigger2 = numhelper(15000) = 0
+;---------------------------------------------------------------------------
+;Mokuton Bunshin - End
+[Statedef 15001]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+ctrl = 0
+anim = 9999
+
+[State 0]
+type = Explod
+trigger1 = time = 0
+anim = 15107
+ID = 15107
+pos = 0,0
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = 1,1
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 0
+supermove = 999
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 5
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,0
+volume = 50
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 19
+
+;---------------------------------------------------------------------------
+;Mokuton Bunshin - Start
+[Statedef 15002]
+type = S
+physics = S
+sprpriority = 0
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 5
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+Triggerall = parent,var(13) = 0
+trigger1 = time = 0
+value = 15000
+elem = 4
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+Triggerall = parent,var(13) = 1
+trigger1 = time = 0
+value = 16101
+elem = 4
+
+[State 0, ParentVarSet]
+type = ParentVarSet
+trigger1 = time = 0
+v = 16
+value = 100
+
+[State 200, Stand]
+type = ChangeState
+trigger1 = animtime = 0
+value = 15000
+
+;---------------------------------------------------------------------------
+;Mokuton Bunshin - Walk
+[Statedef 15020]
+type    = S
+physics = S
+anim = 15020
+sprpriority = 1
+
+[State 0, ChangeState]
+type = ChangeState
+trigger1 = parent,var(16) <= 0
+value = 15001
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15220
+time = 9999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 3||animelem = 6
+value = S0,0
+
+[State 100, 1]
+type = VelSet
+trigger1 = 1
+x = const(velocity.walk.fwd.x)
+
+[State 200, Jump]
+type = ChangeState
+triggerall = time > 5
+trigger1 = p2statetype = A && random < 100 && p2bodydist x < 70
+value = 15040
+
+[State 100: ChangeState]
+type = ChangeState
+trigger1 = p2bodydist x < 30
+value = 15000
+
+;---------------------------------------------------------------------------
+;Mokuton Bushin - Jump Back
+[Statedef 15105]
+type    = S
+physics = S
+ctrl = 0
+anim = 15105
+sprpriority = 1
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15220
+time = 9999
+
+[State 0, Polvo 2]
+type = Explod
+trigger1 = time = 2
+anim = 7100
+ID = 7100
+facing = -1
+pos = 25,5
+postype = p1
+scale = .2,.2
+sprpriority = 2
+ownpal = 1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 2
+value = S0,3
+volume = 50
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 2
+x = -4
+y = -4
+
+[State 0, StateTypeSet]
+type = StateTypeSet
+trigger1 = time >= 2
+statetype = A
+movetype = I
+physics = A
+
+[State 200, End]
+type = ChangeState
+triggerall = time > 2
+trigger1 = pos y >= -1
+value = 15106
+ctrl = 1
+
+[State 200, Eliminate]
+type = ChangeState
+trigger1 = time > 30
+value = 15001
+
+;---------------------------------------------------------------------------
+;Mokuton Bunshin Land
+[Statedef 15106]
+type    = S
+physics = S
+ctrl = 0
+anim = 15047
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15220
+time = 9999
+
+[State 106, 1]
+type = VelSet
+trigger1 = Time = 0
+y = 0
+
+[State 106, 2]
+type = PosSet
+trigger1 = Time = 0
+y = 0
+
+[State 106, 3]
+type = MakeDust
+trigger1 = Time = 2
+pos = -5,-2
+spacing = 1
+
+[State 106, 4]
+type = ChangeState
+trigger1 = Time = 7
+value = 15000
+ctrl = 1
+
+;---------------------------------------------------------------------------
+;Mokuton Bunshin Jump Start
+[Statedef 15040]
+type            = A
+movetype        = I
+physics         = N
+anim            = 15040
+velset          = 2.5,-5.5
+ctrl            = 0
+poweradd        = 0
+juggle          = 0
+facep2          = 0
+hitdefpersist   = 0
+movehitpersist  = 0
+hitcountpersist = 0
+sprpriority     = 2
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15221
+time = 9999
+
+[state 60, CtrlSet]
+type            = CtrlSet
+trigger1        = Time >= 1
+value           = 1
+
+[state 60, VelAdd]
+type            = VelAdd
+trigger1        = Time > 10
+x               = 0
+y               = .50
+
+[State 60, PlaySnd]
+type = PlaySnd
+trigger1 =  time = 1
+value = s0,1
+volume = 50
+
+[state 60, End]
+type            = ChangeState
+triggerall = time > 2
+trigger1        = Pos Y > -5
+value           = 15106
+
+;---------------------------------------------------------------------------
+;Hit 1
+[Statedef 15200]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 15300
+sprpriority = 2
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+x = 2
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15220
+time = 9999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S3,1
+volume = 50
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = S, NA
+animtype  = Light
+damage    = 20
+guardflag = MA
+pausetime = 10,10
+sparkno = -1
+guard.sparkno = s7000
+sparkxy = -8,-25
+hitsound   = S4,0
+guardsound = S1,0
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = -3
+air.velocity = -2,-1
+Fall = 0
+getpower = 0,0
+envshake.time = 3
+
+[State 200]
+type = Explod
+triggerall = Numexplod(3000) = 0
+trigger1 = Movehit = 1
+anim = 3000
+ID = 3000
+postype = P1
+pos = 50,-40
+facing = 1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = 0.3,0.3
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 200, End]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 15000
+ctrl = 1
+
+;---------------------------------------------------------------------------
+;Hit 2
+[Statedef 15210]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 15301
+sprpriority = 2
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+x = 2
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15220
+time = 9999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S3,1
+volume = 50
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = S, NA
+animtype  = Light
+damage    = 20
+guardflag = MA
+pausetime = 10,10
+sparkno = -1
+guard.sparkno = s7000
+sparkxy = -8,-25
+hitsound   = S4,0
+guardsound = S1,0
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = -3
+air.velocity = -2,-1
+Fall = 0
+getpower = 0,0
+envshake.time = 3
+
+[State 200]
+type = Explod
+triggerall = Numexplod(3000) = 0
+trigger1 = Movehit = 1
+anim = 3000
+ID = 3000
+postype = P1
+pos = 44,-39
+facing = 1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = 0.3,0.3
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 200, End]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 15000
+ctrl = 1
+
+;---------------------------------------------------------------------------
+;Hit 3
+[Statedef 15215]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 15302
+sprpriority = 2
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15220
+time = 9999
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = animelem = 4
+x = 3
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 4
+value = S6,0
+volume = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,0
+volume = 50
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = S, NA
+animtype  = Heavy
+damage    = 30
+guardflag = MA
+pausetime = 10,10
+sparkno = -1
+guard.sparkno = s7000
+sparkxy = -8,-25
+hitsound   = S4,2
+guardsound = S1,0
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = -7,-6
+air.velocity = -7,-4
+Fall = 1
+getpower = 0,0
+envshake.time = 10
+
+[State 200]
+type = Explod
+triggerall = Numexplod(3000) = 0
+trigger1 = Movehit = 1
+anim = 3000
+ID = 3000
+postype = P1
+pos = 60,-40
+facing = 1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = 0.5,0.5
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 200, End]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 15000
+ctrl = 1
+
+;---------------------------------------------------------------------------
+;Hitted
+[Statedef 15220]
+type    = S
+physics = S
+movetype = H
+sprpriority = -1
+
+[State 0, PalFX]
+type = PalFX
+trigger1 = time = 0
+time = 15
+add = 100,0,0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15220
+time = 9999
+
+[State 0, ParentVaradd]
+type = ParentVaradd
+trigger1 = time = 0
+v = 16
+value = -gethitvar(damage)
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+y = 0
+
+[State 0, VelSet]
+type = Veladd
+trigger1 = time = 0
+x = ifelse(facing = 1,gethitvar(xvel)/2,-gethitvar(xvel)/2)
+
+[State 130, 1]
+type = ChangeAnim
+trigger1 = 1
+value = 15106
+
+[State 130, Hit End]
+type = ChangeState
+trigger1 = parent,var(16) > 0 && Hitover
+value = 15000
+
+[State 130, Hit End]
+type = ChangeState
+trigger1 = parent,var(16) <= 0 && Hitover
+value = 15001
+
+;---------------------------------------------------------------------------
+;Hitted in Air
+[Statedef 15221]
+type    = A
+physics = A
+movetype = H
+sprpriority = -1
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15221
+time = 9999
+
+[State 0, ParentVaradd]
+type = ParentVaradd
+trigger1 = time = 0
+v = 16
+value = -gethitvar(damage)
+
+[State 0, VelSet]
+type = Veladd
+trigger1 = time = 0
+x = ifelse(facing = 1,gethitvar(xvel)/2,-gethitvar(xvel)/2)
+
+[State 130, 1]
+type = ChangeAnim
+trigger1 = 1
+value = 15106
+
+[State 130, Hit End]
+type = ChangeState
+trigger1 = parent,var(16) > 0 && Hitover
+value = 15000
+
+[State 130, Hit End]
+type = ChangeState
+trigger1 = parent,var(16) <= 0 && Hitover
+value = 15001
+
+[State 130, Hit End]
+type = ChangeState
+trigger1 = parent,var(16) > 0 && Hitover
+value = 15040
+
+[State 0, ChangeState]
+type = ChangeState
+trigger1 = pos y >= -10
+value = 15220

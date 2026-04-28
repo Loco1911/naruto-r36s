@@ -1,0 +1,939 @@
+;===================================================================================
+;---------------- Sapo --------------------------------------------
+;===============================================================================
+; Sapo:
+;-------------------------------------------------------------------------------
+; Sapo - Start
+[Statedef 3400]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3400
+sprpriority = -1
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+ignorehitpause = 1
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+
+[State 0, Life]
+type = ParentVarSet
+trigger1 = time = 0
+v = 19
+value = 300
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 5
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,28
+volume = 50
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 50
+value = S0,30
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 50
+value = S0,30
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 50
+value = S0,30
+volume = 999
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = time = 0
+time = 30
+freq = 60
+ampl = -4
+phase = 90
+
+[State 1501, Explod]
+type = Explod
+trigger1 = time = 0
+anim = 3030
+ID = 9037
+pos = 0,15
+postype = p1
+facing = -1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .6,.6
+sprpriority = 7
+ontop = 0
+ownpal = 1
+removeongethit = 0
+ignorehitpause = 0
+
+[State 200, End]
+type = ChangeState
+trigger1 = time = 60
+value = 3401
+;---------------------------------------------------------------------------
+; Sapo - Stand
+[Statedef 3401]
+type    = S
+movetype= I
+physics = N
+juggle  = 1
+velset = 0,0
+ctrl = 0
+sprpriority = -1
+anim = 3450
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+ignorehitpause = 1
+
+[State 0, Helper Tiempo]
+type = Helper
+trigger1 = prevstateno = 3400 && time = 0
+helpertype = normal
+name = "Helper Tiempo"
+ID = 33200
+stateno = 33200
+pos = 0,0
+postype = p1
+
+[State 0, 2]
+type = VelSet
+trigger1 = Time = 0
+y = 0
+
+[State 0, 3]
+type = VelSet
+trigger1 = abs(vel x) < 2
+trigger2 = Time = 4
+x = 0
+
+[State 0, Turn]
+type = Turn
+trigger1 = p2bodydist x < -30
+trigger2 = rootdist x < -40
+
+[State 0, Walk FWD]
+type = ChangeState
+trigger1 = rootdist x > 40
+value = 3420
+
+[State 200, WALK DOWN]
+type = Changestate
+triggerall = root,pos y <= 0
+trigger1 = rootdist y > 20
+value = 3421
+
+;-----------------------
+[State 0, ChangeState]
+type = Changestate
+trigger1 = parent,var(19) <= 0
+trigger2 = parent,win
+trigger3 = parent,drawgame
+trigger4 = parent,lose
+trigger5 = numhelper(33200) = 0
+value = 3402
+;-------------------------------------------------------------------------------
+; Helper Tiempo
+[Statedef 33200]
+type    = S
+movetype= I
+physics = N
+juggle  = 1
+anim = 9999
+
+[State 200, End]
+type = Destroyself
+trigger1 = time >= 3000
+trigger2 = numhelper(3400) = 0
+;----------------------
+; Sapo - Desaparecer
+;----------------------
+[Statedef 3402]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3401
+sprpriority = -1
+
+[State 0, Evitador de Infinitos]
+type = Helper
+triggerall = numhelper(3290) = 0
+trigger1 = time = 0
+helpertype = normal
+name = "Evitador de Infinitos"
+ID = 3290
+stateno = 3290
+pos = 9999,9999
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+
+[State 0, ParentVarSet]
+type = ParentVarSet
+trigger1 = time = 0
+v = 19
+value = 0
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 10
+value = S5,28
+volume = 50
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = time = 10
+time = 30
+freq = 60
+ampl = -8
+phase = 90
+
+[State 1501, Explod]
+type = Explod
+trigger1 = time = 10
+anim = 3030
+ID = 9037
+pos = 0,15
+postype = p1
+facing = -1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .6,.6
+sprpriority = 7
+ontop = 0
+ownpal = 1
+removeongethit = 0
+ignorehitpause = 0
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 5
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+ignorehitpause = 1
+
+[State 200, End]
+type = Destroyself
+trigger1 = animtime = 0
+;---------------------------------------
+; Walk FWD
+;--------------------------------------
+[Statedef 3420]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+anim = 3460
+sprpriority = -1
+
+[State 200, WALK DOWN]
+type = Changestate
+triggerall = root,pos y <= 0
+trigger1 = rootdist y > 20
+value = 3421
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+ignorehitpause = 1
+
+[State 0, PlayerPush]
+type = PlayerPush
+trigger1 = 1
+value = 0
+
+[State 20, 1]
+type = VelSet
+trigger1 = 1
+x = 2
+
+[State 200, End]
+type = ChangeState
+trigger1 = rootdist x = [-30,30]
+value = 3401
+;---------------------------------------
+; Walk Back
+;--------------------------------------
+[Statedef 3421]
+type    = S
+physics = S
+anim = 3461
+sprpriority = -1
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+ignorehitpause = 1
+
+[State 20, 1]
+type = VelSet
+trigger1 = 1
+x = -2
+
+[State 200, End]
+type = Changestate
+trigger1 = rootdist y < 20
+value = 3401
+;-------------------------------------------------------------------------------
+; Katsuyu - Golpe Normal 1
+[Statedef 3430]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3430
+sprpriority = -1
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+ignorehitpause = 1
+
+[State 0, Onda FX]
+type = Helper
+trigger1 = time = 0
+helpertype = normal
+name = "Onda FX"
+ID = 8510
+stateno = 8510
+pos = 20,-45
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+size.xscale = .5
+size.yscale = .5
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S2,10
+volume = 999
+
+[State 225,2 Explod]
+type = Explod
+trigger1 = Animelem = 2
+anim = 6027
+ID = 6027
+pos = 67,-57
+angle = 15
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = 1,1.4
+sprpriority = 0
+ontop = 0
+ownpal = 1
+removeongethit = 0
+
+[State 0, Acido]
+type = Helper
+trigger1 = animelem = 2
+helpertype = normal
+name = "Acido"
+ID = 3435
+stateno = 3435
+pos = 68,-56
+postype = p1
+ownpal = 1
+ontop = 1
+size.xscale = 1
+size.yscale = 1
+
+[State 200, End]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 3401
+
+;------------------------------------------------------------------------------
+; Acido
+[StateDef 3435]
+type     = S
+movetype = A
+physics  = S
+juggle   = 1
+velset   = 0,0
+ctrl = 0
+anim = 6026
+sprpriority = 4
+
+[State 0, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = Noshadow
+ignorehitpause = 1
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 = 1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 3436
+time = 999999999
+ignorehitpause = 1
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = A, NP
+animtype  = Heavy
+damage    = 30
+Hitflag = MAFDE
+guardflag = MA
+pausetime = 0,12
+sparkno = -1
+guard.sparkno = -1
+sparkxy = -8,-25
+hitsound   = S1,18
+guardsound = S4,1
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = -4,-8
+air.velocity = -4,-6
+Fall = 1
+Envshake.time = 20
+PalFX.time = 30
+palfx.add = 0,100,50
+palfx.mul = 20,120,24
+palfx.sinadd = 85,110,55,10
+PalFX.invertall = 0
+PalFX.color = 256
+sprpriority = 3
+
+[State 226,2 VelSet]
+type = VelSet
+trigger1 = !Time
+trigger1 = Pos y<0
+y = -5+Enemynear ,pos y / 20
+
+[State 226,3 VelSet]
+type = VelSet
+trigger1 = 1
+trigger1 = Pos y<0
+x = 7+Cond(Facing=1,Enemynear ,pos x / 20,-Enemynear ,pos x / 20)
+
+[State 226,4 VelAdd]
+type = VelAdd
+trigger1 = 1
+trigger1 = Pos y<0
+y = .2
+
+[State 226,5 Gravity]
+type = Gravity
+trigger1 = 1
+
+[State 226,6 AngleDraw]
+type = AngleDraw
+trigger1 = 1
+trigger1 = Pos y<0
+scale = .4,.4
+value = ((ATan(vel y/vel x*Cond(vel x<0,1,-1)))*(180.0/PI))
+
+[State 0, Hit Spark]
+type = Explod
+triggerall = Numexplod(7001) = 0
+trigger1 = Movehit = 1
+anim = 7001
+ID = 7001
+postype = P1
+pos = 20,0
+facing = -1
+sprpriority = 5
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = .6,.6
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 0, Guard Spark]
+type = Explod
+triggerall = numexplod(7010) = 0
+trigger1 = moveguarded = 1
+anim = 7000
+ID = 7010
+postype = P2
+pos = 8,-30
+facing = 1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = .7,.7
+removeongethit = 1
+ontop = 1
+ignorehitpause = 1
+
+[State 200, End]
+type = ChangeState
+trigger1 = movecontact
+trigger2 = frontedgebodydist < 5
+trigger3 = pos y >= -20
+trigger4 = time = 500
+value = 3436
+
+;-------------------------------------------------------------------------------
+; Waterball Fin
+[Statedef 3436]
+type    = A
+movetype= I
+physics = N
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 9999
+sprpriority = 3
+
+[State 0, Water Explosion]
+type = Explod
+trigger1 = time = 0
+anim = 6028
+ID = 6028
+pos = 0,0
+postype = p1
+scale = 0.5,0.5
+sprpriority = 2
+angle = Random%360
+ontop = 0
+ownpal = 1
+ignorehitpause = 1
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = time = 0
+time = 20
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S1,19
+volume = 999
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 100
+
+
+;-------------------------------------------------------------------------------
+; Katsuyu - Golpe Normal 2
+[Statedef 3440]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3440
+sprpriority = -1
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+ignorehitpause = 1
+
+[State 0, Onda FX]
+type = Helper
+trigger1 = time = 0
+helpertype = normal
+name = "Onda FX"
+ID = 8510
+stateno = 8510
+pos = 20,-45
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+size.xscale = .5
+size.yscale = .5
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S2,10
+volume = 999
+
+[State 217,7 Explod]
+type = Explod
+Triggerall = time >= 20
+trigger1 = time%15 = 0
+anim = 6029
+pos = 0,0
+postype = p1  ;p2,front,back,left,right
+facing = 1
+vfacing = 1
+bindtime = 1
+vel = 0,-0.8
+removetime = -2
+scale = 0.8,0.5
+sprpriority = 0
+ontop = 0
+ownpal = 1
+removeongethit = 0
+
+[State 0, PalFXWiz]
+type = PalFX
+Triggerall = time >= 20
+trigger1 = time%15 = 0
+time = 12
+add = 0,50,0
+mul = 256,256,256
+sinadd = 50,50,50,50
+color = 256
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 20
+value = S5,27
+volume = 50
+channel = -5
+
+[State 0, StopSnd]
+type = StopSnd
+trigger1 = time = 199
+channel = -5
+
+[State 200, End]
+type = ChangeState
+trigger1 = Time = 200
+value = 3441
+
+;-------------------------------------------------------------------------------
+[Statedef 3441]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+sprpriority = -1
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+ignorehitpause = 1
+
+[State 200, End]
+type = ChangeState
+trigger1 = Time = 50
+value = 3401
+
+
+
+;-------------------------------------------------------------------------------
+; Katsuyu - Golpe Normal 3
+[Statedef 3445]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3445
+sprpriority = -1
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+ignorehitpause = 1
+
+[State 0, Onda FX]
+type = Helper
+trigger1 = time = 0
+trigger2 = time = 30
+trigger3 = time = 60
+helpertype = normal
+name = "Onda FX"
+ID = 8510
+stateno = 8510
+pos = 20,-45
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+size.xscale = .5
+size.yscale = .5
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+trigger2 = time = 30
+trigger3 = time = 60
+value = S2,10
+volume = 999
+
+[State 225,2 Explod]
+type = Explod
+trigger1 = Animelem = 2
+trigger2 = Animelem = 3
+trigger3 = Animelem = 4
+anim = 6027
+ID = 6027
+pos = 67,-57
+angle = 15
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = 1,1.4
+sprpriority = 0
+ontop = 0
+ownpal = 1
+removeongethit = 0
+
+[State 0, Acido]
+type = Helper
+trigger1 = Animelem = 2
+trigger2 = Animelem = 3
+trigger3 = Animelem = 4
+helpertype = normal
+name = "Acido"
+ID = 3446
+stateno = 3446
+pos = 68,-56
+postype = p1
+ownpal = 1
+ontop = 1
+size.xscale = 1
+size.yscale = 1
+
+[State 200, End]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 3401
+
+;------------------------------------------------------------------------------
+; Acido
+[StateDef 3446]
+type     = S
+movetype = A
+physics  = S
+juggle   = 1
+velset   = 0,0
+ctrl = 0
+anim = 6026
+sprpriority = 4
+
+[State 0, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = Noshadow
+ignorehitpause = 1
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 = 1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 3436
+time = 999999999
+ignorehitpause = 1
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = A, NP
+animtype  = Heavy
+damage    = 30
+Hitflag = MAFDE
+guardflag = MA
+pausetime = 0,12
+sparkno = -1
+guard.sparkno = -1
+sparkxy = -8,-25
+hitsound   = S1,18
+guardsound = S4,1
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = -4,-8
+air.velocity = -4,-6
+Fall = 1
+Envshake.time = 20
+PalFX.time = 30
+palfx.add = 0,100,50
+palfx.mul = 20,120,24
+palfx.sinadd = 85,110,55,10
+PalFX.invertall = 0
+PalFX.color = 256
+sprpriority = 3
+
+[State 226,2 VelSet]
+type = VelSet
+trigger1 = !Time
+trigger1 = Pos y<0
+y = -5+Enemynear ,pos y / 20
+
+[State 226,3 VelSet]
+type = VelSet
+trigger1 = 1
+trigger1 = Pos y<0
+x = 7+Cond(Facing=1,Enemynear ,pos x / 20,-Enemynear ,pos x / 20)
+
+[State 226,4 VelAdd]
+type = VelAdd
+trigger1 = 1
+trigger1 = Pos y<0
+y = .2
+
+[State 226,5 Gravity]
+type = Gravity
+trigger1 = 1
+
+[State 226,6 AngleDraw]
+type = AngleDraw
+trigger1 = 1
+trigger1 = Pos y<0
+scale = .4,.4
+value = ((ATan(vel y/vel x*Cond(vel x<0,1,-1)))*(180.0/PI))
+
+[State 0, Hit Spark]
+type = Explod
+triggerall = Numexplod(7001) = 0
+trigger1 = Movehit = 1
+anim = 7001
+ID = 7001
+postype = P1
+pos = 20,0
+facing = -1
+sprpriority = 5
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = .6,.6
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 0, Guard Spark]
+type = Explod
+triggerall = numexplod(7010) = 0
+trigger1 = moveguarded = 1
+anim = 7000
+ID = 7010
+postype = P2
+pos = 8,-30
+facing = 1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = .7,.7
+removeongethit = 1
+ontop = 1
+ignorehitpause = 1
+
+[State 200, End]
+type = ChangeState
+trigger1 = movecontact
+trigger2 = frontedgebodydist < 5
+trigger3 = pos y >= -20
+trigger4 = time = 500
+value = 3436
+;--------------------------------
+; Golpeado
+;---------------------------------
+[Statedef 3480]
+type    = S
+physics = S
+movetype= H
+sprpriority = -1
+
+[State 0, ParentVaradd]
+type = ParentVaradd
+trigger1 = time = 0
+v = 19
+value = -gethitvar(damage)
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+y = 0
+
+[State 0, VelSet]
+type = Veladd
+trigger1 = time = 0
+x = ifelse(facing = 1,gethitvar(xvel)/2,-gethitvar(xvel)/2)
+
+[State 130, 1]
+type = ChangeAnim
+trigger1 = 1
+value = 3480
+
+[State 130, Hit Fin]
+type = ChangeState
+trigger1 = parent,var(19) > 0 && Hitover
+value = 3401
+
+[State 130, Hit Fin]
+type = ChangeState
+trigger1 = parent,var(19) <= 0 && Hitover
+value = 3402
+
+;-------------------------------------------------------------------------------
+; Evitador de Infinitos
+[Statedef 3290]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 9999
+sprpriority = 2
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 2000

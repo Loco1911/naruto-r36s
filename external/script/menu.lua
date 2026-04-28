@@ -614,6 +614,54 @@ local function f_prettifyInput(str)
 	return str:match('^%s*(.-)%s*$')
 end
 
+local function f_movelistTrim(str, maxLen)
+	str = tostring(str or '')
+	if #str <= maxLen then
+		return str
+	end
+	return str:sub(1, math.max(1, maxLen - 2)) .. '..'
+end
+
+local function f_movelistWrapInput(str, maxLen)
+	str = tostring(str or ''):gsub('%s+', ' '):match('^%s*(.-)%s*$')
+	maxLen = maxLen or 42
+	if str == '' then
+		return {''}
+	end
+	local lines = {}
+	local line = ''
+	for part in str:gmatch('[^,]+,?') do
+		part = part:gsub('^%s+', ''):gsub('%s+$', '')
+		if part ~= '' then
+			local candidate = line == '' and part or (line .. ' ' .. part)
+			if #candidate <= maxLen then
+				line = candidate
+			else
+				if line ~= '' then
+					table.insert(lines, line)
+				end
+				while #part > maxLen do
+					table.insert(lines, part:sub(1, maxLen))
+					part = part:sub(maxLen + 1)
+				end
+				line = part
+			end
+		end
+	end
+	if line ~= '' then
+		table.insert(lines, line)
+	end
+	if #lines == 0 then
+		table.insert(lines, str)
+	end
+	return lines
+end
+
+local function f_movelistIsAiCommand(name)
+	local text = tostring(name or ''):lower():match('^%s*(.-)%s*$')
+	return text == 'ai' or text:match('^ai%d') or text:match('^ai[%s_-]')
+end
+
 local function f_movelistJson(ref)
 	local charData = start.f_getCharData(ref)
 	if type(charData) ~= 'table' then
@@ -662,18 +710,31 @@ local function f_movelistJsonToCommandlist(data)
 		return f_prettifyInput(str)
 	end
 	for _, section in ipairs(data.sections or {}) do
-		table.insert(out, {
-			{glyph = false, text = tostring(section.name or 'Seccion'), align = 1, col = f_hexColor('FFB132')}
-		})
-		for _, move in ipairs(section.moves or {}) do
-			table.insert(out, {
-				{glyph = false, text = tostring(move.name or 'Movimiento'), align = 1, col = {}},
-				{glyph = false, text = displayInput(move.input), align = -1, col = typeColors[move.type] or f_hexColor('E6EBF4')},
-			})
+		if type(section) == 'table' then
+			local sectionRows = {}
+			for _, move in ipairs(type(section.moves) == 'table' and section.moves or {}) do
+				if type(move) == 'table' and not f_movelistIsAiCommand(move.name) then
+					local inputLines = f_movelistWrapInput(displayInput(move.input), 42)
+					for lineIndex, inputText in ipairs(inputLines) do
+						table.insert(sectionRows, {
+							{glyph = false, text = lineIndex == 1 and f_movelistTrim(move.name or 'Movimiento', 28) or '', align = 1, col = {}},
+							{glyph = false, text = inputText, align = -1, col = typeColors[move.type] or f_hexColor('E6EBF4')},
+						})
+					end
+				end
+			end
+			if #sectionRows > 0 then
+				table.insert(out, {
+					{glyph = false, text = f_movelistTrim(section.name or 'Seccion', 32), align = 1, col = f_hexColor('FFB132')}
+				})
+				for _, row in ipairs(sectionRows) do
+					table.insert(out, row)
+				end
+				table.insert(out, {
+					{glyph = false, text = '', align = 1, col = {}}
+				})
+			end
 		end
-		table.insert(out, {
-			{glyph = false, text = '', align = 1, col = {}}
-		})
 	end
 	if #out > 0 and #out[#out] == 1 and out[#out][1].text == '' then
 		table.remove(out)
@@ -774,6 +835,9 @@ function menu.f_commandlistParse()
 end
 
 function menu.f_commandlistRender(section, t)
+	if type(t) ~= 'table' or type(t.tbl) ~= 'table' then
+		return
+	end
 	main.f_cmdInput()
 	if getKey() ~= '' then
 		resetKey()
@@ -784,9 +848,12 @@ function menu.f_commandlistRender(section, t)
 	else
 		table.insert(cmdList, {{glyph = false, text = motif[section].movelist_text_text, align = 1, col = {}}})
 	end
+	t.tbl.movelistLine = math.max(1, math.min(t.tbl.movelistLine or 1, math.max(1, #cmdList)))
 	if menu.commandlistDebounce > 0 then
 		menu.commandlistDebounce = menu.commandlistDebounce - 1
-		main.f_cmdBufReset()
+		if type(main.f_cmdBufReset) == 'function' then
+			main.f_cmdBufReset()
+		end
 	elseif esc() or main.f_input(main.t_players, {'m'}) then
 		sndPlay(motif.files.snd_data, motif[section].cancel_snd[1], motif[section].cancel_snd[2])
 		menu.commandlistDebounce = 0
@@ -832,7 +899,7 @@ function menu.f_commandlistRender(section, t)
 		local lengthOffset = 0
 		local align = 1
 		local width = 0
-		for k, v in ipairs(cmdList[n]) do
+		for k, v in ipairs(type(cmdList[n]) == 'table' and cmdList[n] or {}) do
 			if v.text ~= '' then
 				alignOffset = 0
 				if v.align == 0 then --center align

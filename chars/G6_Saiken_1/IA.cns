@@ -1,0 +1,248 @@
+;-------------------------------------------------------------------------------
+;[Statedef -2]
+;===============================================================================
+;---------------------------Estados usados Siempre------------------------------
+;===============================================================================
+[Statedef -3]
+;===============================================================================
+; Pared Rota:
+;-------------------------------------------------------------------------------
+[State 0, Helper]
+type = Helper
+triggerall = numhelper(450) = 0
+trigger1 = p2stateno = 436
+helpertype = normal
+name = "Pared Rota"
+ID = 450
+stateno = 450
+pos = 0,-30
+postype = p2
+facing = 1
+keyctrl = 0
+ownpal = 1
+;===============================================================================
+; Saiken IA:
+;-------------------------------------------------------------------------------
+[State 0, Stand]
+type = ChangeState
+Triggerall =  stateno != [180,181]
+Triggerall =  stateno != [34988,34989]
+triggerall = pos y >= 0
+triggerall = roundstate = 2
+Trigger1 =  stateno != [3401,3499]
+value = 3401
+
+[State 0, JUMP]
+type = ChangeState
+triggerall = time >= 5
+triggerall = stateno = 3401||stateno = 3420||stateno = 3421
+trigger1 = command = "holdup"
+trigger2 = ailevel > 0 && p2bodydist x = [0,150]
+trigger2 = p2statetype = A && random < 40
+value = 3440
+
+;[State 0, GUARD]
+;type = ChangeState
+;triggerall = stateno = 3401||stateno = 3420||stateno = 3421
+;trigger1 = command = "holddown"
+;trigger2 = ailevel > 0 && (p2movetype = A || (enemy, NumProj >= 1)) && p2bodydist x = [0,100]
+;trigger2 = random < 25
+;value = 3470
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = stateno = [3400,3499]
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 10
+
+[State 0, Kurama Escudo Invisible]
+type = Helper
+triggerall = numhelper(34988) = 0
+trigger1 = stateno = [3401,3499]
+helpertype = player
+name = "Kurama Escudo Invisible"
+ID = 34988
+stateno = 34988
+pos = 0,0
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+
+[State 0, LifeAdd]
+type = LifeAdd
+trigger1 = stateno = [3400,3499]
+value = var(6)
+;===============================================================================
+; ESPECIALES:
+;-------------------------------------------------------------------------------
+[State 0, SPECIAL 1]
+type = ChangeState
+Triggerall = numhelper(12100) = 0
+Triggerall = power >= 2000
+triggerall = stateno = 3401||stateno = 3420||stateno = 3421
+trigger1 = command = "SPECIAL 1"
+trigger2 = ailevel > 0 && p2bodydist x >= 100
+trigger2 = random < 100
+value = 3490
+
+[State -1, SPECIAL 2]
+type = ChangeState
+Triggerall = power >= 2000
+triggerall = stateno = 3401||stateno = 3420||stateno = 3421
+trigger1 = command = "SPECIAL 2"
+trigger2 = ailevel > 0 && p2bodydist x = [-100,100]
+trigger2 = random < 100
+value = 3494
+
+[State 0, SPECIAL 3]
+type = ChangeState
+Triggerall = power >= 2000
+triggerall = stateno = 3401||stateno = 3420||stateno = 3421
+trigger1 = command = "SPECIAL 3"
+trigger2 = ailevel > 0 && p2bodydist x = [50,150]
+trigger2 = random < 100
+value = 3491
+
+[State -1, SPECIAL 4]
+type = ChangeState
+Triggerall = power >= 2000
+triggerall = stateno = 3401||stateno = 3420||stateno = 3421
+trigger1 = command = "SPECIAL 4"
+trigger2 = ailevel > 0 && p2bodydist x = [50,200]
+trigger2 = random < 100
+trigger2 = enemy,pos y < -50
+value = 3497
+
+[State 0, SPECIAL 5]
+type = ChangeState
+Triggerall = power >= 3000
+triggerall = stateno = 3401||stateno = 3420||stateno = 3421
+trigger1 = command = "SPECIAL 5"
+trigger2 = ailevel > 0 && p2bodydist x >= 150
+trigger2 = random < 100
+value = 3495
+
+[State 0, SPECIAL 6]
+type = ChangeState
+Triggerall = power >= 5000
+triggerall = stateno = 3401||stateno = 3420||stateno = 3421
+trigger1 = command = "SPECIAL 6"
+trigger2 = ailevel > 0 && p2bodydist x >= 100
+trigger2 = random < 250
+value = 3498
+;===============================================================================
+; NORMALES:
+;-------------------------------------------------------------------------------
+[State 0, Mordisco]
+type = ChangeState
+triggerall = stateno = 3401||stateno = 3420||stateno = 3421
+trigger1 = command = "a"
+trigger2 = ailevel > 0 && p2bodydist x = [0,150]
+trigger2 = random < 50
+trigger2 = enemy,pos y < -50
+value = 3430
+
+[State 0, Manotazo]
+type = ChangeState
+triggerall = stateno = 3401||stateno = 3420||stateno = 3421
+trigger1 = command = "b"
+trigger2 = ailevel > 0 && p2bodydist x = [50,150]
+trigger2 = random < 50
+value = 3432
+
+[State 0, Bijuudama Normal]
+type = ChangeState
+triggerall = stateno = 3401||stateno = 3420||stateno = 3421
+trigger1 = command = "c"
+trigger2 = ailevel > 0 && p2bodydist x = [150,250]
+trigger2 = random < 50
+value = 3433
+
+[State 0, Bijuudama Aire]
+type = ChangeState
+Triggerall = power >= 500
+Triggerall = pos y < -30
+triggerall = stateno = 3440
+trigger1 = command = "a" || command = "b" || command = "c"
+trigger2 = ailevel > 0 && p2bodydist x >= 100
+trigger2 = time < 5 && time > 2 && random < 50
+value = 3439
+
+[State -1, Power Charge]
+type = changestate
+triggerall = power < 5000
+triggerall = stateno = 3401||stateno = 3420||stateno = 3421
+trigger1 = command = "y"
+value = 3450
+
+[State -1, Power Charge IA]
+type = changestate
+triggerall = power < 5000
+triggerall = RoundState = 2 && ailevel > 0
+triggerall = stateno = 3401||stateno = 3420||stateno = 3421
+triggerall = P2BodyDist X >= 200
+trigger1 = power < 1000 && Random = [600,800]
+trigger2 = power < 2000 && power > 1000 && Random = [300,500]
+trigger3 = power < 3000 && power > 2000 && Random = [100,200]
+trigger4 = power < 4000 && power > 3000 && Random = [50,100]
+trigger5 = power < 5000 && power > 4000 && Random = [25,50]
+value = 3450
+;-------------------------------------------------------------------------------
+; Sonidos Comunes:
+;-------------------------------------------------------------------------------
+[State 0, PlaySnd]
+type = PlaySnd
+triggerall = stateno = 3420||stateno = 3421
+trigger1 = animelem = 2
+value = S20,1
+
+[State 0, Saltando]
+type = PlaySnd
+triggerall = stateno = 3440
+trigger1 = Time = 1
+value = S60,1
+volume = 55
+channel = -1
+
+[State 0, Land]
+type = PlaySnd
+triggerall = stateno = 3441
+trigger1 = time = 1
+value = S20,1
+volume = 50
+
+[State 0, Run]
+type = PlaySnd
+triggerall = stateno = 60||stateno = 70
+trigger1 = time = 1
+value = S40,2
+volume = 50
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+TRIGGERALL = stateno != 3450
+trigger1 = time = 1
+id = 550
+
+[State 0, StopSnd]
+type = StopSnd
+TRIGGERALL = stateno != 3450
+trigger1 = time = 1
+channel = 1
+
+[State 0, StopSnd]
+type = StopSnd
+TRIGGERALL = stateno != 3450
+trigger1 = time = 1
+channel = 2
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = stateno = 3420 && animelem = 2
+trigger2 = stateno = 3421 && animelem = 2
+trigger3 = time = 1 && stateno = 3441
+time = 15
+freq = 60
+ampl = -2
+phase = 90

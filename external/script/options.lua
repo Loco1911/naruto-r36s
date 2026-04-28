@@ -182,6 +182,7 @@ options.t_itemname = {
 			--config.ScreenshotFolder = ""
 			--config.StartStage = "stages/stage0-720.def"
 			config.StereoEffects = true
+			config.SubstitutionButton = main.f_getSubstitutionButtonCommand(nil)
 			--config.System = "external/script/main.lua"
 			config.Team1VS2Life = 100
 			config.TeamDuplicates = true
@@ -1013,6 +1014,27 @@ options.t_itemname = {
 		end
 		return true
 	end,
+	--Substitution Button
+	['substitutionbutton'] = function(t, item, cursorPosY, moveTxt)
+		if main.f_input(main.t_players, {'$F', '$B', 'pal', 's'}) then
+			sndPlay(motif.files.snd_data, motif.option_info.cursor_move_snd[1], motif.option_info.cursor_move_snd[2])
+			local idx = main.f_getSubstitutionButtonIndex(config.SubstitutionButton)
+			if main.f_input(main.t_players, {'$F', 'pal', 's'}) then
+				idx = idx + 1
+			else
+				idx = idx - 1
+			end
+			if idx > #main.t_substitutionButtons then
+				idx = 1
+			elseif idx < 1 then
+				idx = #main.t_substitutionButtons
+			end
+			config.SubstitutionButton = main.t_substitutionButtons[idx].command
+			t.items[item].vardisplay = main.t_substitutionButtons[idx].displayname
+			options.modified = true
+		end
+		return true
+	end,
 	--Default
 	['inputdefault'] = function(t, item, cursorPosY, moveTxt)
 		if main.f_input(main.t_players, {'pal', 's'}) then
@@ -1026,6 +1048,7 @@ options.t_itemname = {
 					setKeyConfig(pn, config.JoystickConfig[pn].Joystick, config.JoystickConfig[pn].Buttons)
 				end
 			end
+			config.SubstitutionButton = main.f_getSubstitutionButtonCommand(nil)
 			options.modified = true
 		end
 		return true
@@ -1354,6 +1377,9 @@ options.t_vardisplay = {
 	end,
 	['players'] = function()
 		return config.Players
+	end,
+	['substitutionbutton'] = function()
+		return main.f_getSubstitutionButtonDisplay(config.SubstitutionButton)
 	end,
 	['portchange'] = function()
 		return config.ListenPort

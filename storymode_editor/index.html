@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>IKEMEN GO — Editor Integral</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cinzel:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -53,6 +54,141 @@
         .sb-item.active { background: rgba(234,88,12,0.08); border-left: 3px solid #ea580c; }
         /* No-select on disk list items */
         .disk-item { cursor: default !important; user-select: none; }
+        .char-preview-shell {
+            background: linear-gradient(180deg, #121925 0%, #0d1219 100%);
+            border: 1px solid #223044;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .char-preview-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px 8px;
+            border-bottom: 1px solid rgba(42, 58, 78, 0.8);
+            background: linear-gradient(180deg, rgba(18,25,37,0.95) 0%, rgba(13,18,25,0.95) 100%);
+        }
+        .char-preview-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #f8fafc;
+            line-height: 1.2;
+        }
+        .char-preview-subtitle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+            font-size: 11px;
+            color: #94a3b8;
+        }
+        .char-preview-stage {
+            position: relative;
+            height: 220px;
+            background:
+                radial-gradient(circle at top, rgba(30,41,59,0.95) 0%, rgba(16,23,34,0.98) 58%, rgba(10,14,20,1) 100%);
+        }
+        .char-preview-stage::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 30%),
+                repeating-linear-gradient(
+                    90deg,
+                    rgba(148,163,184,0.02) 0,
+                    rgba(148,163,184,0.02) 1px,
+                    transparent 1px,
+                    transparent 24px
+                );
+            pointer-events: none;
+        }
+        .char-preview-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .char-preview-image {
+            position: absolute;
+            left: 50%;
+            bottom: 18px;
+            transform: translateX(-50%);
+            max-width: 88%;
+            max-height: 84%;
+            image-rendering: pixelated;
+            filter: drop-shadow(0 12px 14px rgba(0, 0, 0, 0.35));
+        }
+        .char-preview-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            text-align: center;
+            font-size: 12px;
+            line-height: 1.45;
+            color: #94a3b8;
+            background: rgba(10,14,20,0.2);
+            backdrop-filter: blur(1px);
+        }
+        .char-preview-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 8px 12px 10px;
+            font-size: 10px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #64748b;
+            border-top: 1px solid rgba(42, 58, 78, 0.7);
+        }
+        .char-preview-mugshot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 12px;
+            border-top: 1px solid rgba(42, 58, 78, 0.7);
+            background: linear-gradient(180deg, rgba(11,16,23,0.96) 0%, rgba(13,18,25,0.96) 100%);
+        }
+        .char-preview-mugshot-copy {
+            min-width: 0;
+        }
+        .char-preview-mugshot-label {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #6b87b8;
+        }
+        .char-preview-mugshot-text {
+            margin-top: 4px;
+            font-size: 11px;
+            color: #cbd5e1;
+        }
+        .char-preview-mugshot-box {
+            width: 78px;
+            height: 58px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(59, 130, 246, 0.28);
+            background: radial-gradient(circle at top, rgba(30,41,59,0.92) 0%, rgba(10,14,20,1) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .char-preview-mugshot-image {
+            max-width: 100%;
+            max-height: 100%;
+            image-rendering: pixelated;
+            object-fit: contain;
+        }
 
         /* ── Historia Visual ── */
         .scroll-bg {
@@ -61,42 +197,50 @@
         }
         .timeline-shell {
             overflow-x: auto;
-            overflow-y: hidden;
-            padding-bottom: 10px;
+            overflow-y: auto;
+            padding: 0 0 12px;
         }
         .timeline-track {
-            min-width: max-content;
-            display: flex;
-            align-items: flex-start;
-            gap: 0;
-            padding: 10px 8px 18px;
+            position: relative;
+            min-height: 100%;
         }
         .chapter-node {
-            width: 112px; min-height: 146px; flex-shrink: 0;
+            width: 148px; min-height: 172px;
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 6px;
             cursor: pointer; transition: transform 0.15s, filter 0.15s;
             user-select: none;
-            position: relative;
+            position: absolute;
+            padding-bottom: 8px;
         }
-        .chapter-node:hover { transform: translateY(-2px); filter: brightness(1.04); }
-        .chapter-node.active .node-circle { box-shadow: 0 0 0 3px #fff, 0 0 12px rgba(255,200,0,0.8); }
-        .chapter-node.drag-over .node-circle { box-shadow: 0 0 0 3px #ea580c, 0 0 18px rgba(234,88,12,0.45); }
+        .chapter-node:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .chapter-node.active { transform: scale(1.05); filter: brightness(1.2); }
+        .chapter-node.active .node-circle { box-shadow: 0 0 15px rgba(255,255,255,0.4); }
+        .chapter-node.drag-over .node-circle { border-color: #60a5fa; box-shadow: 0 0 10px #60a5fa; }
         .node-circle {
-            width: 56px; height: 56px; border-radius: 12px;
+            width: 52px; height: 52px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             font-size: 16px; font-weight: 800; border: 3px solid;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-            transition: box-shadow 0.15s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.2);
+            position: relative; z-index: 2;
         }
         .node-index {
             letter-spacing: 0.5px;
             text-transform: uppercase;
         }
         .node-label {
-            font-size: 10px; font-weight: 700; text-align: center;
+            width: 100%;
+            min-height: 72px;
+            padding: 9px 10px;
+            border-radius: 10px;
+            background: linear-gradient(180deg, rgba(15,23,35,0.96) 0%, rgba(11,17,26,0.96) 100%);
+            border: 1px solid rgba(54, 70, 91, 0.9);
+            box-shadow: 0 14px 28px rgba(0,0,0,0.22);
+            text-align: center;
             color: #dbe5f1;
-            max-width: 104px; min-height: 52px; line-height: 1.25;
-            display: flex; flex-direction: column; justify-content: flex-start;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 3px;
         }
         .node-meta {
             font-size: 9px;
@@ -104,19 +248,138 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             color: #7c8aa0;
-            margin-bottom: 2px;
+        }
+        .node-title {
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1.35;
+            color: #f3f7fd;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
         .node-parent {
-            font-size: 9px;
-            color: #64748b;
+            font-size: 10px;
+            color: #c0d6f2;
+            margin-top: auto;
+            text-align: center;
+            background: rgba(37,99,235,0.16);
+            border: 1px solid rgba(96,165,250,0.35);
+            padding: 4px 8px;
+            border-radius: 999px;
         }
-        .node-normal { background: radial-gradient(circle at 35% 35%, #fef9d0, #c8a84b); border-color: #8b6914; }
-        .node-sidestory { background: radial-gradient(circle at 35% 35%, #d0e8ff, #5b9ed6); border-color: #2563ab; }
-        .node-midboss { background: radial-gradient(circle at 35% 35%, #ffd0d0, #d66565); border-color: #991b1b; }
-        .node-finalboss { background: radial-gradient(circle at 35% 35%, #f0d0ff, #9b59d6); border-color: #7c2fa8; }
+        .story-workspace {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-height: 100%;
+        }
+        .story-canvas-card {
+            background: linear-gradient(180deg, #111826 0%, #0d131d 100%);
+            border: 1px solid #1e2a3a;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+        }
+        .story-canvas-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .story-canvas-eyebrow {
+            font-size: 10px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: #7c8aa0;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+        .story-canvas-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #f59e0b;
+            line-height: 1.15;
+        }
+        .story-canvas-subtitle {
+            max-width: 720px;
+            margin-top: 6px;
+            color: #8ca1ba;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+        .story-metrics {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .story-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            border: 1px solid rgba(60,78,102,0.85);
+            background: rgba(13,18,25,0.9);
+            color: #dbe5f1;
+        }
+        .story-chip strong {
+            color: #f8fafc;
+            font-size: 12px;
+        }
+        .story-chip-gold { box-shadow: inset 0 0 0 1px rgba(234,179,8,0.12); }
+        .story-chip-blue { box-shadow: inset 0 0 0 1px rgba(59,130,246,0.12); }
+        .story-chip-red { box-shadow: inset 0 0 0 1px rgba(239,68,68,0.12); }
+        .story-chip-purple { box-shadow: inset 0 0 0 1px rgba(168,85,247,0.12); }
+        .story-editor-card {
+            background: linear-gradient(180deg, #121a25 0%, #0d131c 100%);
+            border: 1px solid #1e2a3a;
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .story-node-strip {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .story-node-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 999px;
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(15,23,35,0.9);
+            border: 1px solid rgba(54,70,91,0.9);
+            color: #dbe5f1;
+        }
+        .story-help-copy {
+            font-size: 12px;
+            color: #7c8aa0;
+            line-height: 1.45;
+        }
+        @media (max-width: 1280px) {
+            .chapter-node {
+                width: 136px;
+            }
+            .story-canvas-title {
+                font-size: 19px;
+            }
+        }
+        .node-normal { background: radial-gradient(circle at 35% 35%, #fef9d0, #c8a84b); border-color: #8b6914; color: #4a3400; }
+        .node-sidestory { background: radial-gradient(circle at 35% 35%, #d0e8ff, #5b9ed6); border-color: #2563ab; color: #0d2d4f; }
+        .node-midboss { background: radial-gradient(circle at 35% 35%, #ffd0d0, #d66565); border-color: #991b1b; color: #4a0f0f; }
+        .node-finalboss { background: radial-gradient(circle at 35% 35%, #f0d0ff, #9b59d6); border-color: #7c2fa8; color: #3b1151; }
         .node-empty { background: #3d3020; border-color: #5a4a2a; border-style: dashed; opacity: 0.5; }
-        .connector { height: 4px; width: 36px; flex: 0 0 36px; background: linear-gradient(90deg,#334155,#64748b,#334155); border-radius: 2px; margin-top: 28px; }
-        .connector-side { background: linear-gradient(90deg,#1d4ed8,#60a5fa,#1d4ed8); opacity: 0.55; }
         .format-btn { padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; }
         .format-btn.active { background: rgba(234,88,12,0.2); border-color: #ea580c; color: #fb923c; }
         .format-btn:not(.active) { background: #1a2332; border-color: #2a3a4e; color: #64748b; }
@@ -162,6 +425,7 @@
                 <button @click="activeTab='chars';loadChars()" :class="{active:activeTab==='chars'}" class="tab-btn">🥷 Personajes</button>
                 <button @click="activeTab='movelists';loadMovelistCatalog()" :class="{active:activeTab==='movelists'}" class="tab-btn">⚡ Move Lists</button>
                 <button @click="activeTab='stages';loadStages()" :class="{active:activeTab==='stages'}" class="tab-btn">🏟️ Stages</button>
+                <button @click="activeTab='lifebars';loadLifebars()" :class="{active:activeTab==='lifebars'}" class="tab-btn">❤️ Lifebars</button>
             </nav>
         </div>
         <div class="flex items-center gap-3">
@@ -217,18 +481,46 @@
                 </div>
 
                 <!-- Scroll canvas -->
-                <div class="flex-1 overflow-auto custom-scroll p-6 flex flex-col gap-4">
-                    <div class="scroll-bg rounded-lg p-6 min-h-[200px] relative">
-                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 text-center" style="font-family:'Cinzel',serif;">
-                            {{ currentArc.title||'Saga' }}
+                <div class="flex-1 overflow-y-auto custom-scroll p-5 xl:p-6">
+                    <div class="story-workspace">
+                    <div class="story-canvas-card">
+                        <div class="story-canvas-header">
+                            <div>
+                                <div class="story-canvas-eyebrow">Mapa de progresión</div>
+                                <div class="story-canvas-title">{{ currentArc.title||'Saga' }}</div>
+                                <div class="story-canvas-subtitle">
+                                    Arrastra ramas completas para reordenarlas. Las side stories se pueden colgar de capítulos normales o de otras side stories para formar árboles como <strong>1A</strong>, <strong>1B</strong> y ramas más profundas.
+                                </div>
+                            </div>
+                            <div class="story-metrics">
+                                <span class="story-chip story-chip-gold"><strong>{{ arcChapterCount(currentArc,'normal') }}</strong> capítulos</span>
+                                <span class="story-chip story-chip-blue"><strong>{{ arcChapterCount(currentArc,'sidestory') }}</strong> side stories</span>
+                                <span class="story-chip story-chip-red"><strong>{{ arcChapterCount(currentArc,'midboss') }}</strong> mid-bosses</span>
+                                <span class="story-chip story-chip-purple"><strong>{{ arcChapterCount(currentArc,'finalboss') }}</strong> final bosses</span>
+                            </div>
                         </div>
-                        <div class="text-[11px] text-slate-500 text-center mb-5">
-                            Arrastra nodos para reordenar. Las side stories bajan por nivel y puedes convertir cualquier nodo desde el editor de abajo.
-                        </div>
-                        <div class="timeline-shell custom-scroll">
-                            <div class="timeline-track" :style="{minHeight: currentArcTimelineHeight + 'px'}">
+                        <div class="timeline-shell custom-scroll" :style="{height: currentArcTimelineViewportHeight + 'px', overflowY: 'auto', overflowX: 'auto'}">
+                            <div class="timeline-track" :style="{width: currentArcTimelineWidth + 'px', height: currentArcTimelineHeight + 'px'}">
+                            <!-- SVG Connectors -->
+                            <svg style="position: absolute; top:0; left:0; width: 100%; height: 100%; pointer-events: none; z-index: 1;">
+                                <!-- Main track horizontal line -->
+                                <template v-for="(lnk,i) in timelineConnections" :key="'lnk'+i">
+                                    <!-- Main track connector -->
+                                    <line v-if="lnk.type==='main'" :x1="nodeX(lnk.from)+26" :y1="nodeY(lnk.from)+26" :x2="nodeX(lnk.to)+26" :y2="nodeY(lnk.to)+26"
+                                          stroke="#475569" stroke-width="4" stroke-linecap="round" />
+                                    <!-- Parent to child: vertical + horizontal bridge -->
+                                    <template v-if="lnk.type==='side'">
+                                        <line :x1="nodeX(lnk.from)+26" :y1="nodeY(lnk.from)+26" :x2="nodeX(lnk.from)+26" :y2="nodeY(lnk.to)+26"
+                                              stroke="#3b82f6" stroke-width="3" stroke-dasharray="6,3" opacity="0.6" />
+                                        <line :x1="nodeX(lnk.from)+26" :y1="nodeY(lnk.to)+26" :x2="nodeX(lnk.to)+26" :y2="nodeY(lnk.to)+26"
+                                              stroke="#3b82f6" stroke-width="3" stroke-dasharray="6,3" opacity="0.6" />
+                                    </template>
+                                    <!-- Sibling horizontal connector -->
+                                    <line v-if="lnk.type==='sibling'" :x1="nodeX(lnk.from)+26" :y1="nodeY(lnk.from)+26" :x2="nodeX(lnk.to)+26" :y2="nodeY(lnk.to)+26"
+                                          stroke="#60a5fa" stroke-width="3" stroke-linecap="round" opacity="0.7" />
+                                </template>
+                            </svg>
                             <template v-for="(cap,cI) in currentArc.chapters" :key="'n'+cI">
-                                <div v-if="cI>0" class="connector" :class="cap.type==='sidestory' ? 'connector-side' : ''"></div>
                                 <div class="chapter-node"
                                      :class="{active:selectedChapterIndex===cI,'drag-over':storyDropIndex===cI}"
                                      :style="chapterNodeStyle(cI)"
@@ -244,29 +536,37 @@
                                     </div>
                                     <div class="node-label">
                                         <div class="node-meta">{{ nodeTypeLabel(cap.type) }}</div>
-                                        <div>{{ cap.title||('Cap '+(((currentArcChapterMap[cI] || {}).label) || (cI+1))) }}</div>
+                                        <div class="node-title">{{ cap.title||('Cap '+(((currentArcChapterMap[cI] || {}).label) || (cI+1))) }}</div>
                                     </div>
                                     <div v-if="cap.type==='sidestory' && (currentArcChapterMap[cI] || {}).parentLabel" class="node-parent">
                                         ↳ {{ currentArcChapterMap[cI].parentLabel }}
                                     </div>
                                 </div>
                             </template>
-                            <div v-if="!currentArc.chapters||currentArc.chapters.length===0" class="text-sm text-slate-500 text-center w-full py-4 opacity-70">
+                            <div v-if="!currentArc.chapters||currentArc.chapters.length===0" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)" class="text-sm text-slate-500 text-center py-4 opacity-70">
                                 Usa los botones de arriba para agregar capítulos a esta saga.
                             </div>
                             </div>
                         </div>
                     </div>
+                    </div>
 
                     <!-- Chapter editor appears below the visual when a node is selected -->
-                    <div v-if="currentChapter" class="card p-5 space-y-5">
+                    <div v-if="currentChapter" class="story-editor-card space-y-5">
                         <div class="flex items-center justify-between border-b border-[#1e2a3a] pb-2">
-                            <h3 class="font-bold text-gray-200 flex items-center gap-2">
-                                <span>{{ nodeEmoji(currentChapter.type) }}</span>
-                                <span>{{ nodeTypeLabel(currentChapter.type) }} — {{ currentChapter.title||'Sin título' }}</span>
-                                <span class="badge" :class="typeBadgeClass(currentChapter.type)">{{ currentChapter.type||'normal' }}</span>
-                            </h3>
-                            <button @click="deleteCurrentChapter" class="btn-danger text-xs">🗑️ Eliminar Capítulo</button>
+                            <div>
+                                <h3 class="font-bold text-gray-200 flex items-center gap-2">
+                                    <span>{{ nodeEmoji(currentChapter.type) }}</span>
+                                    <span>{{ nodeTypeLabel(currentChapter.type) }} — {{ currentChapter.title||'Sin título' }}</span>
+                                    <span class="badge" :class="typeBadgeClass(currentChapter.type)">{{ currentChapter.type||'normal' }}</span>
+                                </h3>
+                                <div class="story-node-strip">
+                                    <span class="story-node-pill">Nodo {{ (currentChapterVisual||{}).label || (selectedChapterIndex+1) }}</span>
+                                    <span v-if="currentChapter.type==='sidestory' && (currentChapterVisual||{}).parentLabel" class="story-node-pill">Cuelga de {{ currentChapterVisual.parentLabel }}</span>
+                                    <span class="story-node-pill">{{ battleFormat==='1v1' ? '1 vs 1' : battleFormat==='3v3' ? '3 vs 3' : 'Tag' }}</span>
+                                </div>
+                            </div>
+                            <button @click="deleteCurrentChapter" class="btn-danger text-xs flex-shrink-0">🗑️ Eliminar Capítulo</button>
                         </div>
 
                         <!-- Basic info -->
@@ -287,7 +587,7 @@
                                 </div>
                             </div>
                             <div class="text-xs text-gray-500">
-                                Si conviertes un nodo en side story, el editor le asigna un capítulo padre y luego puedes reanclarlo arrastrándolo.
+                                Si conviertes un nodo en side story, el editor le asigna un capítulo padre. Al arrastrar una rama sobre cualquier otro nodo, el editor entiende que quieres anidarla debajo de ese objetivo.
                             </div>
                         </div>
 
@@ -299,14 +599,14 @@
                                     <option v-for="opt in availableSideParents" :key="'parent-'+opt.idx" :value="opt.id">{{ opt.label }}</option>
                                 </select>
                             </div>
-                            <div class="text-xs text-gray-500 flex items-end pb-2">
-                                También puedes arrastrar esta side story sobre otro nodo para reanclarla o anidarla.
+                            <div class="story-help-copy flex items-end pb-2">
+                                Arrastra esta rama sobre otro nodo para reanclarla. Si sueltas un capítulo principal sobre un capítulo grande o una side story, el editor lo convierte y lo cuelga debajo de esa rama conservando sus subcapítulos.
                             </div>
                         </div>
 
                         <!-- Battle format -->
-                        <div class="card p-4 space-y-4">
-                            <div class="flex justify-between items-start gap-6">
+	                        <div class="card p-4 space-y-4">
+	                            <div class="flex justify-between items-start gap-6">
                                 <!-- Format selector -->
                                 <div class="flex-shrink-0">
                                     <label class="section-title">Formato de Batalla</label>
@@ -323,14 +623,49 @@
                                     <div class="flex-1"><label class="section-title">Cinemática Inicial</label>
                                         <select v-model="currentChapter.introStoryboard" class="input-dark"><option value="">Ninguna</option><option v-for="d in assets.storyboard_defs" :value="d">{{ storyboardDisplayName(d) }}</option></select></div>
                                 </div>
-                            </div>
+	                            </div>
 
-                            <!-- Teams -->
+	                            <div class="grid grid-cols-3 gap-4">
+	                                <div>
+	                                    <label class="section-title">Tiempo del Round</label>
+	                                    <select v-model="currentChapter.roundTimeMode" class="input-dark">
+	                                        <option value="default">Usar configuración global</option>
+	                                        <option value="custom">Definir tiempo</option>
+	                                        <option value="infinite">Infinito</option>
+	                                    </select>
+	                                </div>
+	                                <div>
+	                                    <label class="section-title">Segundos</label>
+	                                    <input
+	                                        type="number"
+	                                        min="1"
+	                                        step="1"
+	                                        v-model.number="currentChapter.roundTimeValue"
+	                                        class="input-dark"
+	                                        :disabled="currentChapter.roundTimeMode!=='custom'"
+	                                        placeholder="99"
+	                                    >
+	                                </div>
+	                                <div class="text-xs text-gray-500 flex items-end pb-2">
+	                                    Infinito se guarda como -1. Configuración global no fuerza ningún valor para ese capítulo.
+	                                </div>
+	                            </div>
+
+	                            <!-- Teams -->
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="p-3 border border-blue-900/30 rounded bg-blue-950/10">
                                     <div class="flex justify-between items-center mb-2">
                                         <h4 class="font-semibold text-blue-400 text-sm">Equipo P1 <span class="text-[10px] text-blue-600">({{ currentChapter.p1.length }}/{{ maxTeamSize }})</span></h4>
                                         <button @click="addP1" v-if="currentChapter.p1.length<maxTeamSize" class="text-[10px] bg-blue-600/60 px-2 py-0.5 rounded text-white">+</button>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="section-title">Sustituciones J1</label>
+                                        <select v-model.number="currentChapter.p1Substitutions" class="input-dark text-sm">
+                                            <option :value="0">0</option>
+                                            <option :value="1">1</option>
+                                            <option :value="2">2</option>
+                                            <option :value="3">3</option>
+                                        </select>
                                     </div>
                                     <div v-for="(_,i) in currentChapter.p1" :key="'p1'+i" class="flex gap-2 mb-1.5 items-center">
                                         <select v-model="currentChapter.p1[i]" class="input-dark text-sm flex-1"><option v-for="c in assets.chars" :value="c">{{c}}</option></select>
@@ -341,6 +676,15 @@
                                     <div class="flex justify-between items-center mb-2">
                                         <h4 class="font-semibold text-red-400 text-sm">Equipo P2 / CPU <span class="text-[10px] text-red-600">({{ currentChapter.p2.length }}/{{ maxTeamSize }})</span></h4>
                                         <button @click="addP2" v-if="currentChapter.p2.length<maxTeamSize" class="text-[10px] bg-red-600/60 px-2 py-0.5 rounded text-white">+</button>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="section-title">Sustituciones CPU</label>
+                                        <select v-model.number="currentChapter.p2Substitutions" class="input-dark text-sm">
+                                            <option :value="0">0</option>
+                                            <option :value="1">1</option>
+                                            <option :value="2">2</option>
+                                            <option :value="3">3</option>
+                                        </select>
                                     </div>
                                     <div v-for="(_,i) in currentChapter.p2" :key="'p2'+i" class="flex gap-2 mb-1.5 items-center">
                                         <select v-model="currentChapter.p2[i]" class="input-dark text-sm flex-1"><option v-for="c in assets.chars" :value="c">{{c}}</option></select>
@@ -354,22 +698,86 @@
                         <!-- Dialogues -->
                         <div class="card p-4 space-y-3">
                             <div class="flex justify-between items-center border-b border-[#1e2a3a] pb-2">
-                                <h3 class="font-semibold text-orange-400 text-sm">💬 Diálogos Pre-Pelea</h3>
+                                <h3 class="font-semibold text-orange-400 text-sm">💬 Pre-Pelea</h3>
                                 <button @click="addDialogue" class="text-[10px] bg-gray-700 px-3 py-1 rounded font-bold hover:bg-gray-600">+ Texto</button>
                             </div>
-                            <div v-if="!currentChapter.dialogues||currentChapter.dialogues.length===0" class="text-xs text-gray-600 text-center py-3">Sin diálogos. El speaker puede ser cualquier nombre.</div>
-                            <div v-for="(dlg,dI) in currentChapter.dialogues" :key="'d'+dI" class="flex gap-2 items-start bg-[#0a0e14] border border-[#1e2a3a] p-2.5 rounded">
+                            <div v-for="(dlg,dI) in currentChapter.dialogues" :key="'di'+dI" class="flex gap-2 items-start bg-[#0a0e14] border border-[#1e2a3a] p-2.5 rounded">
                                 <span class="text-[10px] text-gray-600 w-5 text-center pt-2">{{dI+1}}</span>
                                 <div class="flex flex-col gap-1.5 flex-1">
-                                    <input v-model="dlg.speaker" class="input-dark text-xs py-1 w-44" placeholder="Naruto, Kakashi, Narrador…">
-                                    <textarea v-model="dlg.text" rows="2" class="input-dark text-xs" placeholder="Texto del diálogo..."></textarea>
+                                    <input v-model="dlg.speaker" class="input-dark text-xs py-1 w-44" placeholder="Naruto, Kakashi…">
+                                    <textarea v-model="dlg.text" rows="1" class="input-dark text-xs" placeholder="Texto del diálogo..."></textarea>
                                 </div>
                                 <button @click="currentChapter.dialogues.splice(dI,1)" class="text-red-400 hover:text-red-300 px-1 pt-2 text-xs flex-shrink-0">✕</button>
+                            </div>
+
+                            <div class="flex justify-between items-center border-b border-[#1e2a3a] pb-2 mt-4">
+                                <h3 class="font-semibold text-purple-400 text-sm">💬 Fin Round 1</h3>
+                                <button @click="addRound1Dialog" class="text-[10px] bg-gray-700 px-3 py-1 rounded font-bold hover:bg-gray-600">+ Texto</button>
+                            </div>
+                            <div v-for="(dlg,dI) in currentChapter.round1EndDialogues" :key="'dr1'+dI" class="flex gap-2 items-start bg-[#0a0e14] border border-[#1e2a3a] p-2.5 rounded">
+                                <span class="text-[10px] text-gray-600 w-5 text-center pt-2">{{dI+1}}</span>
+                                <div class="flex flex-col gap-1.5 flex-1">
+                                    <input v-model="dlg.speaker" class="input-dark text-xs py-1 w-44" placeholder="Speaker...">
+                                    <textarea v-model="dlg.text" rows="1" class="input-dark text-xs" placeholder="Texto..."></textarea>
+                                </div>
+                                <button @click="currentChapter.round1EndDialogues.splice(dI,1)" class="text-red-400 hover:text-red-300 px-1 pt-2 text-xs flex-shrink-0">✕</button>
+                            </div>
+
+                            <div class="flex justify-between items-center border-b border-[#1e2a3a] pb-2 mt-4">
+                                <h3 class="font-semibold text-purple-400 text-sm">💬 Fin Round 2</h3>
+                                <button @click="addRound2Dialog" class="text-[10px] bg-gray-700 px-3 py-1 rounded font-bold hover:bg-gray-600">+ Texto</button>
+                            </div>
+                            <div v-for="(dlg,dI) in currentChapter.round2EndDialogues" :key="'dr2'+dI" class="flex gap-2 items-start bg-[#0a0e14] border border-[#1e2a3a] p-2.5 rounded">
+                                <span class="text-[10px] text-gray-600 w-5 text-center pt-2">{{dI+1}}</span>
+                                <div class="flex flex-col gap-1.5 flex-1">
+                                    <input v-model="dlg.speaker" class="input-dark text-xs py-1 w-44" placeholder="Speaker...">
+                                    <textarea v-model="dlg.text" rows="1" class="input-dark text-xs" placeholder="Texto..."></textarea>
+                                </div>
+                                <button @click="currentChapter.round2EndDialogues.splice(dI,1)" class="text-red-400 hover:text-red-300 px-1 pt-2 text-xs flex-shrink-0">✕</button>
+                            </div>
+
+                            <div class="flex justify-between items-center border-b border-[#1e2a3a] pb-2 mt-4">
+                                <h3 class="font-semibold text-purple-400 text-sm">💬 Fin Round 3</h3>
+                                <button @click="addRound3Dialog" class="text-[10px] bg-gray-700 px-3 py-1 rounded font-bold hover:bg-gray-600">+ Texto</button>
+                            </div>
+                            <div v-for="(dlg,dI) in currentChapter.round3EndDialogues" :key="'dr3'+dI" class="flex gap-2 items-start bg-[#0a0e14] border border-[#1e2a3a] p-2.5 rounded">
+                                <span class="text-[10px] text-gray-600 w-5 text-center pt-2">{{dI+1}}</span>
+                                <div class="flex flex-col gap-1.5 flex-1">
+                                    <input v-model="dlg.speaker" class="input-dark text-xs py-1 w-44" placeholder="Speaker...">
+                                    <textarea v-model="dlg.text" rows="1" class="input-dark text-xs" placeholder="Texto..."></textarea>
+                                </div>
+                                <button @click="currentChapter.round3EndDialogues.splice(dI,1)" class="text-red-400 hover:text-red-300 px-1 pt-2 text-xs flex-shrink-0">✕</button>
+                            </div>
+
+                            <div class="flex justify-between items-center border-b border-[#1e2a3a] pb-2 mt-4">
+                                <h3 class="font-semibold text-emerald-400 text-sm">💬 Porcentaje de Vida (Mid-Fight)</h3>
+                                <button @click="addHealthDialog" class="text-[10px] bg-gray-700 px-3 py-1 rounded font-bold hover:bg-gray-600">+ Texto</button>
+                            </div>
+                            <div v-for="(dlg,dI) in currentChapter.healthDialogues" :key="'dhp'+dI" class="flex flex-col gap-2 bg-[#0a0e14] border border-[#1e2a3a] p-2.5 rounded">
+                                <div class="flex gap-2 items-center">
+                                    <span class="text-[10px] text-gray-600 w-5 text-center">{{dI+1}}</span>
+                                    <div class="flex gap-2 flex-1 items-center">
+                                       <span class="text-xs text-slate-300">Detonar si % vida de</span>
+                                       <select v-model="dlg.target" class="input-dark text-xs py-1 w-16">
+                                            <option value="p1">J1</option>
+                                            <option value="p2">CPU</option>
+                                       </select>
+                                       <span class="text-xs text-slate-300">baja a</span>
+                                       <input type="number" v-model="dlg.thresholdPercent" class="input-dark text-xs py-1 w-16 text-center" min="1" max="100">
+                                       <span class="text-xs text-slate-300">%</span>
+                                    </div>
+                                    <button @click="currentChapter.healthDialogues.splice(dI,1)" class="text-red-400 hover:text-red-300 px-1 text-xs flex-shrink-0">✕</button>
+                                </div>
+                                <div class="flex gap-2 items-start pl-7">
+                                    <input v-model="dlg.speaker" class="input-dark text-xs py-1 w-32" placeholder="Speaker...">
+                                    <textarea v-model="dlg.text" rows="1" class="input-dark text-xs flex-1" placeholder="Texto..."></textarea>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div v-else-if="currentArc.chapters&&currentArc.chapters.length>0" class="text-center text-sm text-gray-600 py-4">
                         ↑ Haz clic en un nodo para editar ese capítulo
+                    </div>
                     </div>
                 </div>
             </template>
@@ -479,12 +887,12 @@
             <div class="panel-header flex justify-between items-center">
                 <div class="flex items-center gap-3">
                     <h2 class="font-bold text-purple-400">🥷 Roster</h2>
-                    <span class="badge badge-blue">{{ charRoster.length }}</span>
+                    <span class="badge badge-blue">{{ realCharCount }} chars</span>
+                    <span v-if="charLabelCount>0" class="badge badge-purple">{{ charLabelCount }} tags</span>
                     <span v-if="sel.chars.size>0" class="badge badge-yellow">{{ sel.chars.size }} sel.</span>
                 </div>
                 <div class="flex gap-2">
                     <input v-model="charSearch" placeholder="Buscar..." class="input-dark py-1 w-40">
-                    <button @click="saveChars" class="btn-primary text-xs">💾 Guardar</button>
                 </div>
             </div>
             <div v-if="sel.chars.size>0" class="px-4 py-1.5 bg-purple-950/30 border-b border-purple-800/40 flex items-center gap-2 text-xs">
@@ -506,10 +914,10 @@
                      class="row-item flex items-center gap-2 px-4 py-1.5 border-b border-[#1e2a3a]/50"
                      :class="{'bg-[#0d1219]':viewIdx%2===0, selected:isSel('chars',row.idx), 'bg-[#1a1324]':isLabelEntry(row.item), 'opacity-80':isSlotLocked(row.item)}"
                      :draggable="!isSlotLocked(row.item)"
-                     @dragstart="onDragStart('chars',row.idx,$event)" @dragover.prevent="onDragOver($event)" @dragleave="onDragLeave($event)" @drop="onDrop('chars',row.idx,$event)"
+                    @dragstart="onDragStart('chars',row.idx,$event)" @dragend="clearDragState()" @dragover.prevent="onDragOver($event)" @dragleave="onDragLeave($event)" @drop="onDrop('chars',row.idx,$event)"
                      @click="handleRowClick('chars',row.idx,$event)">
                     <input type="checkbox" :checked="isSel('chars',row.idx)" @click.stop @change="toggleSel('chars',row.idx)" class="mr-1">
-                    <span class="w-8 text-center text-gray-600 text-[11px] font-mono">{{row.idx+1}}</span>
+                    <span class="w-8 text-center text-gray-600 text-[11px] font-mono">{{ isCharEntry(row.item) ? charSlotNumber(row.idx) : '🏷' }}</span>
                     <div class="flex-1 flex items-center gap-1.5 min-w-0">
                         <template v-if="isLabelEntry(row.item)">
                             <span class="badge badge-purple">tag</span>
@@ -528,8 +936,9 @@
                         <template v-if="isCharEntry(row.item)">
                             <button @click.stop="toggleEngineLock(row.idx)" class="text-[10px] px-1.5 py-0.5 rounded"
                                     :disabled="isSlotLocked(row.item)"
-                                    :class="row.item.hidden>0?'bg-red-900/30 text-red-400':'bg-green-900/20 text-green-400'">
-                                {{ row.item.hidden>0?'Oculto':'Visible' }}
+                                    :class="engineStateMeta(row.item).class"
+                                    :title="engineStateMeta(row.item).title">
+                                {{ engineStateMeta(row.item).label }}
                             </button>
                         </template>
                         <span v-else class="text-[10px] text-purple-300">Comentario</span>
@@ -548,41 +957,172 @@
                         <button @click.stop="removeItem('chars',row.idx)" class="text-red-400 hover:text-red-300 text-[10px]" :class="isSlotLocked(row.item)?'opacity-30 cursor-not-allowed':''">✕</button>
                     </div>
                 </div>
+                <div class="px-4 py-3 text-center text-[11px] text-gray-500 border-t border-dashed border-[#243247] bg-[#0b1017]"
+                     @dragover.prevent="onDragOver($event)" @dragleave="onDragLeave($event)" @drop="onDropToEnd('chars',$event)">
+                    Suelta aquí para mover o agregar al final del roster
+                </div>
             </div>
         </div>
-        <aside class="w-80 border-l border-[#1e2a3a] bg-[#0a0e14] overflow-y-auto custom-scroll flex-shrink-0">
+        <aside class="w-[54rem] min-w-[54rem] border-l border-[#1e2a3a] bg-[#0a0e14] overflow-y-auto custom-scroll flex-shrink-0">
+            <div class="flex h-full">
+            <!-- COLUMN 1: VISUAL -->
+            <div class="w-1/3 flex flex-col border-r border-[#1e2a3a]">
             <div class="p-3 border-b border-[#1e2a3a]">
-                <p class="section-title">📦 Disponibles en disco</p>
-                <div class="max-h-[28vh] overflow-y-auto custom-scroll space-y-1">
-                    <div v-if="charUnused.length===0" class="text-xs text-gray-600 py-3 text-center disk-item">Todos en roster 👍</div>
-                    <div v-for="u in charUnused" :key="u.name" class="disk-item flex items-center justify-between bg-[#131a24] border border-[#1e2a3a] rounded px-2 py-1 hover:border-purple-600/50 text-xs">
-                        <span class="truncate mr-1 select-none">{{ u.name }}</span>
-                        <button @click="addToRoster('chars',u.name)" class="text-purple-400 hover:text-purple-300 font-bold px-1 flex-shrink-0">+</button>
+                <p class="section-title">🖼️ Preview Idle</p>
+                <div class="char-preview-shell">
+                    <div class="char-preview-head">
+                        <div class="min-w-0">
+                            <div class="char-preview-name truncate">{{ charPreview.displayName || 'Sin selección' }}</div>
+                            <div class="char-preview-subtitle">
+                                <span v-if="charPreview.source" class="badge" :class="charPreview.source==='roster' ? 'badge-yellow' : 'badge-blue'">
+                                    {{ charPreview.source==='roster' ? 'Roster' : 'Disco' }}
+                                </span>
+                                <span class="truncate">{{ charPreview.status }}</span>
+                            </div>
+                        </div>
+                        <button @click="reloadCharPreview()" class="btn-secondary px-2 py-1 text-[11px]" :disabled="!charPreviewKey || charPreview.loading">↻</button>
+                    </div>
+                    <div class="char-preview-stage">
+                        <img v-if="charPreview.imageUrl" :src="charPreview.imageUrl" :alt="charPreview.displayName || 'Preview idle'" class="char-preview-image">
+                        <canvas ref="charPreviewCanvas" class="char-preview-canvas"></canvas>
+                        <div v-if="charPreview.loading" class="char-preview-overlay">Cargando sprites y animación...</div>
+                        <div v-else-if="charPreview.error" class="char-preview-overlay">{{ charPreview.error }}</div>
+                        <div v-else-if="!charPreviewKey" class="char-preview-overlay">Selecciona un char del roster o uno de la lista instalada para previsualizar su idle.</div>
+                    </div>
+                    <div v-if="charPreview.mugshotUrl" class="char-preview-mugshot">
+                        <div class="char-preview-mugshot-copy">
+                            <div class="char-preview-mugshot-label">Mugshot</div>
+                            <div class="char-preview-mugshot-text">Vista rápida del portrait del select.</div>
+                        </div>
+                        <div class="char-preview-mugshot-box">
+                            <img :src="charPreview.mugshotUrl" :alt="`${charPreview.displayName || 'Char'} mugshot`" class="char-preview-mugshot-image">
+                        </div>
+                    </div>
+                    <div class="char-preview-meta">
+                        <span>{{ charPreview.frameCount ? `${charPreview.frameCount} frame${charPreview.frameCount===1?'':'s'}` : 'Sin frames' }}</span>
+                        <span>{{ charPreview.sffVersion || 'Sin SFF' }}</span>
                     </div>
                 </div>
             </div>
             <div class="p-3 border-b border-[#1e2a3a] space-y-2">
-                <p class="section-title">🛠️ Herramientas</p>
-                <button @click="addNull()" class="btn-secondary w-full text-xs">➕ Slot Vacío</button>
-                <button @click="addRandom()" class="btn-secondary w-full text-xs">🎲 Random Select</button>
-                <button @click="addLabel()" class="btn-secondary w-full text-xs">🏷 Agregar Etiqueta</button>
-                <button @click="fillRow()" class="btn-secondary w-full text-xs">📐 Completar Fila (21)</button>
+                <p class="section-title">🖼️ Portrait Offset</p>
+                <template v-if="portraitOffsetTarget">
+                    <div class="input-dark text-xs min-h-[2rem] flex items-center justify-between gap-2 mb-1.5">
+                        <span class="truncate">{{ portraitOffsetTarget.name }}</span>
+                        <span class="badge badge-blue flex-shrink-0">Slot {{ charSlotNumber(portraitOffsetTarget.idx) }}</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="text-[10px] text-gray-500 block mb-0.5">Offset X</label>
+                            <input type="number" :value="portraitOffsetTarget.offsetX"
+                                   @change="setPortraitParam('select_portrait_offset_x',$event.target.value)"
+                                   class="input-dark text-xs text-center w-full" step="1">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500 block mb-0.5">Offset Y</label>
+                            <input type="number" :value="portraitOffsetTarget.offsetY"
+                                   @change="setPortraitParam('select_portrait_offset_y',$event.target.value)"
+                                   class="input-dark text-xs text-center w-full" step="1">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500 block mb-0.5">Scale</label>
+                            <input type="number" :value="portraitOffsetTarget.scale"
+                                   @change="setPortraitParam('select_portrait_scale',$event.target.value)"
+                                   class="input-dark text-xs text-center w-full" step="0.1" min="0">
+                        </div>
+                    </div>
+                    <button @click="applyPortraitOffsetToAllSlots" class="btn-secondary w-full text-xs mt-1">📋 Aplicar a todos los slots</button>
+                    <p class="text-[10px] text-gray-600 leading-relaxed">Ajusta la posición del ícono en la grilla del select screen.</p>
+                </template>
+                <p v-else class="text-[10px] text-gray-500 py-1">Selecciona un personaje del roster para ajustar su portrait.</p>
+            </div>
+            </div> <!-- End Column 1 -->
+
+            <!-- COLUMN 2: ARCHIVOS -->
+            <div class="w-1/3 flex flex-col border-r border-[#1e2a3a]">
+            <div class="p-3 border-b border-[#1e2a3a] flex-1 flex flex-col min-h-0">
+                <p class="section-title">📦 Todos en disco</p>
+                <div class="flex-1 overflow-y-auto custom-scroll space-y-1 pr-1">
+                    <div v-if="charAvailable.length===0" class="text-xs text-gray-600 py-3 text-center disk-item">Carpeta vacía</div>
+                    <div v-for="u in charAvailable" :key="u.name" class="disk-item flex items-center justify-between border rounded px-2 py-1 text-xs transition-colors"
+                         :class="[
+                            rosterNamesSet.has(u.name) ? 'bg-green-900/20 border-green-800 text-green-300' : 'bg-red-900/20 border-red-800 text-red-300',
+                            selectedAvailableCharName===u.name ? 'ring-1 ring-white/30' : 'hover:border-white/20'
+                         ]"
+                         draggable="true" @click="selectAvailableChar(u.name)" @dragstart="startAvailableCharDrag(u,$event)" @dragend="clearDragState()">
+                        <span class="truncate mr-1 select-none flex-1 font-medium">{{ u.name }}</span>
+                        <div class="flex items-center gap-1 flex-shrink-0">
+                            <button @click.stop="addToRoster('chars',u.name)" class="text-gray-400 hover:text-white font-bold px-1" title="Agregar al roster">+</button>
+                            <button @click.stop="deleteInstalledCharEverywhere(u.name, u.display_name || u.info_name || u.name)"
+                                    class="text-gray-500 hover:text-red-400 font-bold px-1"
+                                    title="Eliminar físicamente del disco">🗑</button>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="p-3 border-b border-[#1e2a3a] space-y-2">
-                <p class="section-title">✏️ Renombrar</p>
-                <select v-model="renameOld" class="input-dark text-xs"><option value="">-- Char --</option><option v-for="u in charAvailable" :value="u.name">{{u.name}}</option></select>
-                <input v-model="renameNew" placeholder="Nuevo nombre" class="input-dark text-xs">
-                <label class="flex items-center gap-2 text-[11px] text-gray-500 cursor-pointer"><input type="checkbox" v-model="renameDisk" class="accent-orange-500"> Renombrar carpeta en disco</label>
-                <button @click="renameChar" class="btn-primary w-full text-xs" :disabled="!renameOld||!renameNew">{{ renameDisk?'Renombrar (Disco+Roster)':'Renombrar (Solo Roster)' }}</button>
-            </div>
-            <div class="p-3 space-y-2">
-                <p class="section-title">📥 Subir ZIP</p>
+                <p class="section-title">📥 Instalar Chars</p>
                 <div class="upload-zone" @click="$refs.charZipInput.click()" @dragover.prevent="$event.currentTarget.classList.add('drag-active')" @dragleave="$event.currentTarget.classList.remove('drag-active')" @drop.prevent="handleFileDrop('chars',$event)">
-                    <p class="text-xs text-gray-500">Arrastra .zip aquí o clic</p>
-                    <input type="file" ref="charZipInput" accept=".zip" @change="handleFileSelect('chars',$event)" class="hidden">
+                    <p class="text-xs text-gray-500">Arrastra .zip .rar .7z aquí o clic</p>
+                    <input type="file" ref="charZipInput" accept=".zip,.rar,.7z" multiple @change="handleFileSelect('chars',$event)" class="hidden">
                 </div>
             </div>
             <div v-if="msg.chars" class="p-3"><div class="text-xs font-bold text-center rounded py-2 px-2" :class="msgType.chars==='ok'?'bg-green-900/20 text-green-400':'bg-red-900/20 text-red-400'">{{msg.chars}}</div></div>
+            </div> <!-- End Column 2 -->
+
+            <!-- COLUMN 3: UTILIDADES -->
+            <div class="w-1/3 flex flex-col">
+            <div class="p-3 border-b border-[#1e2a3a] space-y-2">
+                <p class="section-title">🛠️ Herramientas</p>
+                <div class="grid grid-cols-2 gap-2">
+                <button @click="addNull()" @dragstart="startCharTemplateDrag('null',$event)" @dragend="clearDragState()" draggable="true" class="btn-secondary w-full text-xs">➕ Vacío</button>
+                <button @click="addRandom()" @dragstart="startCharTemplateDrag('random',$event)" @dragend="clearDragState()" draggable="true" class="btn-secondary w-full text-xs">🎲 Random</button>
+                <button @click="addLabel()" @dragstart="startCharTemplateDrag('label',$event)" @dragend="clearDragState()" draggable="true" class="btn-secondary w-full text-xs col-span-2">🏷 Agregar Etiqueta</button>
+                <button @click="fillRow()" class="btn-secondary w-full text-xs col-span-2">📐 Completar Fila (21)</button>
+                <button @click="sortRosterCharsAlphabetically()" class="btn-secondary w-full text-xs col-span-2">🔤 Ordenar chars libres</button>
+                <button @click="replaceAllRosterCharsWithRandom()" class="btn-secondary w-full text-xs col-span-2">🎲 Cambiar todos por Random</button>
+                <select v-model="replaceCharTarget" class="input-dark text-xs col-span-2">
+                    <option value="">-- Reemplazar por char --</option>
+                    <option v-for="name in installedCharChoices" :key="'replace-'+name" :value="name">{{ name }}</option>
+                </select>
+                <button @click="replaceSelectedRosterWithInstalledChar()" class="btn-secondary w-full text-xs col-span-2" :disabled="!replaceCharTarget">🔁 Reemplazar seleccionados</button>
+                <button @click="replaceMissingCharsWithRandom()" class="btn-secondary w-full text-xs col-span-2">🧹 Reemplazar faltantes</button>
+                </div>
+            </div>
+            <div class="p-3 border-b border-[#1e2a3a] space-y-2">
+                <p class="section-title">✏️ Renombrar</p>
+                <div class="input-dark text-xs min-h-[2.25rem] flex items-center justify-between gap-2">
+                    <span class="truncate">{{ selectedRenameTarget ? selectedRenameTarget.name : renameSelectionHint }}</span>
+                    <span v-if="selectedRenameTarget && selectedRenameTarget.source==='disk'" class="badge badge-purple flex-shrink-0">Disco</span>
+                    <span v-else-if="selectedRenameTarget" class="badge badge-blue flex-shrink-0">Slot {{ charSlotNumber(selectedRenameTarget.idx) }}</span>
+                </div>
+                <input v-model="renameNew" placeholder="Nuevo nombre" class="input-dark text-xs">
+                <label class="flex items-center gap-2 text-[11px] text-gray-500 cursor-pointer"><input type="checkbox" v-model="renameDisk" class="accent-orange-500"> Renombrar carpeta en disco</label>
+                <button @click="renameChar" class="btn-primary w-full text-xs" :disabled="!canRenameSelectedChar">Renombrar</button>
+            </div>
+            <div class="p-3 border-b border-[#1e2a3a] space-y-2">
+                <p class="section-title">🏷️ Corregir Displaynames</p>
+                <button @click="scanDisplaynames" class="btn-secondary w-full text-xs" :disabled="displaynameScan.loading">{{ displaynameScan.loading ? '⏳ Escaneando...' : '🔍 Escanear problemas' }}</button>
+                <template v-if="displaynameScan.items.length">
+                    <div class="text-[10px] text-amber-400 font-bold">⚠️ {{ displaynameScan.items.filter(i=>i.mismatch).length }} problemas</div>
+                    <div class="max-h-[20vh] overflow-y-auto custom-scroll space-y-1">
+                        <div v-for="item in displaynameScan.items.filter(i=>i.mismatch)" :key="'dn-'+item.folder"
+                             class="bg-[#131a24] border border-[#1e2a3a] rounded px-2 py-1 text-[11px]">
+                            <div class="flex items-center justify-between gap-1 mb-1">
+                                <span class="font-bold text-gray-300 truncate">{{ item.folder }}</span>
+                            </div>
+                            <input v-model="item.newDisplayname" :placeholder="item.folder" class="input-dark text-xs w-full">
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1 mt-1">
+                        <button @click="autoFillDisplaynames" class="btn-secondary text-xs">✨ Auto-completar</button>
+                        <button @click="applyDisplaynameFixes" class="btn-primary text-xs" :disabled="displaynameScan.applying">{{ displaynameScan.applying ? '⏳...' : '✅ Aplicar' }}</button>
+                    </div>
+                </template>
+                <p v-else-if="displaynameScan.scanned && !displaynameScan.items.filter(i=>i.mismatch).length" class="text-[10px] text-green-400">✅ Todos correctos.</p>
+            </div>
+            </div> <!-- End Column 3 -->
+            </div>
         </aside>
     </div>
 
@@ -715,6 +1255,7 @@
             <div v-if="sel.stages.size>0" class="px-4 py-1.5 bg-emerald-950/20 border-b border-emerald-800/30 flex items-center gap-2 text-xs">
                 <span class="text-emerald-300 font-bold">{{ sel.stages.size }} sel:</span>
                 <button @click="bulkAction('stages','delete')" class="bg-red-900/40 text-red-300 px-2 py-0.5 rounded font-bold">🗑 Quitar</button>
+                <button @click="deleteSelectedStagesEverywhere" class="bg-red-700/70 text-white px-2 py-0.5 rounded font-bold">💣 Disco + refs</button>
                 <button @click="clearSel('stages')" class="text-gray-500 hover:text-white px-2 ml-auto">✕</button>
             </div>
             <div class="text-[10px] text-gray-500 px-4 py-1 flex items-center gap-2 border-b border-[#1e2a3a] bg-[#0d1219]">
@@ -751,17 +1292,127 @@
                 </div>
             </div>
             <div class="p-3 border-b border-[#1e2a3a] space-y-2">
-                <p class="section-title">📥 Subir Stage ZIP</p>
+                <p class="section-title">📥 Instalar Stages</p>
                 <div class="upload-zone" @click="$refs.stageZipInput.click()" @dragover.prevent="$event.currentTarget.classList.add('drag-active')" @dragleave="$event.currentTarget.classList.remove('drag-active')" @drop.prevent="handleFileDrop('stages',$event)">
-                    <p class="text-xs text-gray-500">Arrastra .zip aquí o clic</p>
-                    <input type="file" ref="stageZipInput" accept=".zip" @change="handleFileSelect('stages',$event)" class="hidden">
+                    <p class="text-xs text-gray-500">Arrastra .zip .rar .7z aquí o clic</p>
+                    <input type="file" ref="stageZipInput" accept=".zip,.rar,.7z" multiple @change="handleFileSelect('stages',$event)" class="hidden">
                 </div>
             </div>
             <div class="p-3">
+                <button @click="cleanMissingStages()" class="btn-secondary w-full text-xs mb-2">🧹 Limpiar refs rotas</button>
                 <button @click="loadStages" class="btn-secondary w-full text-xs">🔄 Escanear stages/</button>
             </div>
             <div v-if="msg.stages" class="p-3"><div class="text-xs font-bold text-center rounded py-2 px-2" :class="msgType.stages==='ok'?'bg-green-900/20 text-green-400':'bg-red-900/20 text-red-400'">{{msg.stages}}</div></div>
         </aside>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- LIFEBARS TAB                                                   -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div v-if="activeTab==='lifebars'" class="flex flex-1 overflow-hidden">
+        <aside class="w-80 border-r border-[#1e2a3a] bg-[#0a0e14] flex flex-col overflow-hidden flex-shrink-0">
+            <div class="panel-header flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-sm text-pink-300">❤️ Lifebars</span>
+                    <span class="badge badge-purple">{{ lifebars.length }}</span>
+                </div>
+                <button @click="loadLifebars()" class="text-[10px] bg-pink-600/70 px-2 py-0.5 rounded font-bold text-white hover:bg-pink-500">↻</button>
+            </div>
+            <div class="p-3 border-b border-[#1e2a3a]">
+                <input v-model="lifebarSearch" placeholder="Buscar lifebar..." class="input-dark text-xs">
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scroll">
+                <div v-if="lifebarLoading && lifebars.length===0" class="text-xs text-gray-600 text-center py-8">Cargando lifebars...</div>
+                <button v-for="item in filteredLifebars" :key="'lb-'+item.id"
+                        @click="selectedLifebarId=item.id"
+                        class="w-full text-left px-3 py-3 border-b border-[#1e2a3a]/50 hover:bg-[#1a2332] transition"
+                        :class="selectedLifebarId===item.id?'bg-pink-950/15 border-l-4 border-l-pink-500':''">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0">
+                            <div class="text-sm font-semibold truncate">{{ item.title }}</div>
+                            <div class="text-[11px] text-gray-500 truncate">{{ item.id }}</div>
+                        </div>
+                        <span class="badge" :class="item.active?'badge-green':'badge-blue'">{{ item.active ? 'activo' : 'instalado' }}</span>
+                    </div>
+                    <div class="text-[10px] text-gray-600 mt-1 truncate">{{ item.main_def_path }}</div>
+                    <div v-if="item.author" class="text-[10px] text-gray-500 mt-1 truncate">Autor: {{ item.author }}</div>
+                </button>
+                <div v-if="!lifebarLoading && filteredLifebars.length===0" class="text-xs text-gray-600 text-center py-8">No hay lifebars que coincidan.</div>
+            </div>
+        </aside>
+
+        <div class="flex-1 overflow-y-auto custom-scroll p-5 bg-[#0c1018]">
+            <div class="max-w-5xl mx-auto space-y-4">
+                <div class="card p-4">
+                    <div class="flex items-start justify-between gap-4 flex-wrap">
+                        <div>
+                            <div class="section-title">Activo</div>
+                            <h2 class="text-lg font-bold text-pink-300">{{ activeLifebar ? activeLifebar.title : 'Sin lifebar activa' }}</h2>
+                            <p class="text-xs text-gray-500 mt-1">Motif actual: {{ lifebarMotif ? lifebarMotif.path : '—' }}</p>
+                            <p class="text-xs text-gray-600 mt-1">Entrada `fight`: {{ lifebarMotif ? lifebarMotif.fight_ref : '—' }}</p>
+                        </div>
+                        <div v-if="lifebarMigration && lifebarMigration.migrated" class="badge badge-green text-[11px] px-3 py-1.5">
+                            Migrada a /lifebars
+                        </div>
+                    </div>
+                    <div v-if="lifebarMigration && lifebarMigration.migrated" class="mt-3 text-xs text-gray-400">
+                        El lifebar activo se separó del motif y ahora vive como paquete independiente dentro de <code>/lifebars</code>.
+                    </div>
+                    <div class="mt-3">
+                        <button @click="cleanMissingLifebars" class="btn-secondary text-xs">🧹 Limpiar refs rotas</button>
+                    </div>
+                </div>
+
+                <div v-if="selectedLifebar" class="card p-4 space-y-4">
+                    <div class="flex items-start justify-between gap-4 flex-wrap">
+                        <div>
+                            <div class="section-title">Seleccionada</div>
+                            <h3 class="text-xl font-bold text-gray-100">{{ selectedLifebar.title }}</h3>
+                            <p v-if="selectedLifebar.author" class="text-sm text-gray-500 mt-1">Autor: {{ selectedLifebar.author }}</p>
+                            <p class="text-xs text-gray-500 mt-2">Paquete: {{ selectedLifebar.path }}</p>
+                            <p class="text-xs text-gray-600 mt-1">Def principal: {{ selectedLifebar.main_def_path }}</p>
+                        </div>
+                        <div class="flex flex-col gap-2 min-w-[220px]">
+                            <button @click="activateSelectedLifebar" class="btn-primary"
+                                    :disabled="!selectedLifebar || selectedLifebar.active">
+                                {{ selectedLifebar.active ? '✅ Ya está activa' : '🎯 Activar Lifebar' }}
+                            </button>
+                            <button @click="deleteSelectedLifebar"
+                                    class="bg-red-700/80 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-bold transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                    :disabled="!selectedLifebar || selectedLifebar.active">
+                                🗑️ Eliminar Lifebar
+                            </button>
+                            <p class="text-[11px] text-gray-600" v-if="selectedLifebar.active">
+                                Activa otra lifebar para poder borrar esta.
+                            </p>
+                        </div>
+                    </div>
+                    <div v-if="selectedLifebar.missing && selectedLifebar.missing.length" class="rounded border border-amber-700/40 bg-amber-950/20 p-3 text-xs text-amber-200">
+                        Archivos faltantes detectados en este paquete: {{ selectedLifebar.missing.join(', ') }}
+                    </div>
+                </div>
+
+                <div v-else class="card p-6 text-center text-sm text-gray-600">
+                    Selecciona una lifebar de la lista para verla y activarla.
+                </div>
+
+                <div class="card p-4 space-y-3">
+                    <div>
+                        <div class="section-title">Importar ZIP</div>
+                        <p class="text-sm text-gray-500">El editor instala la lifebar dentro de <code>/lifebars</code> y detecta automáticamente su <code>fight.def</code> principal.</p>
+                    </div>
+                    <div class="upload-zone" @click="$refs.lifebarZipInput.click()" @dragover.prevent="$event.currentTarget.classList.add('drag-active')" @dragleave="$event.currentTarget.classList.remove('drag-active')" @drop.prevent="handleFileDrop('lifebars',$event)">
+                        <p class="text-xs text-gray-500">Arrastra .zip .rar .7z aquí o clic</p>
+                        <input type="file" ref="lifebarZipInput" accept=".zip,.rar,.7z" multiple @change="handleFileSelect('lifebars',$event)" class="hidden">
+                    </div>
+                </div>
+
+                <div v-if="msg.lifebars" class="text-xs font-bold rounded py-2 px-3"
+                     :class="msgType.lifebars==='ok'?'bg-green-900/20 text-green-400':'bg-red-900/20 text-red-400'">
+                    {{ msg.lifebars }}
+                </div>
+            </div>
+        </div>
     </div>
 
     </template>
@@ -779,30 +1430,72 @@ createApp({
         sbForm:{name:'',saga:'General',spr:'',snd:'',duration:300},
         sbMsg:'', sbMsgOk:true,
         // Chars/Stages
-        charRoster:[], charAvailable:[], charUnused:[], charSearch:'',
+        charRoster:[], charAvailable:[], charSearch:'',
+        charRosterSaveTimeout: null,
+        charRosterLoading: false,
         stageRoster:[], stageAvailable:[], stageUnused:[], stageSearch:'', stageNameMap:{},
+        lifebars:[], lifebarSearch:'', selectedLifebarId:'', lifebarActiveId:'', lifebarMotif:null, lifebarMigration:null, lifebarLoading:false,
         sel:{chars:new Set(),stages:new Set()}, lastClicked:{chars:-1,stages:-1}, tick:0,
         editIdx:{chars:-1,stages:-1}, editName:'',
-        renameOld:'', renameNew:'', renameDisk:false,
-        msg:{chars:'',stages:''}, msgType:{chars:'ok',stages:'ok'},
-        dragState:{type:null,idx:null},
+        renameOld:'', renameNew:'', renameDisk:true,
+        displaynameScan:{loading:false, applying:false, scanned:false, items:[]},
+        replaceCharTarget:'', selectedAvailableCharName:'',
+        charPreview:{
+            loading:false,
+            error:'',
+            status:'Selecciona un personaje',
+            displayName:'',
+            source:'',
+            imageUrl:'',
+            mugshotUrl:'',
+            frameCount:0,
+            sffVersion:''
+        },
+        charPreviewCache:{},
+        charPreviewPlayer:{
+            rafId:0,
+            token:0,
+            frames:[],
+            loopStart:0,
+            bounds:null,
+            frameIndex:0,
+            frameElapsed:0,
+            lastTs:0
+        },
+        msg:{chars:'',stages:'',lifebars:''}, msgType:{chars:'ok',stages:'ok',lifebars:'ok'},
+        dragState:{type:null,idx:null,source:null,item:null,removeUnusedName:''},
         storyDragIndex:-1, storyDropIndex:-1,
         movelistChars:[], movelistSearch:'', selectedMovelistChar:'', movelistEditor:null,
         movelistLoading:false, movelistGenerating:false, movelistMsg:'', movelistMsgOk:true
     }},
     computed: {
+        rosterNamesSet(){
+            return new Set(
+                this.charRoster
+                    .filter(item=>this.isCharEntry(item))
+                    .map(item=>this.rosterCharRef(item))
+                    .filter(name=>name&&name!=='null'&&name!=='randomselect')
+            );
+        },
         currentArc(){ return this.selectedArcIndex>=0?this.catalog[this.selectedArcIndex]:null },
         currentChapter(){ return this.currentArc&&this.currentArc.chapters&&this.selectedChapterIndex>=0&&this.selectedChapterIndex<this.currentArc.chapters.length?this.currentArc.chapters[this.selectedChapterIndex]:null },
         currentArcChapterMap(){ return this.buildChapterVisualMap(this.currentArc) },
+        currentChapterVisual(){
+            if(this.selectedChapterIndex<0)return null;
+            return this.currentArcChapterMap[this.selectedChapterIndex]||null;
+        },
         availableSideParents(){
             if(!this.currentArc||!Array.isArray(this.currentArc.chapters))return [];
+            const map=this.currentArcChapterMap||{};
             return this.currentArc.chapters
                 .map((chapter,idx)=>({
                     idx,
                     id:chapter&&chapter.id?chapter.id:'',
                     label:`${((this.currentArcChapterMap[idx]||{}).label)||(idx+1)} · ${chapter.title||chapter.id||('Cap '+(idx+1))}`
                 }))
-                .filter(opt=>opt.idx!==this.selectedChapterIndex&&opt.id);
+                .filter(opt=>opt.idx!==this.selectedChapterIndex&&opt.id)
+                .filter(opt=>this.selectedChapterIndex<0 || !this.isChapterDescendant(this.currentArc,opt.idx,this.selectedChapterIndex,map))
+                .sort((a,b)=>((map[a.idx]||{}).column||0)-((map[b.idx]||{}).column||0));
         },
         battleFormat(){
             if(!this.currentChapter)return '1v1';
@@ -824,15 +1517,197 @@ createApp({
                     return text.toLowerCase().includes(q);
                 });
         },
+        installedCharChoices(){
+            return (this.charAvailable||[])
+                .filter(item=>item&&item.type==='folder'&&item.has_def)
+                .map(item=>item.name)
+                .sort((a,b)=>String(a).localeCompare(String(b),undefined,{sensitivity:'base'}));
+        },
+        realCharCount(){
+            return this.charRoster.filter(item=>this.isCharEntry(item)).length;
+        },
+        charLabelCount(){
+            return this.charRoster.filter(item=>this.isLabelEntry(item)).length;
+        },
+        charPreviewTarget(){
+            void this.tick;
+            const selected = Array.from(this.sel.chars)
+                .filter(i=>Number.isInteger(i)&&i>=0&&i<this.charRoster.length)
+                .sort((a,b)=>a-b);
+            if(selected.length>0){
+                const preferred = selected.includes(this.lastClicked.chars) ? this.lastClicked.chars : selected[selected.length-1];
+                const item = this.charRoster[preferred];
+                const name = this.isCharEntry(item) ? this.normalizeText(item.name) : '';
+                if(name && name !== 'null' && name !== 'randomselect'){
+                    return {
+                        name,
+                        ref:this.rosterCharRef(item),
+                        label:name,
+                        source:'roster'
+                    };
+                }
+            }
+            const diskName = this.normalizeText(this.selectedAvailableCharName);
+            if(diskName){
+                return {name:diskName, ref:diskName, label:diskName, source:'disk'};
+            }
+            return null;
+        },
+        selectedRenameIndices(){
+            void this.tick;
+            return Array.from(this.sel.chars)
+                .filter(i=>Number.isInteger(i)&&i>=0&&i<this.charRoster.length)
+                .sort((a,b)=>a-b);
+        },
+        selectedRenameTarget(){
+            const selected=this.selectedRenameIndices;
+            if(selected.length===1){
+                const idx=selected[0];
+                const item=this.charRoster[idx];
+                if(this.isCharEntry(item)){
+                    const name=this.normalizeText(item.name);
+                    if(name&&name!=='null'&&name!=='randomselect'){
+                        return {
+                            idx,
+                            name,
+                            ref:this.rosterCharRef(item)||name,
+                            locked:this.isSlotLocked(item),
+                            source:'roster'
+                        };
+                    }
+                }
+            }
+            /* Fall through: check disk selection */
+            if(selected.length===0){
+                const diskName=this.normalizeText(this.selectedAvailableCharName);
+                if(diskName){
+                    return {
+                        idx:-1,
+                        name:diskName,
+                        ref:diskName,
+                        locked:false,
+                        source:'disk'
+                    };
+                }
+            }
+            return null;
+        },
+        renameSelectionHint(){
+            const count=this.selectedRenameIndices.length;
+            if(count===0&&!this.selectedAvailableCharName)return 'Selecciona un personaje del roster o de disco';
+            if(count>1)return 'Selecciona un solo personaje';
+            return 'El slot seleccionado no es un personaje renombrable';
+        },
+        canRenameSelectedChar(){
+            const target=this.selectedRenameTarget;
+            if(!target)return false;
+            if(target.locked)return false;
+            if(!this.normalizeText(this.renameNew))return false;
+            /* disk chars always rename on disk; roster chars require the checkbox */
+            if(target.source==='roster'&&!this.renameDisk)return false;
+            return true;
+        },
+        portraitOffsetTarget(){
+            void this.tick;
+            const selected=Array.from(this.sel.chars)
+                .filter(i=>Number.isInteger(i)&&i>=0&&i<this.charRoster.length)
+                .sort((a,b)=>a-b);
+            if(selected.length!==1)return null;
+            const idx=selected[0];
+            const item=this.charRoster[idx];
+            if(!this.isCharEntry(item))return null;
+            const name=this.normalizeText(item.name);
+            if(!name||name==='null'||name==='randomselect')return null;
+            const ep=item.extra_params||[];
+            const getVal=(key)=>{
+                const prefix=key.toLowerCase()+'=';
+                for(const p of ep){
+                    if(p.toLowerCase().startsWith(prefix)){
+                        const v=parseFloat(p.split('=')[1]);
+                        return Number.isFinite(v)?v:0;
+                    }
+                }
+                return 0;
+            };
+            return {
+                idx,
+                name,
+                offsetX:getVal('select_portrait_offset_x'),
+                offsetY:getVal('select_portrait_offset_y'),
+                scale:getVal('select_portrait_scale')||0,
+            };
+        },
+        charPreviewKey(){
+            const target = this.charPreviewTarget;
+            return target ? `${target.source}:${target.ref||target.name}:${target.label||''}` : '';
+        },
         filteredStageRoster(){ if(!this.stageSearch)return this.stageRoster; const q=this.stageSearch.toLowerCase();return this.stageRoster.filter(s=>(this.stageNameMap[s]||s).toLowerCase().includes(q)) },
+        filteredLifebars(){
+            const q=this.lifebarSearch.trim().toLowerCase();
+            return this.lifebars.filter(item=>{
+                if(!q)return true;
+                return [item.title, item.id, item.author, item.main_def_path].some(value=>(value||'').toLowerCase().includes(q));
+            });
+        },
+        selectedLifebar(){
+            return this.lifebars.find(item=>item.id===this.selectedLifebarId) || null;
+        },
+        activeLifebar(){
+            return this.lifebars.find(item=>item.id===this.lifebarActiveId) || null;
+        },
         uniqueEnemies(){ if(!this.currentArc||!this.currentArc.chapters)return 0;const s=new Set();this.currentArc.chapters.forEach(ch=>(ch.p2||[]).forEach(p=>s.add(p)));return s.size },
         storyboardSagas(){ const s=new Set();this.storyboardList.forEach(x=>s.add(x.saga));return Array.from(s).sort() },
         sbAssetList(){ const a=[];this.storyboardList.forEach(sb=>{if(sb.spr)a.push(sb.spr);if(sb.snd)a.push(sb.snd)});return[...new Set(a)].sort() },
+        timelineConnections(){
+            if(!this.currentArc||!this.currentArc.chapters)return[];
+            const links=[];
+            const map=this.currentArcChapterMap||{};
+            let lastMain=-1;
+            this.currentArc.chapters.forEach((cap,idx)=>{
+                const isSide=(cap.type||'normal')==='sidestory';
+                const info=map[idx]||{};
+                if(isSide && info.parentIdx>=0){
+                    // Only draw parent→child connector for the FIRST sibling in each lane
+                    const parentInfo=map[info.parentIdx]||{};
+                    const siblings=(parentInfo.childGroups||{})[info.lane]||[];
+                    if(siblings.length===0 || siblings[0]===idx){
+                        links.push({from:info.parentIdx,to:idx,type:'side'});
+                    }
+                }else if(!isSide){
+                    if(lastMain>=0) links.push({from:lastMain,to:idx,type:'main'});
+                    lastMain=idx;
+                }
+            });
+            // Add sibling horizontal links
+            const values=Object.values(map);
+            values.forEach(info=>{
+                const groups=info.childGroups||{};
+                Object.values(groups).forEach(group=>{
+                    for(let i=1;i<group.length;i++){
+                        links.push({from:group[i-1],to:group[i],type:'sibling'});
+                    }
+                });
+            });
+            return links;
+        },
         currentArcTimelineHeight(){
-            const values=Object.values(this.currentArcChapterMap||{});
-            let maxDepth=0;
-            values.forEach(info=>{ maxDepth=Math.max(maxDepth, info.depth||0); });
-            return 152 + maxDepth * 54;
+            const map=this.currentArcChapterMap||{};
+            const values=Object.values(map);
+            let maxLane=0;
+            values.forEach(info=>{ maxLane=Math.max(maxLane, info.lane||0); });
+            const layout=this.timelineLayout();
+            return Math.max(layout.minHeight, layout.topY + maxLane * layout.laneSpacing + layout.bottomPadding);
+        },
+        currentArcTimelineViewportHeight(){
+            return Math.min(560, Math.max(360, this.currentArcTimelineHeight));
+        },
+        currentArcTimelineWidth(){
+            const map=this.currentArcChapterMap||{};
+            const values=Object.values(map);
+            let maxCol=0;
+            values.forEach(info=>{ maxCol=Math.max(maxCol, info.column||0); });
+            const layout=this.timelineLayout();
+            return Math.max(layout.minWidth, layout.startX + (maxCol * layout.colSpacing) + layout.sidePadding);
         },
         filteredMovelistChars(){
             const q=this.movelistSearch.trim().toLowerCase();
@@ -846,14 +1721,61 @@ createApp({
             return this.movelistEditor.sections.reduce((total, section)=>total + ((section.moves||[]).length), 0);
         }
     },
+    watch: {
+        charRoster: {
+            deep: true,
+            handler() {
+                if (this.charRosterLoading) return;
+                if (this.charRosterSaveTimeout) clearTimeout(this.charRosterSaveTimeout);
+                this.charRosterSaveTimeout = setTimeout(() => {
+                    this.saveChars(true);
+                }, 1000);
+            }
+        },
+        charPreviewKey(){
+            if(this.activeTab === 'chars'){
+                this.reloadCharPreview();
+            }
+        },
+        activeTab(nextTab){
+            if(nextTab === 'chars'){
+                this.reloadCharPreview();
+                return;
+            }
+            this.stopCharPreviewAnimation();
+        }
+    },
     methods: {
+        timelineLayout(){
+            return {
+                startX: 28,
+                topY: 72,
+                colSpacing: 176,
+                laneSpacing: 136,
+                sidePadding: 176,
+                bottomPadding: 176,
+                minWidth: 760,
+                minHeight: 360
+            };
+        },
+        nodeX(idx){
+            const layout=this.timelineLayout();
+            const info=this.currentArcChapterMap[idx]||{};
+            const col=info.column||0;
+            return layout.startX + col * layout.colSpacing;
+        },
+        nodeY(idx){
+            const layout=this.timelineLayout();
+            const info=this.currentArcChapterMap[idx]||{};
+            return layout.topY + (info.lane||0) * layout.laneSpacing;
+        },
         // ── Node helpers ──
         lettersForIndex(n){
             let value=Math.max(1, Number(n)||1);
             let out='';
             while(value>0){
                 const rem=(value-1)%26;
-                out=String.fromCharCode(97+rem)+out;
+                out=String.fromCharCode(65+rem)+out;
                 value=Math.floor((value-1)/26);
             }
             return out;
@@ -865,23 +1787,16 @@ createApp({
             const childrenOf={};
             const labels={};
             const mainOrder=[];
+            const laneOf={};
+            const depthOf={};
             const addChild=(parentIdx,childIdx)=>{
                 if(parentIdx==null||parentIdx<0||parentIdx===childIdx)return;
                 if(!childrenOf[parentIdx])childrenOf[parentIdx]=[];
                 childrenOf[parentIdx].push(childIdx);
                 parentOf[childIdx]=parentIdx;
             };
-
-            chapters.forEach((chapter,idx)=>{
-                if(chapter&&chapter.id)idToIdx.set(chapter.id,idx);
-                if((((chapter || {}).type)||'normal')!=='sidestory'){
-                    mainOrder.push(idx);
-                    labels[idx]=String(mainOrder.length);
-                }
-            });
-
-            chapters.forEach((chapter,idx)=>{
-                if((((chapter || {}).type)||'normal')!=='sidestory')return;
+            const resolveParentIndex=(idx)=>{
+                const chapter=chapters[idx]||{};
                 let parentIdx=-1;
                 if(chapter.sideUnlockAfter&&idToIdx.has(chapter.sideUnlockAfter))parentIdx=idToIdx.get(chapter.sideUnlockAfter);
                 if(parentIdx<0){
@@ -892,55 +1807,106 @@ createApp({
                         }
                     }
                 }
+                return parentIdx;
+            };
+
+            chapters.forEach((chapter,idx)=>{
+                if(chapter&&chapter.id)idToIdx.set(chapter.id,idx);
+                if((((chapter || {}).type)||'normal')!=='sidestory'){
+                    mainOrder.push(idx);
+                    labels[idx]=String(mainOrder.length);
+                    laneOf[idx]=0;
+                    depthOf[idx]=0;
+                }
+            });
+
+            chapters.forEach((chapter,idx)=>{
+                if((((chapter || {}).type)||'normal')!=='sidestory')return;
+                const parentIdx=resolveParentIndex(idx);
                 if(parentIdx>=0)addChild(parentIdx,idx);
             });
 
             Object.values(childrenOf).forEach(list=>list.sort((a,b)=>a-b));
 
-            const assignChildren=(parentIdx)=>{
-                (childrenOf[parentIdx]||[]).forEach((childIdx,order)=>{
-                    labels[childIdx]=`${labels[parentIdx]||'1'}${this.lettersForIndex(order+1)}`;
-                    assignChildren(childIdx);
+            const assignChildrenLanes=(parentIdx)=>{
+                const children=childrenOf[parentIdx]||[];
+                if(children.length===0)return;
+                const parentLane=laneOf[parentIdx]||0;
+                const parentDepth=depthOf[parentIdx]||0;
+                children.forEach((childIdx,pos)=>{
+                    laneOf[childIdx]=parentLane+1;
+                    depthOf[childIdx]=parentDepth+1;
+                    labels[childIdx]=`${labels[parentIdx]||'1'}${this.lettersForIndex(pos+1)}`;
+                    assignChildrenLanes(childIdx);
                 });
             };
 
-            mainOrder.forEach(assignChildren);
+            mainOrder.forEach(assignChildrenLanes);
 
             let orphanCount=0;
             chapters.forEach((chapter,idx)=>{
                 if(((((chapter || {}).type)||'normal')!=='sidestory')||parentOf[idx]!=null)return;
                 orphanCount+=1;
+                laneOf[idx]=1;
+                depthOf[idx]=1;
                 labels[idx]=`1${this.lettersForIndex(orphanCount)}`;
-                assignChildren(idx);
+                assignChildrenLanes(idx);
             });
 
-            const depthOf={};
-            const resolveDepth=(idx)=>{
-                if(depthOf[idx]!=null)return depthOf[idx];
-                const parentIdx=Number.isInteger(parentOf[idx])?parentOf[idx]:-1;
-                if(parentIdx<0){
-                    depthOf[idx]=0;
-                    return 0;
-                }
-                depthOf[idx]=resolveDepth(parentIdx)+1;
-                return depthOf[idx];
+            const columnOf={};
+            let nextCol=0;
+            const childGroupsOf={}; // parentIdx -> { lane: [childIdx, ...] }
+
+            const getSiblingGroups=(parentIdx)=>{
+                const children=childrenOf[parentIdx]||[];
+                if(children.length===0)return{};
+                const byLane={};
+                children.forEach(childIdx=>{
+                    const lane=laneOf[childIdx]||1;
+                    if(!byLane[lane])byLane[lane]=[];
+                    byLane[lane].push(childIdx);
+                });
+                return byLane;
             };
+
+            const assignColumnsRecursive=(idx)=>{
+                columnOf[idx]=nextCol;
+                nextCol++;
+                const groups=getSiblingGroups(idx);
+                childGroupsOf[idx]=groups;
+                const lanes=Object.keys(groups).map(Number).sort((a,b)=>a-b);
+                lanes.forEach(lane=>{
+                    groups[lane].forEach(childIdx=>{
+                        assignColumnsRecursive(childIdx);
+                    });
+                });
+            };
+
+            mainOrder.forEach(assignColumnsRecursive);
+
+            // Orphan sides
+            chapters.forEach((chapter,idx)=>{
+                if(((((chapter || {}).type)||'normal')!=='sidestory')||parentOf[idx]!=null)return;
+                assignColumnsRecursive(idx);
+            });
 
             const map={};
             chapters.forEach((chapter,idx)=>{
-                const parentIdx=Number.isInteger(parentOf[idx])?parentOf[idx]:-1;
+                const pIdx=Number.isInteger(parentOf[idx])?parentOf[idx]:-1;
                 map[idx]={
                     label:labels[idx]||String(idx+1),
-                    parentIdx,
-                    parentLabel:parentIdx>=0?(labels[parentIdx]||String(parentIdx+1)):'',
-                    depth:resolveDepth(idx)
+                    parentIdx:pIdx,
+                    parentLabel:pIdx>=0?(labels[pIdx]||String(pIdx+1)):'',
+                    depth:depthOf[idx]||0,
+                    lane:laneOf[idx]||0,
+                    column:columnOf[idx]||0,
+                    childGroups:childGroupsOf[idx]||{}
                 };
             });
             return map;
         },
         chapterNodeStyle(idx){
-            const info=this.currentArcChapterMap[idx]||{};
-            return {marginTop:`${(info.depth||0)*54}px`};
+            return {left:this.nodeX(idx)+'px', top:this.nodeY(idx)+'px'};
         },
         nodeClass(type){
             const m={normal:'node-normal',sidestory:'node-sidestory',midboss:'node-midboss',finalboss:'node-finalboss'};
@@ -963,8 +1929,63 @@ createApp({
         isLabelEntry(item){ return item && item.kind==='label' },
         isCharEntry(item){ return !this.isLabelEntry(item) },
         isSlotLocked(item){ return !!(item && item.slot_locked) },
-        makeCharEntry(name='null'){
-            return {kind:'char',name,stage:"",hidden:0,order:1,music:"",ai:0,includestage:1,unlock:"",extra_params:[],slot_locked:false};
+        engineStateMeta(item){
+            const unlock=this.normalizeText(item&&item.unlock);
+            const hidden=Number(item&&item.hidden)||0;
+            if(hidden===0){
+                return {
+                    label:'Visible',
+                    class:'bg-green-900/20 text-green-400',
+                    title:'El motor muestra este personaje normalmente en el select.'
+                };
+            }
+            if(hidden===3 && unlock){
+                return {
+                    label:'Story Lock',
+                    class:'bg-yellow-900/30 text-yellow-300',
+                    title:'Este slot está bloqueado por story mode y en el juego se muestra como random/? hasta desbloquearse.'
+                };
+            }
+            if(hidden===3){
+                return {
+                    label:'Random',
+                    class:'bg-blue-900/30 text-blue-300',
+                    title:'Este slot se comporta como randomselect en el select.'
+                };
+            }
+            if(hidden===2){
+                return {
+                    label:'Bloq.',
+                    class:'bg-red-900/40 text-red-300',
+                    title:'El motor mantiene este slot bloqueado/no seleccionable.'
+                };
+            }
+            return {
+                label:'Oculto',
+                class:'bg-red-900/30 text-red-400',
+                title:'Este slot está oculto en el select.'
+            };
+        },
+        rosterCharRef(item){
+            if(!this.isCharEntry(item))return '';
+            const ref=this.normalizeText(item&&item.char_ref);
+            if(ref)return ref;
+            const name=this.normalizeText(item&&item.name);
+            return name&&name!=='null'&&name!=='randomselect'?name:'';
+        },
+        charSlotNumber(idx){
+            let count=0;
+            for(let i=0;i<=idx;i++){
+                if(this.isCharEntry(this.charRoster[i]))count+=1;
+            }
+            return count;
+        },
+        makeCharEntry(name='null',charRef=''){
+            return {kind:'char',name,char_ref:charRef||'',stage:"",hidden:0,order:1,music:"",ai:0,includestage:1,unlock:"",extra_params:[],slot_locked:false};
+        },
+        makeInstalledCharEntry(name=''){
+            const clean=this.normalizeText(name);
+            return this.makeCharEntry(clean, clean);
         },
         makeLabelEntry(label='Nueva etiqueta'){
             return {kind:'label',label,slot_locked:false};
@@ -991,6 +2012,40 @@ createApp({
             }
             return false;
         },
+        getChapterBranchIndices(arc,rootIdx,map){
+            const chapters=arc&&Array.isArray(arc.chapters)?arc.chapters:[];
+            if(rootIdx<0||rootIdx>=chapters.length)return [];
+            const view=map||this.buildChapterVisualMap(arc);
+            const branch=[rootIdx];
+            const walk=(parentIdx)=>{
+                chapters.forEach((_,idx)=>{
+                    if((view[idx]||{}).parentIdx===parentIdx){
+                        branch.push(idx);
+                        walk(idx);
+                    }
+                });
+            };
+            walk(rootIdx);
+            return [...new Set(branch)].sort((a,b)=>a-b);
+        },
+        getChapterBranchItems(arc,rootIdx,map){
+            const chapters=arc&&Array.isArray(arc.chapters)?arc.chapters:[];
+            return this.getChapterBranchIndices(arc,rootIdx,map).map(idx=>chapters[idx]).filter(Boolean);
+        },
+        getTopLevelChapterIndex(arc,idx,map){
+            const chapters=arc&&Array.isArray(arc.chapters)?arc.chapters:[];
+            if(idx<0||idx>=chapters.length)return -1;
+            const view=map||this.buildChapterVisualMap(arc);
+            let cursor=idx;
+            let guard=0;
+            while(cursor>=0&&guard<=chapters.length){
+                const parentIdx=(view[cursor]||{}).parentIdx;
+                if(parentIdx==null||parentIdx<0)return cursor;
+                cursor=parentIdx;
+                guard+=1;
+            }
+            return idx;
+        },
         suggestedSideParentIndex(){
             if(!this.currentArc||!Array.isArray(this.currentArc.chapters)||this.currentArc.chapters.length===0)return-1;
             if(this.selectedChapterIndex>=0&&this.selectedChapterIndex<this.currentArc.chapters.length)return this.selectedChapterIndex;
@@ -998,9 +2053,63 @@ createApp({
         },
         normalizeRosterItem(item){
             if(this.isLabelEntry(item))return {...this.makeLabelEntry(item.label||'Nueva etiqueta'),...item,kind:'label'};
-            const base=this.makeCharEntry(item&&item.name?item.name:'null');
+            const base=this.makeCharEntry(item&&item.name?item.name:'null', item&&item.char_ref?item.char_ref:'');
             const extraParams=Array.isArray(item&&item.extra_params)?item.extra_params:[];
             return {...base,...item,kind:'char',extra_params:[...extraParams],slot_locked:!!(item&&item.slot_locked)};
+        },
+        normalizeChapterRoundTime(ch){
+            if(!ch)return;
+            const raw=ch.roundTime;
+            if(raw===-1 || raw==='-1' || raw==='infinite'){
+                ch.roundTime=-1;
+                ch.roundTimeMode='infinite';
+                ch.roundTimeValue=99;
+                return;
+            }
+            const parsed=Number(raw);
+            if(Number.isFinite(parsed) && parsed > 0){
+                ch.roundTime=Math.floor(parsed);
+                ch.roundTimeMode='custom';
+                ch.roundTimeValue=ch.roundTime;
+                return;
+            }
+            delete ch.roundTime;
+            ch.roundTimeMode='default';
+            ch.roundTimeValue=99;
+        },
+        normalizeChapterSubstitutions(ch){
+            if(!ch)return;
+            const clamp=(value)=>{
+                const parsed=Math.floor(Number(value));
+                if(!Number.isFinite(parsed))return 3;
+                if(parsed < 0)return 0;
+                if(parsed > 3)return 3;
+                return parsed;
+            };
+            ch.p1Substitutions=clamp(ch.p1Substitutions);
+            ch.p2Substitutions=clamp(ch.p2Substitutions);
+        },
+        buildCatalogPayload(){
+            return (this.catalog||[]).map(arc=>({
+                ...arc,
+                chapters:(arc.chapters||[]).map(ch=>{
+                    const out=JSON.parse(JSON.stringify(ch));
+                    this.ensureChapterId(out,'cap');
+                    this.normalizeChapterSubstitutions(out);
+                    if(out.roundTimeMode==='infinite'){
+                        out.roundTime=-1;
+                    }else if(out.roundTimeMode==='custom'){
+                        const v=Math.floor(Number(out.roundTimeValue));
+                        if(Number.isFinite(v) && v > 0) out.roundTime=v;
+                        else delete out.roundTime;
+                    }else{
+                        delete out.roundTime;
+                    }
+                    delete out.roundTimeMode;
+                    delete out.roundTimeValue;
+                    return out;
+                })
+            }));
         },
         ensureRosterEditable(idx,action){
             const item=this.charRoster[idx];
@@ -1017,6 +2126,95 @@ createApp({
         bulkToggleSlotLock(){
             if(this.sel.chars.size===0)return;
             this.bulkAction('chars', this.selectedCharsAllLocked() ? 'slotunlock' : 'slotlock');
+        },
+        clearDragState(){
+            this.dragState={type:null,idx:null,source:null,item:null,removeUnusedName:''};
+        },
+        getSelectedInsertIndex(t){
+            const list=this.getList(t);
+            if(t!=='chars')return list.length;
+            const selected=Array.from(this.sel.chars)
+                .filter(i=>Number.isInteger(i)&&i>=0&&i<this.charRoster.length)
+                .sort((a,b)=>a-b);
+            if(selected.length===0)return this.charRoster.length;
+            const anchor=selected.includes(this.lastClicked.chars)?this.lastClicked.chars:selected[selected.length-1];
+            return Math.min(this.charRoster.length, anchor+1);
+        },
+        insertRosterItem(t,item,options={}){
+            const list=this.getList(t);
+            const rawIndex=Number.isInteger(options.index)?options.index:this.getSelectedInsertIndex(t);
+            const insertAt=Math.max(0,Math.min(list.length,rawIndex));
+            if(t==='chars'){
+                const normalized=this.normalizeRosterItem(item);
+                this.charRoster.splice(insertAt,0,normalized);
+                if(options.removeUnusedName){
+                    // No longer filtering unused list since charAvailable shows everything
+                }
+                if(options.select!==false){
+                    this.sel.chars.clear();
+                    this.sel.chars.add(insertAt);
+                    this.lastClicked.chars=insertAt;
+                    this.tick++;
+                }
+                return insertAt;
+            }
+            this.stageRoster.splice(insertAt,0,item);
+            return insertAt;
+        },
+        buildReplacementRosterItem(targetItem,newItem){
+            const incoming=this.normalizeRosterItem(newItem);
+            if(!this.isCharEntry(incoming))return incoming;
+            if(!this.isCharEntry(targetItem))return incoming;
+            return {
+                ...this.normalizeRosterItem(targetItem),
+                name:incoming.name,
+                char_ref:incoming.char_ref||'',
+                kind:'char',
+                slot_locked:!!targetItem.slot_locked
+            };
+        },
+        startAvailableCharDrag(entry,ev){
+            this.dragState={
+                type:'chars',
+                idx:-1,
+                source:'charAvailable',
+                item:this.makeInstalledCharEntry(entry.name),
+                removeUnusedName:entry.name
+            };
+            ev.dataTransfer.effectAllowed='copyMove';
+        },
+        startCharTemplateDrag(kind,ev){
+            let item=this.makeCharEntry('null');
+            if(kind==='random')item=this.makeCharEntry('randomselect');
+            else if(kind==='label')item=this.makeLabelEntry();
+            this.dragState={
+                type:'chars',
+                idx:-1,
+                source:`template:${kind}`,
+                item,
+                removeUnusedName:''
+            };
+            ev.dataTransfer.effectAllowed='copy';
+        },
+        computeExternalDropMode(ev){
+            if(!ev||!ev.currentTarget||typeof ev.clientY!=='number')return'after';
+            const rect=ev.currentTarget.getBoundingClientRect();
+            if(!rect||rect.height<=0)return'after';
+            const ratio=(ev.clientY-rect.top)/rect.height;
+            if(ratio<0.34)return'before';
+            if(ratio>0.66)return'after';
+            return'replace';
+        },
+        computeDropInsertIndex(t,i,ev){
+            const list=this.getList(t);
+            let insertAt=i;
+            if(ev&&ev.currentTarget&&typeof ev.clientY==='number'){
+                const rect=ev.currentTarget.getBoundingClientRect();
+                if(rect&&rect.height>0&&ev.clientY>(rect.top+rect.height/2)){
+                    insertAt=i+1;
+                }
+            }
+            return Math.max(0,Math.min(list.length,insertAt));
         },
 
         setChapterType(type){
@@ -1059,6 +2257,734 @@ createApp({
             return parts[parts.length-1].replace(/\.def$/i,'')||path;
         },
         storyboardsBySaga(saga){ return this.storyboardList.filter(s=>s.saga===saga) },
+        normalizeText(value){
+            return String(value ?? '').trim();
+        },
+        selectAvailableChar(name){
+            this.selectedAvailableCharName = this.normalizeText(name);
+            this.sel.chars.clear();
+            this.lastClicked.chars = -1;
+            this.tick++;
+        },
+        stopCharPreviewAnimation(){
+            if(this.charPreviewPlayer.rafId){
+                cancelAnimationFrame(this.charPreviewPlayer.rafId);
+            }
+            this.charPreviewPlayer.rafId = 0;
+            this.charPreviewPlayer.frames = [];
+            this.charPreviewPlayer.frameIndex = 0;
+            this.charPreviewPlayer.frameElapsed = 0;
+            this.charPreviewPlayer.lastTs = 0;
+            this.charPreviewPlayer.bounds = null;
+        },
+        clearCharPreviewCanvas(){
+            const canvas = this.$refs.charPreviewCanvas;
+            if(!canvas)return;
+            const rect = canvas.getBoundingClientRect();
+            const width = Math.max(240, Math.round(rect.width || canvas.clientWidth || 256));
+            const height = Math.max(180, Math.round(rect.height || canvas.clientHeight || 220));
+            const ratio = window.devicePixelRatio || 1;
+            if(canvas.width !== Math.round(width * ratio) || canvas.height !== Math.round(height * ratio)){
+                canvas.width = Math.round(width * ratio);
+                canvas.height = Math.round(height * ratio);
+            }
+            const ctx = canvas.getContext('2d');
+            if(!ctx)return;
+            ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+            ctx.clearRect(0, 0, width, height);
+        },
+        buildCharPreviewBounds(frames){
+            let minX = Infinity;
+            let minY = Infinity;
+            let maxX = -Infinity;
+            let maxY = -Infinity;
+            frames.forEach(frame=>{
+                const left = frame.offsetX - frame.sprite.axisX;
+                const top = frame.offsetY - frame.sprite.axisY;
+                minX = Math.min(minX, left);
+                minY = Math.min(minY, top);
+                maxX = Math.max(maxX, left + frame.sprite.width);
+                maxY = Math.max(maxY, top + frame.sprite.height);
+            });
+            if(!Number.isFinite(minX)){
+                return {minX:0,minY:0,maxX:1,maxY:1,width:1,height:1};
+            }
+            return {
+                minX,
+                minY,
+                maxX,
+                maxY,
+                width:Math.max(1, maxX - minX),
+                height:Math.max(1, maxY - minY)
+            };
+        },
+        renderCharPreviewFrame(){
+            const canvas = this.$refs.charPreviewCanvas;
+            const frames = this.charPreviewPlayer.frames || [];
+            if(!canvas || frames.length===0)return;
+            const rect = canvas.getBoundingClientRect();
+            const width = Math.max(240, Math.round(rect.width || canvas.clientWidth || 256));
+            const height = Math.max(180, Math.round(rect.height || canvas.clientHeight || 220));
+            const ratio = window.devicePixelRatio || 1;
+            if(canvas.width !== Math.round(width * ratio) || canvas.height !== Math.round(height * ratio)){
+                canvas.width = Math.round(width * ratio);
+                canvas.height = Math.round(height * ratio);
+            }
+            const ctx = canvas.getContext('2d');
+            if(!ctx)return;
+            ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+            ctx.clearRect(0, 0, width, height);
+
+            const frame = frames[this.charPreviewPlayer.frameIndex] || frames[0];
+            const bounds = this.charPreviewPlayer.bounds || this.buildCharPreviewBounds(frames);
+            const stagePaddingX = 18;
+            const stagePaddingTop = 16;
+            const stagePaddingBottom = 20;
+            const usableWidth = Math.max(1, width - stagePaddingX * 2);
+            const usableHeight = Math.max(1, height - stagePaddingTop - stagePaddingBottom);
+            const scale = Math.max(1, Math.min(3.4, usableWidth / bounds.width, usableHeight / bounds.height));
+            const anchorX = width / 2;
+            const anchorY = height - stagePaddingBottom - Math.max(0, bounds.maxY) * scale;
+
+            ctx.fillStyle = 'rgba(14, 19, 28, 0.78)';
+            ctx.fillRect(0, height - 34, width, 34);
+            ctx.strokeStyle = 'rgba(96, 165, 250, 0.55)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, height - 34);
+            ctx.lineTo(width, height - 34);
+            ctx.stroke();
+
+            const shadowWidth = Math.max(34, Math.min(110, bounds.width * scale * 0.42));
+            ctx.fillStyle = 'rgba(5, 8, 12, 0.38)';
+            ctx.beginPath();
+            ctx.ellipse(anchorX, height - 18, shadowWidth, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            const drawX = anchorX + (frame.offsetX - frame.sprite.axisX) * scale;
+            const drawY = anchorY + (frame.offsetY - frame.sprite.axisY) * scale;
+            ctx.save();
+            ctx.translate(drawX + (frame.flipH ? frame.sprite.width * scale : 0), drawY + (frame.flipV ? frame.sprite.height * scale : 0));
+            ctx.scale(frame.flipH ? -1 : 1, frame.flipV ? -1 : 1);
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(frame.sprite.canvas, 0, 0, frame.sprite.width * scale, frame.sprite.height * scale);
+            ctx.restore();
+        },
+        startCharPreviewAnimation(){
+            this.stopCharPreviewAnimation();
+            if(!this.charPreviewPlayer.frames.length){
+                this.clearCharPreviewCanvas();
+                return;
+            }
+            this.charPreviewPlayer.lastTs = 0;
+            const step = (ts)=>{
+                if(!this.charPreviewPlayer.frames.length)return;
+                if(!this.charPreviewPlayer.lastTs){
+                    this.charPreviewPlayer.lastTs = ts;
+                    this.renderCharPreviewFrame();
+                    this.charPreviewPlayer.rafId = requestAnimationFrame(step);
+                    return;
+                }
+                const delta = ts - this.charPreviewPlayer.lastTs;
+                this.charPreviewPlayer.lastTs = ts;
+                const current = this.charPreviewPlayer.frames[this.charPreviewPlayer.frameIndex];
+                const frameMs = current && current.durationMs > 0 ? current.durationMs : (1000 / 60);
+                this.charPreviewPlayer.frameElapsed += delta;
+                while(this.charPreviewPlayer.frameElapsed >= frameMs){
+                    this.charPreviewPlayer.frameElapsed -= frameMs;
+                    let nextIndex = this.charPreviewPlayer.frameIndex + 1;
+                    if(nextIndex >= this.charPreviewPlayer.frames.length){
+                        nextIndex = Math.min(this.charPreviewPlayer.loopStart || 0, this.charPreviewPlayer.frames.length - 1);
+                    }
+                    this.charPreviewPlayer.frameIndex = nextIndex;
+                }
+                this.renderCharPreviewFrame();
+                this.charPreviewPlayer.rafId = requestAnimationFrame(step);
+            };
+            this.$nextTick(()=>{
+                this.renderCharPreviewFrame();
+                this.charPreviewPlayer.rafId = requestAnimationFrame(step);
+            });
+        },
+        async reloadCharPreview(force=false){
+            const target = this.charPreviewTarget;
+            this.stopCharPreviewAnimation();
+            if(!target){
+                this.charPreview.loading = false;
+                this.charPreview.error = '';
+                this.charPreview.status = 'Selecciona un personaje';
+                this.charPreview.displayName = '';
+                this.charPreview.source = '';
+                this.charPreview.imageUrl = '';
+                this.charPreview.mugshotUrl = '';
+                this.charPreview.frameCount = 0;
+                this.charPreview.sffVersion = '';
+                this.clearCharPreviewCanvas();
+                return;
+            }
+            const cacheKey = target.name;
+            if(force)delete this.charPreviewCache[cacheKey];
+            const previewToken = ++this.charPreviewPlayer.token;
+            this.charPreview.loading = true;
+            this.charPreview.error = '';
+            this.charPreview.status = 'Resolviendo archivos del personaje...';
+            this.charPreview.displayName = target.label || target.name;
+            this.charPreview.source = target.source;
+            this.charPreview.imageUrl = '';
+            this.charPreview.mugshotUrl = '';
+            this.charPreview.frameCount = 0;
+            this.charPreview.sffVersion = '';
+            this.clearCharPreviewCanvas();
+
+            if(this.charPreviewCache[cacheKey]){
+                if(previewToken !== this.charPreviewPlayer.token)return;
+                this.applyCharPreviewPayload(target, this.charPreviewCache[cacheKey]);
+                return;
+            }
+
+            try{
+                const query = `/api/chars/preview_idle?char=${encodeURIComponent(target.name)}${target.ref ? `&ref=${encodeURIComponent(target.ref)}` : ''}`;
+                const serverResp = await fetch(query, {cache:'no-store'});
+                const serverData = await serverResp.json();
+                if(serverResp.ok && !serverData.error && serverData.image_url){
+                    const payload = {
+                        mode:'server',
+                        displayName:serverData.display_name || target.label || target.name,
+                        source:target.source,
+                        status:serverData.status || 'Action 0 · Idle',
+                        frameCount:Number(serverData.frame_count) || 0,
+                        sffVersion:serverData.sff_version || '',
+                        mugshotUrl:serverData.mugshot_url ? `${serverData.mugshot_url}${serverData.mugshot_url.includes('?') ? '&' : '?'}_t=${Date.now()}` : '',
+                        imageUrl:`${serverData.image_url}${serverData.image_url.includes('?') ? '&' : '?'}_t=${Date.now()}`
+                    };
+                    this.charPreviewCache[cacheKey] = payload;
+                    if(previewToken !== this.charPreviewPlayer.token)return;
+                    this.applyCharPreviewPayload(target, payload);
+                    return;
+                }
+
+                const manifestQuery = `/api/chars/preview_source?char=${encodeURIComponent(target.name)}${target.ref ? `&ref=${encodeURIComponent(target.ref)}` : ''}`;
+                const manifestResp = await fetch(manifestQuery, {cache:'no-store'});
+                const manifest = await manifestResp.json();
+                if(!manifestResp.ok || manifest.error)throw new Error(manifest.error || 'No se pudo resolver el personaje');
+                if(previewToken !== this.charPreviewPlayer.token)return;
+
+                this.charPreview.status = 'Leyendo AIR y SFF...';
+                const [airResp, sffResp] = await Promise.all([
+                    fetch(encodeURI(manifest.air_path), {cache:'force-cache'}),
+                    fetch(encodeURI(manifest.sff_path), {cache:'force-cache'})
+                ]);
+                if(!airResp.ok)throw new Error(`No se pudo abrir ${manifest.air_path}`);
+                if(!sffResp.ok)throw new Error(`No se pudo abrir ${manifest.sff_path}`);
+                const [airText, sffBuffer] = await Promise.all([airResp.text(), sffResp.arrayBuffer()]);
+                if(previewToken !== this.charPreviewPlayer.token)return;
+
+                this.charPreview.status = 'Renderizando idle...';
+                const action = this.parseAirAction(airText, 0);
+                const payload = await this.buildCharPreviewPayload(sffBuffer, action);
+                payload.displayName = manifest.display_name || target.name;
+                payload.source = target.source;
+                this.charPreviewCache[cacheKey] = payload;
+                if(previewToken !== this.charPreviewPlayer.token)return;
+                this.applyCharPreviewPayload(target, payload);
+            }catch(err){
+                if(previewToken !== this.charPreviewPlayer.token)return;
+                this.charPreview.loading = false;
+                this.charPreview.error = err && err.message ? err.message : 'No se pudo cargar la preview';
+                this.charPreview.status = 'Preview no disponible';
+                this.charPreview.imageUrl = '';
+                this.charPreview.mugshotUrl = '';
+                this.charPreview.frameCount = 0;
+                this.charPreview.sffVersion = '';
+                this.clearCharPreviewCanvas();
+            }
+        },
+        applyCharPreviewPayload(target, payload){
+            this.charPreview.loading = false;
+            this.charPreview.error = '';
+            this.charPreview.status = payload.status || 'Action 0 · Idle';
+            this.charPreview.displayName = payload.displayName || target.name;
+            this.charPreview.source = target.source;
+            this.charPreview.imageUrl = payload.imageUrl || '';
+            this.charPreview.mugshotUrl = payload.mugshotUrl || '';
+            this.charPreview.frameCount = Number(payload.frameCount || (payload.frames ? payload.frames.length : 0)) || 0;
+            this.charPreview.sffVersion = payload.sffVersion || '';
+            if(payload.mode === 'server'){
+                this.clearCharPreviewCanvas();
+                return;
+            }
+            this.charPreviewPlayer.frames = payload.frames;
+            this.charPreviewPlayer.loopStart = payload.loopStart || 0;
+            this.charPreviewPlayer.bounds = payload.bounds || this.buildCharPreviewBounds(payload.frames);
+            this.charPreviewPlayer.frameIndex = 0;
+            this.charPreviewPlayer.frameElapsed = 0;
+            this.startCharPreviewAnimation();
+        },
+        parseAirAction(airText, actionNo=0){
+            const lines = String(airText || '').split(/\r?\n/);
+            let active = false;
+            let loopStart = 0;
+            const frames = [];
+            for(const rawLine of lines){
+                const line = rawLine.split(';', 1)[0].trim();
+                if(!line)continue;
+                const actionMatch = line.match(/^\[Begin Action\s+(-?\d+)\]/i);
+                if(actionMatch){
+                    active = Number(actionMatch[1]) === Number(actionNo);
+                    continue;
+                }
+                if(!active)continue;
+                if(line.startsWith('['))break;
+                if(/^loopstart$/i.test(line)){
+                    loopStart = frames.length;
+                    continue;
+                }
+                if(/^clsn/i.test(line))continue;
+                const parts = line.split(',').map(part=>part.trim());
+                if(parts.length < 5)continue;
+                const group = Number(parts[0]);
+                const item = Number(parts[1]);
+                const offsetX = Number(parts[2]);
+                const offsetY = Number(parts[3]);
+                const ticks = Number(parts[4]);
+                if(!Number.isFinite(group) || !Number.isFinite(item))continue;
+                const flip = String(parts[5] || '').toUpperCase();
+                frames.push({
+                    group,
+                    item,
+                    offsetX:Number.isFinite(offsetX) ? offsetX : 0,
+                    offsetY:Number.isFinite(offsetY) ? offsetY : 0,
+                    ticks:Number.isFinite(ticks) ? ticks : 1,
+                    flipH:flip.includes('H'),
+                    flipV:flip.includes('V')
+                });
+            }
+            if(!frames.length){
+                throw new Error('No se encontró el Begin Action 0 en el AIR');
+            }
+            return {
+                loopStart:Math.min(loopStart, Math.max(0, frames.length - 1)),
+                frames
+            };
+        },
+        async buildCharPreviewPayload(sffBuffer, action){
+            const bytes = new Uint8Array(sffBuffer);
+            const signature = String.fromCharCode(...bytes.slice(0, 11));
+            if(signature !== 'ElecbyteSpr'){
+                throw new Error('El archivo SFF no tiene una cabecera reconocible');
+            }
+            const versionTag = bytes[15];
+            if(versionTag === 1){
+                return await this.buildCharPreviewFromSffV1(sffBuffer, action);
+            }
+            if(versionTag === 2){
+                return await this.buildCharPreviewFromSffV2(sffBuffer, action);
+            }
+            throw new Error(`Versión de SFF no soportada (${versionTag})`);
+        },
+        async buildCharPreviewFromSffV1(sffBuffer, action){
+            const bytes = new Uint8Array(sffBuffer);
+            const view = new DataView(sffBuffer);
+            const subheaderOffset = view.getUint32(24, true);
+            const headers = [];
+            let offset = subheaderOffset;
+            let guard = 0;
+            while(offset > 0 && offset + 32 <= bytes.length && guard < 20000){
+                const nextOffset = view.getUint32(offset, true);
+                headers.push({
+                    index:headers.length,
+                    offset,
+                    nextOffset,
+                    dataLength:view.getUint32(offset + 4, true),
+                    axisX:view.getInt16(offset + 8, true),
+                    axisY:view.getInt16(offset + 10, true),
+                    group:view.getUint16(offset + 12, true),
+                    item:view.getUint16(offset + 14, true),
+                    linked:view.getUint16(offset + 16, true),
+                    samePalette:bytes[offset + 18] !== 0,
+                    dataStart:offset + 32
+                });
+                if(!nextOffset || nextOffset <= offset)break;
+                offset = nextOffset;
+                guard += 1;
+            }
+            const headerMap = new Map();
+            headers.forEach(header=>{
+                const key = `${header.group}:${header.item}`;
+                if(!headerMap.has(key))headerMap.set(key, header.index);
+            });
+            const spriteCache = new Map();
+            const decodeHeader = (index)=>{
+                if(spriteCache.has(index))return spriteCache.get(index);
+                const header = headers[index];
+                if(!header)throw new Error(`Sprite SFF v1 inexistente (${index})`);
+                let sprite = null;
+                if(header.dataLength === 0 && header.linked > 0 && header.linked < headers.length){
+                    const linkedSprite = decodeHeader(header.linked);
+                    sprite = {...linkedSprite, axisX:header.axisX, axisY:header.axisY};
+                    spriteCache.set(index, sprite);
+                    return sprite;
+                }
+                const raw = bytes.slice(header.dataStart, header.dataStart + header.dataLength);
+                const prevSprite = index > 0 ? decodeHeader(index - 1) : null;
+                const decoded = this.decodePcxSprite(raw, header.samePalette && prevSprite ? prevSprite._palette : null);
+                sprite = {
+                    canvas:decoded.canvas,
+                    width:decoded.width,
+                    height:decoded.height,
+                    axisX:header.axisX,
+                    axisY:header.axisY,
+                    _palette:decoded.palette
+                };
+                spriteCache.set(index, sprite);
+                return sprite;
+            };
+            const frames = [];
+            for(const element of action.frames){
+                const headerIndex = headerMap.get(`${element.group}:${element.item}`);
+                if(headerIndex == null)continue;
+                const sprite = decodeHeader(headerIndex);
+                frames.push({
+                    sprite,
+                    offsetX:element.offsetX,
+                    offsetY:element.offsetY,
+                    flipH:element.flipH,
+                    flipV:element.flipV,
+                    durationMs:(element.ticks <= 0 ? 1 : element.ticks) * (1000 / 60)
+                });
+            }
+            if(!frames.length){
+                throw new Error('El Action 0 no encontró sprites válidos en el SFF v1');
+            }
+            return {
+                frames,
+                loopStart:action.loopStart || 0,
+                bounds:this.buildCharPreviewBounds(frames),
+                sffVersion:'SFF v1'
+            };
+        },
+        async buildCharPreviewFromSffV2(sffBuffer, action){
+            const bytes = new Uint8Array(sffBuffer);
+            const view = new DataView(sffBuffer);
+            const spriteOffset = view.getUint32(0x24, true);
+            const spriteCount = view.getUint32(0x28, true);
+            const paletteOffset = view.getUint32(0x2c, true);
+            const paletteCount = view.getUint32(0x30, true);
+            const ldataOffset = view.getUint32(0x34, true);
+            const spriteHeaders = [];
+            const paletteHeaders = [];
+            for(let i=0;i<paletteCount;i++){
+                const off = paletteOffset + i * 16;
+                if(off + 16 > bytes.length)break;
+                paletteHeaders.push({
+                    group:view.getUint16(off, true),
+                    item:view.getUint16(off + 2, true),
+                    colorCount:view.getUint16(off + 4, true),
+                    linked:view.getUint16(off + 6, true),
+                    dataOffset:view.getUint32(off + 8, true),
+                    dataLength:view.getUint32(off + 12, true)
+                });
+            }
+            for(let i=0;i<spriteCount;i++){
+                const off = spriteOffset + i * 28;
+                if(off + 28 > bytes.length)break;
+                spriteHeaders.push({
+                    group:view.getUint16(off, true),
+                    item:view.getUint16(off + 2, true),
+                    width:view.getUint16(off + 4, true),
+                    height:view.getUint16(off + 6, true),
+                    axisX:view.getInt16(off + 8, true),
+                    axisY:view.getInt16(off + 10, true),
+                    linked:view.getUint16(off + 12, true),
+                    format:bytes[off + 14],
+                    colorDepth:bytes[off + 15],
+                    dataOffset:view.getUint32(off + 16, true),
+                    dataLength:view.getUint32(off + 20, true),
+                    paletteIndex:view.getUint16(off + 24, true),
+                    flags:view.getUint16(off + 26, true)
+                });
+            }
+            const spriteMap = new Map();
+            spriteHeaders.forEach((header, index)=>{
+                const key = `${header.group}:${header.item}`;
+                if(!spriteMap.has(key))spriteMap.set(key, index);
+            });
+            const paletteCache = new Map();
+            const spriteCache = new Map();
+            const loadPalette = (index)=>{
+                if(paletteCache.has(index))return paletteCache.get(index);
+                const header = paletteHeaders[index];
+                if(!header)return null;
+                if(header.linked > 0 && header.linked < paletteHeaders.length){
+                    const linkedPalette = loadPalette(header.linked);
+                    paletteCache.set(index, linkedPalette);
+                    return linkedPalette;
+                }
+                const abs = ldataOffset + header.dataOffset;
+                const paletteBytes = bytes.slice(abs, abs + header.dataLength);
+                paletteCache.set(index, paletteBytes);
+                return paletteBytes;
+            };
+            const loadSprite = async (index)=>{
+                if(spriteCache.has(index))return spriteCache.get(index);
+                const header = spriteHeaders[index];
+                if(!header)throw new Error(`Sprite SFF v2 inexistente (${index})`);
+                if(header.linked > 0 && header.linked < spriteHeaders.length && header.dataLength === 0){
+                    const linkedSprite = await loadSprite(header.linked);
+                    const sprite = {...linkedSprite, axisX:header.axisX, axisY:header.axisY};
+                    spriteCache.set(index, sprite);
+                    return sprite;
+                }
+                const abs = ldataOffset + header.dataOffset;
+                const pngBytes = this.extractPngBytes(bytes, abs);
+                let sprite = null;
+                if(pngBytes){
+                    const decoded = await this.decodePngSprite(pngBytes);
+                    sprite = {
+                        canvas:decoded.canvas,
+                        width:decoded.width,
+                        height:decoded.height,
+                        axisX:header.axisX,
+                        axisY:header.axisY
+                    };
+                }else if(header.colorDepth === 8){
+                    const palette = loadPalette(header.paletteIndex);
+                    if(!palette)throw new Error(`Palette ${header.paletteIndex} no disponible para ${header.group},${header.item}`);
+                    const pixelCount = header.width * header.height;
+                    const pixelBytes = header.format === 2
+                        ? this.decodeRle8Pixels(bytes.slice(abs, abs + header.dataLength), pixelCount)
+                        : bytes.slice(abs, abs + pixelCount);
+                    if(pixelBytes.length < pixelCount){
+                        throw new Error(`Sprite ${header.group},${header.item} usa compresión no soportada todavía`);
+                    }
+                    const canvas = this.buildIndexedSpriteCanvas(header.width, header.height, pixelBytes, palette);
+                    sprite = {
+                        canvas,
+                        width:header.width,
+                        height:header.height,
+                        axisX:header.axisX,
+                        axisY:header.axisY
+                    };
+                }else if(header.colorDepth === 32){
+                    const byteLength = header.width * header.height * 4;
+                    const rgbaBytes = bytes.slice(abs, abs + byteLength);
+                    if(rgbaBytes.length < byteLength){
+                        throw new Error(`Sprite ${header.group},${header.item} usa compresión no soportada todavía`);
+                    }
+                    const canvas = this.buildRgbaSpriteCanvas(header.width, header.height, rgbaBytes);
+                    sprite = {
+                        canvas,
+                        width:header.width,
+                        height:header.height,
+                        axisX:header.axisX,
+                        axisY:header.axisY
+                    };
+                }else{
+                    throw new Error(`Formato SFF v2 no soportado (${header.format}/${header.colorDepth})`);
+                }
+                spriteCache.set(index, sprite);
+                return sprite;
+            };
+            const frames = [];
+            for(const element of action.frames){
+                const spriteIndex = spriteMap.get(`${element.group}:${element.item}`);
+                if(spriteIndex == null)continue;
+                const sprite = await loadSprite(spriteIndex);
+                frames.push({
+                    sprite,
+                    offsetX:element.offsetX,
+                    offsetY:element.offsetY,
+                    flipH:element.flipH,
+                    flipV:element.flipV,
+                    durationMs:(element.ticks <= 0 ? 1 : element.ticks) * (1000 / 60)
+                });
+            }
+            if(!frames.length){
+                throw new Error('El Action 0 no encontró sprites válidos en el SFF v2');
+            }
+            return {
+                frames,
+                loopStart:action.loopStart || 0,
+                bounds:this.buildCharPreviewBounds(frames),
+                sffVersion:'SFF v2'
+            };
+        },
+        decodePcxSprite(rawBytes, fallbackPalette=null){
+            if(!rawBytes || rawBytes.length < 128){
+                throw new Error('PCX inválido o incompleto');
+            }
+            const view = new DataView(rawBytes.buffer, rawBytes.byteOffset, rawBytes.byteLength);
+            const xmin = view.getUint16(4, true);
+            const ymin = view.getUint16(6, true);
+            const xmax = view.getUint16(8, true);
+            const ymax = view.getUint16(10, true);
+            const width = (xmax - xmin) + 1;
+            const height = (ymax - ymin) + 1;
+            const planes = rawBytes[65] || 1;
+            const bytesPerLine = view.getUint16(66, true);
+            const expected = bytesPerLine * planes * height;
+            const paletteMarkerPos = rawBytes.length >= 769 ? rawBytes.length - 769 : -1;
+            const dataEnd = paletteMarkerPos >= 0 && rawBytes[paletteMarkerPos] === 0x0c ? paletteMarkerPos : rawBytes.length;
+            const decoded = new Uint8Array(expected);
+            let src = 128;
+            let dst = 0;
+            while(src < dataEnd && dst < expected){
+                const value = rawBytes[src++];
+                if((value & 0xc0) === 0xc0 && src < dataEnd){
+                    const count = value & 0x3f;
+                    const runValue = rawBytes[src++];
+                    decoded.fill(runValue, dst, Math.min(expected, dst + count));
+                    dst += count;
+                }else{
+                    decoded[dst++] = value;
+                }
+            }
+            const pixels = new Uint8Array(width * height);
+            for(let y=0;y<height;y++){
+                const rowStart = y * bytesPerLine * planes;
+                pixels.set(decoded.slice(rowStart, rowStart + width), y * width);
+            }
+            let palette = fallbackPalette;
+            if(paletteMarkerPos >= 0 && rawBytes[paletteMarkerPos] === 0x0c){
+                palette = rawBytes.slice(paletteMarkerPos + 1, paletteMarkerPos + 769);
+            }
+            if(!palette || palette.length < 768){
+                throw new Error('El sprite PCX no tiene palette utilizable');
+            }
+            return {
+                width,
+                height,
+                palette,
+                canvas:this.buildIndexedSpriteCanvas(width, height, pixels, palette)
+            };
+        },
+        buildIndexedSpriteCanvas(width, height, pixels, palette){
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.createImageData(width, height);
+            const isRgbaPalette = palette.length % 4 === 0 && palette.length % 3 !== 0;
+            for(let i=0;i<pixels.length;i++){
+                const colorIndex = pixels[i] || 0;
+                const out = i * 4;
+                if(colorIndex === 0){
+                    imageData.data[out + 3] = 0;
+                    continue;
+                }
+                if(isRgbaPalette){
+                    const paletteOffset = colorIndex * 4;
+                    imageData.data[out] = palette[paletteOffset] || 0;
+                    imageData.data[out + 1] = palette[paletteOffset + 1] || 0;
+                    imageData.data[out + 2] = palette[paletteOffset + 2] || 0;
+                    imageData.data[out + 3] = palette[paletteOffset + 3] || 255;
+                }else{
+                    const paletteOffset = colorIndex * 3;
+                    imageData.data[out] = palette[paletteOffset] || 0;
+                    imageData.data[out + 1] = palette[paletteOffset + 1] || 0;
+                    imageData.data[out + 2] = palette[paletteOffset + 2] || 0;
+                    imageData.data[out + 3] = 255;
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+            return canvas;
+        },
+        decodeRle8Pixels(rawBytes, expectedPixels){
+            const bytes = rawBytes instanceof Uint8Array ? rawBytes : new Uint8Array(rawBytes || 0);
+            if(bytes.length < 4)throw new Error('Sprite RLE8 incompleto');
+            const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+            const encodedSize = view.getUint32(0, true);
+            const target = Number(expectedPixels || encodedSize) || 0;
+            const pixels = [];
+            let src = 4;
+            while(src < bytes.length && pixels.length < target){
+                const value = bytes[src++];
+                if(value >= 0x40 && value <= 0x7F && src < bytes.length){
+                    const count = value & 0x3F;
+                    const runValue = bytes[src++];
+                    for(let i=0;i<count && pixels.length < target;i++)pixels.push(runValue);
+                }else{
+                    pixels.push(value);
+                }
+            }
+            if(pixels.length < target){
+                throw new Error('Sprite RLE8 incompleto o corrupto');
+            }
+            return new Uint8Array(pixels.slice(0, target));
+        },
+        buildRgbaSpriteCanvas(width, height, rgbaBytes){
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.createImageData(width, height);
+            imageData.data.set(rgbaBytes.slice(0, width * height * 4));
+            ctx.putImageData(imageData, 0, 0);
+            return canvas;
+        },
+        readUint32BE(bytes, offset){
+            return ((bytes[offset] << 24) >>> 0)
+                | (bytes[offset + 1] << 16)
+                | (bytes[offset + 2] << 8)
+                | bytes[offset + 3];
+        },
+        extractPngBytes(bytes, offset){
+            const pngSig = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+            const tryExtract = (start)=>{
+                if(start < 0 || start + pngSig.length > bytes.length)return null;
+                for(let i=0;i<pngSig.length;i++){
+                    if(bytes[start + i] !== pngSig[i])return null;
+                }
+                let pos = start + 8;
+                while(pos + 8 <= bytes.length){
+                    const length = this.readUint32BE(bytes, pos);
+                    const typeStart = pos + 4;
+                    const type = String.fromCharCode(
+                        bytes[typeStart],
+                        bytes[typeStart + 1],
+                        bytes[typeStart + 2],
+                        bytes[typeStart + 3]
+                    );
+                    pos = typeStart + 4 + length + 4;
+                    if(pos > bytes.length)return null;
+                    if(type === 'IEND'){
+                        return bytes.slice(start, pos);
+                    }
+                }
+                return null;
+            };
+            return tryExtract(offset) || tryExtract(offset + 4);
+        },
+        async decodePngSprite(pngBytes){
+            const blob = new Blob([pngBytes], {type:'image/png'});
+            if(window.createImageBitmap){
+                const bitmap = await createImageBitmap(blob);
+                const canvas = document.createElement('canvas');
+                canvas.width = bitmap.width;
+                canvas.height = bitmap.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(bitmap, 0, 0);
+                if(bitmap.close)bitmap.close();
+                return {canvas, width:canvas.width, height:canvas.height};
+            }
+            const url = URL.createObjectURL(blob);
+            try{
+                const image = await new Promise((resolve, reject)=>{
+                    const el = new Image();
+                    el.onload = ()=>resolve(el);
+                    el.onerror = ()=>reject(new Error('No se pudo decodificar el PNG del SFF'));
+                    el.src = url;
+                });
+                const canvas = document.createElement('canvas');
+                canvas.width = image.width;
+                canvas.height = image.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(image, 0, 0);
+                return {canvas, width:canvas.width, height:canvas.height};
+            }finally{
+                URL.revokeObjectURL(url);
+            }
+        },
 
         // ── Setup ──
         async navigatePicker(p){ this.pickerLoading=true;try{let r=await fetch('/api/list_dir?path='+encodeURIComponent(p));let d=await r.json();if(d.current){this.pickerCurrent=d.current;this.pickerParent=d.parent;this.pickerDirs=d.dirs}}catch(e){}this.pickerLoading=false },
@@ -1072,8 +2998,14 @@ createApp({
                         if(!ch.p2ai)ch.p2ai=(ch.p2||[]).map(()=>6);
                         if(!ch.introStoryboard)ch.introStoryboard='';
                         if(!ch.dialogues)ch.dialogues=[];
+                        if(!ch.round1EndDialogues)ch.round1EndDialogues=[];
+                        if(!ch.round2EndDialogues)ch.round2EndDialogues=[];
+                        if(!ch.round3EndDialogues)ch.round3EndDialogues=[];
+                        if(!ch.healthDialogues)ch.healthDialogues=[];
                         if(!ch.type)ch.type='normal';
                         if(!ch.battleFormat)ch.battleFormat='1v1';
+                        this.normalizeChapterRoundTime(ch);
+                        this.normalizeChapterSubstitutions(ch);
                     });
                 });
                 this.catalog=cd||[];
@@ -1082,7 +3014,12 @@ createApp({
         },
         async saveData(){
             this.catalog.forEach(arc=>(arc.chapters||[]).forEach(ch=>this.ensureChapterId(ch,'cap')));
-            try{await fetch('/api/catalog',{method:'POST',body:JSON.stringify(this.catalog),headers:{'Content-Type':'application/json'}});alert('¡Guardado!')}catch(e){alert('Error')}
+            try{
+                const payload=this.buildCatalogPayload();
+                await fetch('/api/catalog',{method:'POST',body:JSON.stringify(payload),headers:{'Content-Type':'application/json'}});
+                this.catalog.forEach(arc=>(arc.chapters||[]).forEach(ch=>{this.normalizeChapterRoundTime(ch);this.normalizeChapterSubstitutions(ch)}));
+                alert('¡Guardado!')
+            }catch(e){alert('Error')}
         },
 
         // ── Arc/Chapter ──
@@ -1098,7 +3035,9 @@ createApp({
                 id:'cap_'+Date.now(),title:'',subtitle:'',type,
                 battleFormat:'1v1',introStoryboard:'',
                 p1:[first],p2:[first],p2ai:[6],
-                stage:'random',dialogues:[]
+                p1Substitutions:3,p2Substitutions:3,
+                stage:'random',roundTimeMode:'default',roundTimeValue:99,dialogues:[],
+                round1EndDialogues:[],round2EndDialogues:[],round3EndDialogues:[],healthDialogues:[]
             };
             if(type==='sidestory'){
                 const parentIdx=this.suggestedSideParentIndex();
@@ -1125,6 +3064,10 @@ createApp({
             this.selectedChapterIndex=-1;
         },
         addDialogue(){ if(!this.currentChapter.dialogues)this.currentChapter.dialogues=[];this.currentChapter.dialogues.push({speaker:'',text:''}) },
+        addRound1Dialog(){ if(!this.currentChapter.round1EndDialogues)this.currentChapter.round1EndDialogues=[];this.currentChapter.round1EndDialogues.push({speaker:'',text:''}) },
+        addRound2Dialog(){ if(!this.currentChapter.round2EndDialogues)this.currentChapter.round2EndDialogues=[];this.currentChapter.round2EndDialogues.push({speaker:'',text:''}) },
+        addRound3Dialog(){ if(!this.currentChapter.round3EndDialogues)this.currentChapter.round3EndDialogues=[];this.currentChapter.round3EndDialogues.push({speaker:'',text:''}) },
+        addHealthDialog(){ if(!this.currentChapter.healthDialogues)this.currentChapter.healthDialogues=[];this.currentChapter.healthDialogues.push({speaker:'',text:'',target:'p2',thresholdPercent:50}) },
         addP1(){ const m=this.maxTeamSize;if(this.currentChapter.p1.length<m)this.currentChapter.p1.push(this.assets.chars[0]||'') },
         removeP1(i){ this.currentChapter.p1.splice(i,1) },
         addP2(){ const m=this.maxTeamSize;if(this.currentChapter.p2.length<m){this.currentChapter.p2.push(this.assets.chars[0]||'');this.currentChapter.p2ai.push(6)} },
@@ -1168,6 +3111,7 @@ createApp({
         },
         handleRowClick(t,i,ev){
             if(['INPUT','SELECT','BUTTON','TEXTAREA'].includes(ev.target.tagName))return;
+            if(t==='chars')this.selectedAvailableCharName='';
             if(ev.ctrlKey||ev.metaKey){this.toggleSel(t,i);return}
             if(ev.shiftKey&&this.lastClicked[t]>=0){const a=Math.min(this.lastClicked[t],i),b=Math.max(this.lastClicked[t],i);for(let x=a;x<=b;x++)this.sel[t].add(x);this.tick++;return}
             this.sel[t].clear();this.sel[t].add(i);this.lastClicked[t]=i;this.tick++
@@ -1196,10 +3140,95 @@ createApp({
             const l=this.getList(t);
             if(t==='chars'){
                 if(!this.ensureRosterEditable(i,'quitar'))return;
-                const ch=l[i];
-                if(this.isCharEntry(ch)&&ch.name!=='null'&&ch.name!=='randomselect')this.charUnused.push({name:ch.name,type:'folder'});
+                l.splice(i,1);
+                this.syncCharUnusedFromRoster();
+                return;
             }
             l.splice(i,1);
+        },
+        selectedCharNames(){
+            const names=[];
+            const seen=new Set();
+            Array.from(this.sel.chars).sort((a,b)=>a-b).forEach(idx=>{
+                const entry=this.charRoster[idx];
+                if(!this.isCharEntry(entry))return;
+                const name=this.rosterCharRef(entry);
+                if(!name||name==='null'||name==='randomselect'||seen.has(name))return;
+                seen.add(name);
+                names.push(name);
+            });
+            return names;
+        },
+        selectedCharDeleteTargets(){
+            const targets=[];
+            const seen=new Set();
+            Array.from(this.sel.chars).sort((a,b)=>a-b).forEach(idx=>{
+                const entry=this.charRoster[idx];
+                if(!this.isCharEntry(entry))return;
+                const name=this.rosterCharRef(entry);
+                const key=this.normalizeText(name).toLowerCase();
+                if(!name||name==='null'||name==='randomselect'||seen.has(key))return;
+                seen.add(key);
+                targets.push({name,label:this.charDeleteLabel(name,entry.name)});
+            });
+            return targets;
+        },
+        selectedStageNames(){
+            const names=[];
+            const seen=new Set();
+            Array.from(this.sel.stages).sort((a,b)=>a-b).forEach(idx=>{
+                const stage=(this.stageRoster[idx]||'').trim();
+                if(!stage||seen.has(stage))return;
+                seen.add(stage);
+                names.push(stage);
+            });
+            return names;
+        },
+        charDeleteLabel(charRef,displayName=''){
+            const ref=this.normalizeText(charRef);
+            const label=this.normalizeText(displayName);
+            if(label&&ref&&label.toLowerCase()!==ref.toLowerCase())return `${label} [${ref}]`;
+            return label||ref;
+        },
+        async deleteCharsEverywhere(rawNames, rawLabels=[]){
+            const seen=new Set();
+            const names=[];
+            const labels={};
+            (rawNames||[]).forEach((rawName,idx)=>{
+                const name=this.normalizeText(rawName);
+                const key=name.toLowerCase();
+                if(!name||name==='null'||name==='randomselect'||seen.has(key))return;
+                seen.add(key);
+                names.push(name);
+                labels[name]=this.normalizeText(rawLabels[idx])||name;
+            });
+            if(names.length===0)return this.showMsg('chars','Selecciona personajes reales para borrarlos del disco','err');
+            const preview=names.slice(0,4).map(name=>labels[name]||name).join(', ');
+            const suffix=names.length>4?` y ${names.length-4} más`:'';
+            if(!confirm(`Se van a borrar del disco y limpiar sus referencias:\n\n${preview}${suffix}\n\nEsto elimina chars/, moves/, roster y referencias del modo historia.`))return;
+            try{
+                const r=await fetch('/api/chars/delete',{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({names,remove_files:true,remove_references:true})
+                });
+                const d=await r.json();
+                if(!d.success)return this.showMsg('chars',d.error||'No se pudo borrar','err');
+                const affected=new Set([
+                    ...names.map(name=>this.normalizeText(name)),
+                    ...Object.values(labels).map(name=>this.normalizeText(name))
+                ]);
+                if(this.selectedMovelistChar && affected.has(this.normalizeText(this.selectedMovelistChar))){
+                    this.selectedMovelistChar='';
+                    this.movelistEditor=null;
+                }
+                this.clearSel('chars');
+                await Promise.all([this.loadChars(), this.loadStages(), this.loadData()]);
+                if(this.activeTab==='movelists')await this.loadMovelistCatalog();
+                this.showMsg('chars',d.message||'Personajes eliminados','ok');
+            }catch(e){
+                this.showMsg('chars','Error al borrar personajes','err');
+            }
         },
         bulkAction(t,a){
             const idx=Array.from(this.sel[t]).sort((a,b)=>b-a);
@@ -1208,23 +3237,69 @@ createApp({
                 if(!confirm(`¿Quitar ${idx.length} items?`))return;
                 const l=this.getList(t);
                 idx.forEach(i=>{
-                    if(t==='chars'){
-                        const ch=l[i];
-                        if(ch&&this.isCharEntry(ch)&&ch.name!=='null'&&ch.name!=='randomselect')this.charUnused.push({name:ch.name,type:'folder'});
-                    }
                     l.splice(i,1);
                 });
+                if(t==='chars')this.syncCharUnusedFromRoster();
                 this.showMsg(t,idx.length+' removidos','ok');
             }
             else if(a==='slotlock'){ idx.forEach(i=>{if(this.charRoster[i])this.charRoster[i].slot_locked=true}); this.showMsg(t,'Slots fijados','ok') }
             else if(a==='slotunlock'){ idx.forEach(i=>{if(this.charRoster[i])this.charRoster[i].slot_locked=false}); this.showMsg(t,'Slots liberados','ok') }
             this.clearSel(t)
         },
+        async deleteInstalledCharEverywhere(charRef,displayName=''){
+            const name=this.normalizeText(charRef);
+            if(!name)return this.showMsg('chars','No se pudo resolver el personaje a borrar','err');
+            return this.deleteCharsEverywhere([name],[this.charDeleteLabel(name,displayName)]);
+        },
+        async deleteSelectedCharsEverywhere(){
+            const targets=this.selectedCharDeleteTargets();
+            return this.deleteCharsEverywhere(
+                targets.map(target=>target.name),
+                targets.map(target=>target.label)
+            );
+        },
+        async replaceMissingCharsWithRandom(){
+            if(!confirm('Se buscarán personajes del roster que ya no existan en chars/ y se reemplazarán por randomselect. ¿Continuar?'))return;
+            try{
+                const r=await fetch('/api/chars/replace_missing_with_random',{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({})
+                });
+                const d=await r.json();
+                if(!d.success)return this.showMsg('chars',d.error||'No se pudo revisar el roster','err');
+                await Promise.all([this.loadChars(), this.loadData()]);
+                this.showMsg('chars',d.message||'Roster revisado','ok');
+            }catch(e){
+                this.showMsg('chars','Error al revisar personajes faltantes','err');
+            }
+        },
+        async deleteSelectedStagesEverywhere(){
+            const names=this.selectedStageNames();
+            if(names.length===0)return this.showMsg('stages','Selecciona stages válidos para borrarlos del disco','err');
+            const preview=names.slice(0,4).join(', ');
+            const suffix=names.length>4?` y ${names.length-4} más`:'';
+            if(!confirm(`Se van a borrar del disco y limpiar sus referencias:\n\n${preview}${suffix}\n\nEsto elimina archivos del stage, entradas en ExtraStages y stages usados por chars/capítulos.`))return;
+            try{
+                const r=await fetch('/api/stages/delete',{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({names,remove_files:true,remove_references:true})
+                });
+                const d=await r.json();
+                if(!d.success)return this.showMsg('stages',d.error||'No se pudo borrar','err');
+                this.clearSel('stages');
+                await Promise.all([this.loadChars(), this.loadStages(), this.loadData()]);
+                this.showMsg('stages',d.message||'Stages eliminados','ok');
+            }catch(e){
+                this.showMsg('stages','Error al borrar stages','err');
+            }
+        },
         toggleEngineLock(i){
             if(!this.ensureRosterEditable(i,'cambiar el estado'))return;
             const c=this.charRoster[i];
             if(!this.isCharEntry(c))return;
-            if(c.hidden>0){c.hidden=0;c.unlock=''}else c.hidden=2;
+            if(c.hidden>0){c.hidden=0;c.unlock=''}else c.hidden=3;
         },
         toggleSlotLock(i){
             const item=this.charRoster[i];
@@ -1252,16 +3327,105 @@ createApp({
             this.showMsg(t,`${o} → ${n}`,'ok');
         },
         addToRoster(t,name){
-            if(t==='chars'){this.charRoster.push(this.makeCharEntry(name));this.charUnused=this.charUnused.filter(u=>u.name!==name)}
-            else{this.stageRoster.push(name);this.stageUnused=this.stageUnused.filter(u=>u.name!==name)}
+            if(t==='chars'){
+                this.insertRosterItem('chars',this.makeInstalledCharEntry(name),{removeUnusedName:name});
+            }
+            else{
+                this.stageRoster.push(name);
+                this.stageUnused=this.stageUnused.filter(u=>u.name!==name);
+            }
             this.showMsg(t,'Agregado','ok')
         },
-        addNull(){ this.charRoster.push(this.makeCharEntry('null')) },
-        addRandom(){ this.charRoster.push(this.makeCharEntry('randomselect')) },
+        addNull(){
+            this.insertRosterItem('chars',this.makeCharEntry('null'));
+            this.showMsg('chars','Agregado','ok');
+        },
+        addRandom(){
+            this.insertRosterItem('chars',this.makeCharEntry('randomselect'));
+            this.showMsg('chars','Agregado','ok');
+        },
         addLabel(){
-            this.charRoster.push(this.makeLabelEntry());
-            this.editIdx.chars=this.charRoster.length-1;
+            const idx=this.insertRosterItem('chars',this.makeLabelEntry());
+            this.editIdx.chars=idx;
             this.editName='Nueva etiqueta';
+            this.showMsg('chars','Agregado','ok');
+        },
+        selectedNonLabelRosterIndices(){
+            return Array.from(this.sel.chars)
+                .filter(i=>Number.isInteger(i)&&i>=0&&i<this.charRoster.length)
+                .sort((a,b)=>a-b)
+                .filter(i=>this.isCharEntry(this.charRoster[i]));
+        },
+        sortRosterCharsAlphabetically(){
+            const movableIdx=[];
+            const movableItems=[];
+            this.charRoster.forEach((item,idx)=>{
+                if(!this.isCharEntry(item))return;
+                if(this.isSlotLocked(item))return;
+                const name=(item.name||'').trim();
+                if(!name||name==='null'||name==='randomselect')return;
+                movableIdx.push(idx);
+                movableItems.push(item);
+            });
+            if(movableItems.length<2){
+                return this.showMsg('chars','No hay suficientes chars libres para ordenar','ok');
+            }
+            movableItems.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),undefined,{sensitivity:'base'}));
+            movableIdx.forEach((idx,pos)=>{
+                this.charRoster[idx]=this.normalizeRosterItem(movableItems[pos]);
+            });
+            this.clearSel('chars');
+            this.showMsg('chars',`${movableItems.length} chars libres ordenados`,'ok');
+        },
+        replaceAllRosterCharsWithRandom(){
+            const selected=this.selectedNonLabelRosterIndices();
+            let changed=0;
+            if(this.sel.chars.size>0){
+                if(selected.length===0){
+                    return this.showMsg('chars','La selección no contiene slots de personaje','err');
+                }
+                selected.forEach(idx=>{
+                    const item=this.charRoster[idx];
+                    const name=(item.name||'').trim();
+                    if(!name||name==='null'||name==='randomselect')return;
+                    this.charRoster[idx]=this.buildReplacementRosterItem(item,this.makeCharEntry('randomselect'));
+                    changed+=1;
+                });
+            }else{
+                this.charRoster=this.charRoster.map(item=>{
+                    if(!this.isCharEntry(item))return item;
+                    const name=(item.name||'').trim();
+                    if(!name||name==='null'||name==='randomselect')return item;
+                    changed+=1;
+                    return this.buildReplacementRosterItem(item,this.makeCharEntry('randomselect'));
+                });
+                this.clearSel('chars');
+            }
+            if(changed===0){
+                return this.showMsg('chars','No había chars válidos para reemplazar','ok');
+            }
+            this.syncCharUnusedFromRoster();
+            this.showMsg('chars',`${changed} chars reemplazados por randomselect`,'ok');
+        },
+        replaceSelectedRosterWithInstalledChar(){
+            if(!this.replaceCharTarget){
+                return this.showMsg('chars','Elige primero un char instalado','err');
+            }
+            const selected=this.selectedNonLabelRosterIndices();
+            if(selected.length===0){
+                return this.showMsg('chars','Selecciona al menos un slot del roster','err');
+            }
+            let changed=0;
+            selected.forEach(idx=>{
+                const item=this.charRoster[idx];
+                this.charRoster[idx]=this.buildReplacementRosterItem(item,this.makeInstalledCharEntry(this.replaceCharTarget));
+                changed+=1;
+            });
+            this.syncCharUnusedFromRoster();
+            if(changed===0){
+                return this.showMsg('chars','No se pudo reemplazar la selección','err');
+            }
+            this.showMsg('chars',`${changed} slots reemplazados por ${this.replaceCharTarget}`,'ok');
         },
         insertLabelAfter(i){
             if(!this.ensureRosterEditable(i,'insertar una etiqueta'))return;
@@ -1280,13 +3444,21 @@ createApp({
 
         async loadChars(){
             try{
+                this.charRosterLoading=true;
                 let r=await fetch('/api/chars');
                 let d=await r.json();
                 if(d.error)return this.showMsg('chars',d.error,'err');
                 this.charRoster=(d.roster||[]).map(item=>this.normalizeRosterItem(item));
                 this.charAvailable=d.available||[];
-                this.charUnused=d.unused||[];
+                if(!this.charAvailable.some(item=>item.name===this.selectedAvailableCharName)){
+                    this.selectedAvailableCharName='';
+                }
+                this.charPreviewCache={};
+                if(this.activeTab==='chars')this.reloadCharPreview(true);
             }catch(e){this.showMsg('chars','Error','err')}
+            finally{
+                this.$nextTick(()=>{ this.charRosterLoading=false; });
+            }
         },
         buildEmptyMovelist(charName){
             return {
@@ -1301,6 +3473,7 @@ createApp({
             const name=((move&&move.name)||'').trim().toLowerCase();
             const input=((move&&move.input)||'').trim().toUpperCase();
             if(!name)return false;
+            if (/^ai(?:\d+|[\s_-]|$)/.test(name)) return false;
             if (/^(ff|bb|dash|run|walk|recovery|taunt)$/.test(name)) return false;
             if (/^[abcxyzswd]$/.test(name)) return false;
             if (/^(up|down|back|fwd|forward|air|jump|crouch|stand)[_-]?[abcxyz]$/.test(name)) return false;
@@ -1444,19 +3617,267 @@ createApp({
             if(!this.movelistEditor||!this.movelistEditor.sections[sectionIdx])return;
             this.movelistEditor.sections[sectionIdx].moves.splice(moveIdx,1);
         },
-        async saveChars(){ try{let r=await fetch('/api/chars/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roster:this.charRoster})});let d=await r.json();if(d.success){this.showMsg('chars','Guardado ✓','ok');this.loadChars();this.loadData()}else this.showMsg('chars',d.error,'err')}catch(e){this.showMsg('chars','Error','err')} },
+        async saveChars(silent=false){
+            try{
+                let r=await fetch('/api/chars/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({roster:this.charRoster})});
+                let d=await r.json();
+                if(d.success){
+                    if(!silent) {
+                        this.showMsg('chars','Guardado ✓','ok');
+                        this.loadChars();
+                        this.loadData();
+                    }
+                }else if(!silent) this.showMsg('chars',d.error,'err');
+            }catch(e){
+                if(!silent) this.showMsg('chars','Error','err');
+            }
+        },
         async loadStages(){ try{let r=await fetch('/api/stages');let d=await r.json();if(d.error)return this.showMsg('stages',d.error,'err');this.stageRoster=d.roster||[];this.stageAvailable=d.available||[];this.stageUnused=d.unused||[];this.stageNameMap=d.name_map||{}}catch(e){this.showMsg('stages','Error','err')} },
         async saveStages(){ try{let r=await fetch('/api/stages/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({stages:this.stageRoster})});let d=await r.json();if(d.success){this.showMsg('stages','Guardado ✓','ok');this.loadData()}else this.showMsg('stages',d.error,'err')}catch(e){this.showMsg('stages','Error','err')} },
-        async renameChar(){ if(!this.renameOld||!this.renameNew)return;try{let r=await fetch('/api/chars/rename',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({old_name:this.renameOld,new_name:this.renameNew,rename_disk:this.renameDisk})});let d=await r.json();if(d.success){this.showMsg('chars',`${this.renameOld} → ${this.renameNew}`,'ok');this.renameOld='';this.renameNew='';this.loadChars()}else this.showMsg('chars',d.error,'err')}catch(e){this.showMsg('chars','Error','err')} },
-        async handleFileSelect(t,ev){ const f=ev.target.files[0];if(f)await this.uploadZip(t,f);ev.target.value='' },
-        async handleFileDrop(t,ev){ ev.currentTarget.classList.remove('drag-active');const f=ev.dataTransfer.files[0];if(f&&f.name.endsWith('.zip'))await this.uploadZip(t,f);else this.showMsg(t,'Solo .zip','err') },
-        async uploadZip(t,file){
-            this.showMsg(t,'Subiendo…','ok');
-            const fd=new FormData();fd.append('zipfile',file);fd.append('type',t);
-            try{let r=await fetch('/api/upload',{method:'POST',body:fd});let d=await r.json();
-                if(d.success){this.showMsg(t,`${d.name} instalado`,'ok');if(t==='chars')this.loadChars();else this.loadStages()}
-                else this.showMsg(t,d.error,'err')
-            }catch(e){this.showMsg(t,'Error','err')}
+        async cleanMissingStages(){
+            if(!confirm('Se eliminarán referencias a stages que ya no existan en el disco y los capítulos afectados pasarán a random. ¿Continuar?'))return;
+            try{
+                let r=await fetch('/api/stages/clean_missing',{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({})
+                });
+                let d=await r.json();
+                if(!d.success)return this.showMsg('stages',d.error||'No se pudo limpiar stages','err');
+                await Promise.all([this.loadStages(), this.loadChars(), this.loadData()]);
+                this.showMsg('stages',d.message||'Stages limpiados','ok');
+            }catch(e){
+                this.showMsg('stages','Error al limpiar stages','err');
+            }
+        },
+        async loadLifebars(){
+            this.lifebarLoading=true;
+            try{
+                let r=await fetch('/api/lifebars');
+                let d=await r.json();
+                if(d.error)return this.showMsg('lifebars',d.error,'err');
+                this.lifebars=d.items||[];
+                this.lifebarActiveId=d.active_id||'';
+                this.lifebarMotif=d.motif||null;
+                this.lifebarMigration=d.migration||null;
+                if(!this.selectedLifebarId || !this.lifebars.some(item=>item.id===this.selectedLifebarId)){
+                    this.selectedLifebarId=this.lifebarActiveId || (this.lifebars[0]?this.lifebars[0].id:'');
+                }
+                if(d.migration && d.migration.migrated){
+                    this.showMsg('lifebars','Lifebar activa migrada a /lifebars','ok');
+                }
+            }catch(e){
+                this.showMsg('lifebars','Error al cargar lifebars','err');
+            }
+            this.lifebarLoading=false;
+        },
+        async activateSelectedLifebar(){
+            if(!this.selectedLifebar)return;
+            try{
+                let r=await fetch('/api/lifebars/activate',{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({id:this.selectedLifebar.id})
+                });
+                let d=await r.json();
+                if(d.success){
+                    await this.loadLifebars();
+                    this.showMsg('lifebars',`${d.title||this.selectedLifebar.title} activada`,'ok');
+                }else{
+                    this.showMsg('lifebars',d.error||'No se pudo activar','err');
+                }
+            }catch(e){
+                this.showMsg('lifebars','Error al activar lifebar','err');
+            }
+        },
+        async cleanMissingLifebars(){
+            if(!confirm('Se revisará la referencia activa del motif y, si apunta a una lifebar rota o faltante, se activará una válida. ¿Continuar?'))return;
+            try{
+                let r=await fetch('/api/lifebars/clean_missing',{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({preferred_id:this.selectedLifebarId||''})
+                });
+                let d=await r.json();
+                if(!d.success)return this.showMsg('lifebars',d.error||'No se pudo limpiar lifebars','err');
+                await this.loadLifebars();
+                this.showMsg('lifebars',d.message||'Lifebars revisadas','ok');
+            }catch(e){
+                this.showMsg('lifebars','Error al limpiar lifebars','err');
+            }
+        },
+        async deleteSelectedLifebar(){
+            if(!this.selectedLifebar)return;
+            if(this.selectedLifebar.active){
+                return this.showMsg('lifebars','No puedes eliminar la lifebar activa. Activa otra primero.','err');
+            }
+            const name=this.selectedLifebar.title||this.selectedLifebar.id;
+            if(!confirm(`Se va a eliminar esta lifebar del disco:\n\n${name}\n${this.selectedLifebar.path}\n\nEsto borra el paquete dentro de /lifebars.`))return;
+            try{
+                let r=await fetch('/api/lifebars/delete',{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({id:this.selectedLifebar.id})
+                });
+                let d=await r.json();
+                if(d.success){
+                    await this.loadLifebars();
+                    this.showMsg('lifebars',d.message||`${name} eliminada`,'ok');
+                }else{
+                    this.showMsg('lifebars',d.error||'No se pudo eliminar','err');
+                }
+            }catch(e){
+                this.showMsg('lifebars','Error al eliminar lifebar','err');
+            }
+        },
+        async renameChar(){
+            const target=this.selectedRenameTarget;
+            if(!target)return this.showMsg('chars',this.renameSelectionHint,'err');
+            if(target.locked)return this.showMsg('chars','Libera primero el slot fijo','err');
+            if(target.source==='roster'&&!this.renameDisk)return this.showMsg('chars','Activa renombrar carpeta en disco','err');
+            const oldName=target.ref||target.name;
+            const newName=this.normalizeText(this.renameNew);
+            if(!newName)return;
+            try{
+                const payload={old_name:oldName,new_name:newName,rename_disk:true};
+                if(target.source==='roster'&&target.idx>=0) payload.slot_index=target.idx;
+                let r=await fetch('/api/chars/rename',{
+                    method:'POST',
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify(payload)
+                });
+                let d=await r.json();
+                if(!d.success)return this.showMsg('chars',d.error,'err');
+                const parts=[];
+                if(Number(d.roster_renamed||0)>0)parts.push(`roster: ${d.roster_renamed}`);
+                if(d.disk&&d.disk.char_dir_renamed)parts.push('chars/: ok');
+                if(d.disk&&d.disk.move_dir_renamed)parts.push('moves/: ok');
+                if(d.catalog&&Number(d.catalog.chapters_changed||0)>0)parts.push(`story: ${d.catalog.chapters_changed}`);
+                const detail=parts.length?` (${parts.join(', ')})`:'';
+                this.showMsg('chars',`${target.name} → ${newName}${detail}`,'ok');
+                this.renameOld='';
+                this.renameNew='';
+                this.selectedAvailableCharName='';
+                await Promise.all([this.loadChars(), this.loadData()]);
+                if(this.activeTab==='movelists')await this.loadMovelistCatalog();
+            }catch(e){
+                this.showMsg('chars','Error','err');
+            }
+        },
+        setPortraitParam(key,value){
+            const t=this.portraitOffsetTarget;
+            if(!t)return;
+            const item=this.charRoster[t.idx];
+            if(!item||!Array.isArray(item.extra_params))return;
+            const lk=key.toLowerCase()+'=';
+            const idx=item.extra_params.findIndex(p=>p.toLowerCase().startsWith(lk));
+            const numVal=parseFloat(value);
+            const isZero=!Number.isFinite(numVal)||numVal===0;
+            if(isZero){
+                /* remove param if value is 0 or empty */
+                if(idx>=0) item.extra_params.splice(idx,1);
+            } else {
+                const param=`${key}=${numVal}`;
+                if(idx>=0) item.extra_params[idx]=param;
+                else item.extra_params.push(param);
+            }
+            this.tick++;
+        },
+        applyPortraitOffsetToAllSlots(){
+            const t=this.portraitOffsetTarget;
+            if(!t)return;
+            const src=this.charRoster[t.idx];
+            if(!src)return;
+            const nameKey=this.normalizeText(src.name).toLowerCase();
+            let count=0;
+            for(let i=0;i<this.charRoster.length;i++){
+                if(i===t.idx)continue;
+                const other=this.charRoster[i];
+                if(!this.isCharEntry(other))continue;
+                if(this.normalizeText(other.name).toLowerCase()!==nameKey)continue;
+                if(!Array.isArray(other.extra_params))other.extra_params=[];
+                /* copy portrait params from source */
+                for(const key of ['select_portrait_offset_x','select_portrait_offset_y','select_portrait_scale']){
+                    const lk=key.toLowerCase()+'=';
+                    const srcIdx=src.extra_params.findIndex(p=>p.toLowerCase().startsWith(lk));
+                    const dstIdx=other.extra_params.findIndex(p=>p.toLowerCase().startsWith(lk));
+                    if(srcIdx>=0){
+                        if(dstIdx>=0) other.extra_params[dstIdx]=src.extra_params[srcIdx];
+                        else other.extra_params.push(src.extra_params[srcIdx]);
+                    } else {
+                        if(dstIdx>=0) other.extra_params.splice(dstIdx,1);
+                    }
+                }
+                count++;
+            }
+            this.tick++;
+            this.showMsg('chars',`Portrait offset aplicado a ${count} slot(s) adicionales de "${t.name}"`,'ok');
+        },
+        async scanDisplaynames(){
+            this.displaynameScan.loading=true;
+            this.displaynameScan.items=[];
+            this.displaynameScan.scanned=false;
+            try{
+                const r=await fetch('/api/chars/get-displaynames',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+                const d=await r.json();
+                if(d.success){
+                    this.displaynameScan.items=(d.chars||[]).map(c=>({...c,newDisplayname:''}));
+                    this.displaynameScan.scanned=true;
+                } else {
+                    this.showMsg('chars',d.error||'Error al escanear','err');
+                }
+            }catch(e){
+                this.showMsg('chars','Error de red','err');
+            }
+            this.displaynameScan.loading=false;
+        },
+        autoFillDisplaynames(){
+            for(const item of this.displaynameScan.items){
+                if(item.mismatch) item.newDisplayname=item.folder;
+            }
+        },
+        async applyDisplaynameFixes(){
+            const fixes=this.displaynameScan.items
+                .filter(i=>i.mismatch && this.normalizeText(i.newDisplayname))
+                .map(i=>({folder:i.folder,displayname:i.newDisplayname,update_name:true}));
+            if(!fixes.length)return this.showMsg('chars','Nada que corregir. Escribe un nuevo displayname.','err');
+            this.displaynameScan.applying=true;
+            try{
+                const r=await fetch('/api/chars/fix-displaynames',{
+                    method:'POST',headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({fixes})
+                });
+                const d=await r.json();
+                if(d.success){
+                    this.showMsg('chars',`✅ ${d.fixed} displayname(s) corregidos`+(d.errors.length?`. Errores: ${d.errors.join(', ')}`:''),'ok');
+                    await this.scanDisplaynames();
+                } else {
+                    this.showMsg('chars',d.error||'Error','err');
+                }
+            }catch(e){
+                this.showMsg('chars','Error de red','err');
+            }
+            this.displaynameScan.applying=false;
+        },
+        async handleFileSelect(t,ev){ const files=Array.from(ev.target.files||[]);if(files.length)await this.uploadMultiple(t,files);ev.target.value='' },
+        async handleFileDrop(t,ev){ ev.currentTarget.classList.remove('drag-active');const validExts=['.zip','.rar','.7z'];const files=Array.from(ev.dataTransfer.files).filter(f=>validExts.some(e=>f.name.toLowerCase().endsWith(e)));if(files.length)await this.uploadMultiple(t,files);else this.showMsg(t,'Solo .zip .rar .7z','err') },
+        async uploadMultiple(t,files){
+            const total=files.length;
+            let ok=0,fail=0;
+            for(let i=0;i<total;i++){
+                this.showMsg(t,`⏳ Instalando ${i+1}/${total}: ${files[i].name}…`,'ok');
+                try{
+                    const fd=new FormData();fd.append('zipfile',files[i]);fd.append('type',t);
+                    const r=await fetch('/api/upload',{method:'POST',body:fd});
+                    const d=await r.json();
+                    if(d.success) ok++; else { fail++; console.warn(`Error ${files[i].name}:`,d.error); }
+                }catch(e){ fail++; }
+            }
+            if(t==='chars')this.loadChars();
+            else if(t==='stages')this.loadStages();
+            else if(t==='lifebars')this.loadLifebars();
+            const msg=`✅ ${ok} instalado(s)`+(fail?`, ❌ ${fail} con error`:'');
+            this.showMsg(t,msg,fail?'err':'ok');
         },
         onChapterDragStart(i,ev){
             if(!this.currentArc||!this.currentArc.chapters||!this.currentArc.chapters[i])return;
@@ -1477,26 +3898,34 @@ createApp({
             const chapters=this.currentArc.chapters;
             const selected=this.currentChapter;
             const map=this.buildChapterVisualMap(this.currentArc);
+            const dragged=chapters[from];
             const target=chapters[i];
-            if(!target||!chapters[from])return this.onChapterDragEnd();
+            if(!target||!dragged)return this.onChapterDragEnd();
 
-            if((chapters[from].type||'normal')==='sidestory'&&this.isChapterDescendant(this.currentArc,i,from,map)){
+            const draggedBranchIdxs=this.getChapterBranchIndices(this.currentArc,from,map);
+            if(draggedBranchIdxs.includes(i)){
                 this.onChapterDragEnd();
-                alert('No puedes anidar una side story dentro de una de sus propias ramas.');
+                alert('No puedes soltar una rama dentro de sí misma ni dentro de uno de sus descendientes.');
                 return;
             }
 
-            this.ensureChapterId(target,'cap');
-            const [item]=chapters.splice(from,1);
-            if((item.type||'normal')==='sidestory'){
-                item.sideUnlockAfter=target.id;
-            }else{
-                delete item.sideUnlockAfter;
-            }
+            const draggedBranchItems=this.getChapterBranchItems(this.currentArc,from,map);
+            const remaining=chapters.filter((_,idx)=>!draggedBranchIdxs.includes(idx));
 
-            const insertAt=Math.max(0, Math.min(chapters.length, i));
-            chapters.splice(insertAt,0,item);
-            this.selectedChapterIndex=selected?chapters.indexOf(selected):chapters.indexOf(item);
+            let anchorItem=null;
+            draggedBranchItems[0].type='sidestory';
+            this.ensureChapterId(target,'cap');
+            draggedBranchItems[0].sideUnlockAfter=target.id;
+            const targetBranchIdxs=this.getChapterBranchIndices(this.currentArc,i,map);
+            anchorItem=chapters[targetBranchIdxs[targetBranchIdxs.length-1]];
+
+            const anchorPos=anchorItem?remaining.indexOf(anchorItem):-1;
+            const insertAt=anchorPos>=0 ? anchorPos+1 : remaining.length;
+            remaining.splice(insertAt,0,...draggedBranchItems);
+            this.currentArc.chapters=remaining;
+
+            const focusChapter=(selected&&remaining.includes(selected))?selected:draggedBranchItems[0];
+            this.selectedChapterIndex=remaining.indexOf(focusChapter);
             this.onChapterDragEnd();
         },
         onChapterDragEnd(){
@@ -1508,22 +3937,104 @@ createApp({
                 ev.preventDefault();
                 return;
             }
-            this.dragState={type:t,idx:i};
+            this.dragState={type:t,idx:i,source:'roster',item:null,removeUnusedName:''};
             ev.dataTransfer.effectAllowed='move';
         },
         onDragOver(ev){ ev.currentTarget.classList.add('drag-over') },
         onDragLeave(ev){ ev.currentTarget.classList.remove('drag-over') },
         onDrop(t,i,ev){
             ev.currentTarget.classList.remove('drag-over');
-            if(!this.dragState.type||this.dragState.type!==t||this.dragState.idx===i)return;
+            if(!this.dragState.type||this.dragState.type!==t)return;
             const l=this.getList(t);
-            if(t==='chars'&&(this.isSlotLocked(l[i])||this.isSlotLocked(l[this.dragState.idx]))){
-                this.dragState={type:null,idx:null};
-                return this.showMsg('chars','No puedes mover slots fijos','err');
+            const insertAtBase=this.computeDropInsertIndex(t,i,ev);
+            const isExisting=Number.isInteger(this.dragState.idx)&&this.dragState.idx>=0;
+
+            if(isExisting){
+                if(this.dragState.idx===i&&insertAtBase===i){
+                    return this.clearDragState();
+                }
+                if(t==='chars'&&(this.isSlotLocked(l[this.dragState.idx])||this.isSlotLocked(l[i]))){
+                    this.clearDragState();
+                    return this.showMsg('chars','No puedes mover slots fijos','err');
+                }
+                const item=l.splice(this.dragState.idx,1)[0];
+                let insertAt=insertAtBase;
+                if(this.dragState.idx<insertAt)insertAt-=1;
+                insertAt=Math.max(0,Math.min(l.length,insertAt));
+                l.splice(insertAt,0,item);
+                if(t==='chars'){
+                    this.sel.chars.clear();
+                    this.sel.chars.add(insertAt);
+                    this.lastClicked.chars=insertAt;
+                    this.tick++;
+                }
+                this.clearDragState();
+                return;
             }
-            const it=l.splice(this.dragState.idx,1)[0];
-            l.splice(i,0,it);
-            this.dragState={type:null,idx:null};
+            if(t==='chars'&&this.dragState.item){
+                let mode=this.computeExternalDropMode(ev);
+                if(mode==='replace'){
+                    if(this.isSlotLocked(l[i])){
+                        this.clearDragState();
+                        return this.showMsg('chars','No puedes reemplazar un slot fijo','err');
+                    }
+                    if(this.isCharEntry(l[i])){
+                        this.charRoster[i]=this.buildReplacementRosterItem(l[i],this.dragState.item);
+                        this.syncCharUnusedFromRoster();
+                        this.sel.chars.clear();
+                        this.sel.chars.add(i);
+                        this.lastClicked.chars=i;
+                        this.tick++;
+                        this.clearDragState();
+                        return this.showMsg('chars','Reemplazado','ok');
+                    }
+                    mode='after';
+                }
+                const insertAt=mode==='after'?i+1:i;
+                if(this.isSlotLocked(l[i])&&insertAt<=i){
+                    this.clearDragState();
+                    return this.showMsg('chars','No puedes insertar antes de un slot fijo','err');
+                }
+                this.insertRosterItem('chars',this.dragState.item,{
+                    index:insertAt,
+                    removeUnusedName:this.dragState.removeUnusedName||'',
+                });
+                this.clearDragState();
+                return this.showMsg('chars','Agregado','ok');
+            }
+            this.clearDragState();
+        },
+        onDropToEnd(t,ev){
+            ev.currentTarget.classList.remove('drag-over');
+            if(!this.dragState.type||this.dragState.type!==t)return;
+            const l=this.getList(t);
+            const isExisting=Number.isInteger(this.dragState.idx)&&this.dragState.idx>=0;
+            if(isExisting){
+                if(t==='chars'&&this.isSlotLocked(l[this.dragState.idx])){
+                    this.clearDragState();
+                    return this.showMsg('chars','No puedes mover slots fijos','err');
+                }
+                const item=l.splice(this.dragState.idx,1)[0];
+                l.push(item);
+                if(t==='chars'){
+                    const idx=l.length-1;
+                    this.sel.chars.clear();
+                    this.sel.chars.add(idx);
+                    this.lastClicked.chars=idx;
+                    this.tick++;
+                }
+                this.clearDragState();
+                return;
+            }
+            if(t==='chars'&&this.dragState.item){
+                this.insertRosterItem('chars',this.dragState.item,{
+                    index:l.length,
+                    removeUnusedName:this.dragState.removeUnusedName||'',
+                });
+                this.clearDragState();
+                return this.showMsg('chars','Agregado','ok');
+            }
+            this.clearDragState();
         },
         showMsg(t,m,tp){ this.msg[t]=m;this.msgType[t]=tp;setTimeout(()=>this.msg[t]='',4000) }
     },

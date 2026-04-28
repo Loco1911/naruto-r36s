@@ -59,6 +59,12 @@ time = 1
 buffer.time = 1
 
 [Command]
+name = "s"
+command = s
+time = 1
+buffer.time = 1
+
+[Command]
 name = "d"
 command = d
 time = 1

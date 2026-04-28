@@ -19,6 +19,29 @@ local function copyTable(t)
   return out
 end
 
+local function clampSubstitutionCount(value)
+  local n = math.floor(tonumber(value) or 3)
+  if n < 0 then return 0 end
+  if n > 3 then return 3 end
+  return n
+end
+
+local function buildTeamPlayerNumbers(teamSide, count)
+  local players = {}
+  for i = 1, math.max(1, tonumber(count) or 1) do
+    table.insert(players, teamSide + (i - 1) * 2)
+  end
+  return players
+end
+
+local function buildCharMapScriptLines(players, mapName, value)
+  local lines = {}
+  for _, pn in ipairs(players or {}) do
+    table.insert(lines, string.format('      charMapSet(%d, "%s", %s)', pn, mapName, tostring(value)))
+  end
+  return table.concat(lines, "\n")
+end
+
 function story.createMotifSpriteBackground(group, number, width, height, fallbackW, fallbackH)
   if motif == nil or motif.files == nil or motif.files.spr_data == nil then
     return nil
@@ -172,21 +195,90 @@ function story.isChapterUnlocked(catalog, arcIndex, chapterIndex, progress)
     return true
   end
 
-  -- Side-story: unlocked after a specific chapter is cleared
+  -- Side-story: sequential unlocking within sibling groups
   if (chapter.type or "normal") == "sidestory" then
-    local afterId = chapter.sideUnlockAfter
-    if afterId and afterId ~= "" then
-      -- Find the chapter with that id
-      for _, cap in ipairs(arc.chapters or {}) do
-        if cap.id == afterId then
-          return story.isChapterCleared(arc.id, cap.id, progress)
+    -- Find this side story's parent chapter
+    local parentId = chapter.sideUnlockAfter
+    local parentIdx = nil
+    if parentId and parentId ~= "" then
+      for j, cap in ipairs(arc.chapters or {}) do
+        if cap.id == parentId then
+          parentIdx = j
+          break
         end
       end
     end
-    -- No afterId → unlock with first chapter of arc
-    if chapterIndex == 1 then return true end
-    local prev = arc.chapters[chapterIndex - 1]
-    return prev and story.isChapterCleared(arc.id, prev.id, progress) or false
+    -- Fallback: find the previous non-sidestory chapter
+    if not parentIdx then
+      for j = chapterIndex - 1, 1, -1 do
+        local prevType = (arc.chapters[j].type or "normal")
+        if prevType ~= "sidestory" then
+          parentIdx = j
+          break
+        end
+      end
+    end
+
+    if not parentIdx then
+      -- No parent found → first chapter behavior
+      return true
+    end
+
+    local parentChapter = arc.chapters[parentIdx]
+    -- Parent must be cleared first
+    if not story.isChapterCleared(arc.id, parentChapter.id, progress) then
+      return false
+    end
+
+    -- Collect all sibling side stories sharing this parent, in order
+    local siblings = {}
+    local parentChapterId = parentChapter.id
+    for j, cap in ipairs(arc.chapters or {}) do
+      if (cap.type or "normal") == "sidestory" then
+        -- Check if this side story belongs to the same parent
+        local capParentId = cap.sideUnlockAfter
+        local capParentIdx = nil
+        if capParentId and capParentId ~= "" then
+          for k, pc in ipairs(arc.chapters or {}) do
+            if pc.id == capParentId then
+              capParentIdx = k
+              break
+            end
+          end
+        end
+        if not capParentIdx then
+          for k = j - 1, 1, -1 do
+            if ((arc.chapters[k].type or "normal") ~= "sidestory") then
+              capParentIdx = k
+              break
+            end
+          end
+        end
+        if capParentIdx == parentIdx then
+          table.insert(siblings, j)
+        end
+      end
+    end
+
+    -- First sibling → unlocked once parent is cleared (already checked above)
+    if #siblings == 0 or siblings[1] == chapterIndex then
+      return true
+    end
+
+    -- Find our position in the sibling list
+    for pos, sibIdx in ipairs(siblings) do
+      if sibIdx == chapterIndex then
+        -- Must clear the previous sibling first
+        local prevSibIdx = siblings[pos - 1]
+        if prevSibIdx then
+          local prevSib = arc.chapters[prevSibIdx]
+          return prevSib and story.isChapterCleared(arc.id, prevSib.id, progress) or false
+        end
+        return true
+      end
+    end
+
+    return true
   end
 
   -- Normal chapter: unlock when previous non-side chapter is cleared
@@ -250,6 +342,20 @@ local function serializeDialogues(dialogues)
     return str
 end
 
+local function serializeHealthDialogues(dialogues)
+    if type(dialogues) ~= "table" or #dialogues == 0 then return "{}" end
+    local str = "{"
+    for i, dlg in ipairs(dialogues) do
+        local spk = dlg.speaker or "p1"
+        local txt = story.escape(dlg.text or "")
+        local tgt = dlg.target or "p1"
+        local thr = tonumber(dlg.thresholdPercent) or 50
+        str = str .. string.format("{speaker=\"%s\", text=\"%s\", target=\"%s\", threshold=%f},", spk, txt, tgt, thr)
+    end
+    str = str .. "}"
+    return str
+end
+
 function story.escape(s)
     if not s then return "" end
     return s:gsub('"', '\\"'):gsub('\n', ' '):gsub('%%', '%%%%')
@@ -264,41 +370,179 @@ function story.playChapter(arcId, chapterId, chapterData)
       launchStoryboardIfExists(chapterData.introStoryboard)
       main.f_cmdBufReset()
   end
-  -- (Los textos ahora se renderizan in-fight, omitimos pre-looping)
 
-  local p1char = chapterData.p1 or {"G6_Naruto_Kid"}
-  local p2char = chapterData.p2 or {"G6_Kakashi/G6_Kakashi_story.def"}
+  local p1char = chapterData.p1 or {"Naruto Uzumaki (Kid)"}
+  local p2char = chapterData.p2 or {"Kakashi Hatake"}
   
   local p2ai = chapterData.p2ai or {}
-  local dlgStr = serializeDialogues(chapterData.dialogues)
+  local p1Substitutions = clampSubstitutionCount(chapterData.p1Substitutions)
+  local p2Substitutions = clampSubstitutionCount(chapterData.p2Substitutions)
+  local p1Players = buildTeamPlayerNumbers(1, #p1char)
+  local p2Players = buildTeamPlayerNumbers(2, #p2char)
   
-  local aiScript = string.format([=[
-    if roundno() == 1 and roundstate() == 0 then
-      setCom(2, %d)
-%s
-%s
+  local dlgIntroStr = serializeDialogues(chapterData.dialogues)
+  local dlgR1Str = serializeDialogues(chapterData.round1EndDialogues)
+  local dlgR2Str = serializeDialogues(chapterData.round2EndDialogues)
+  local dlgR3Str = serializeDialogues(chapterData.round3EndDialogues)
+  local dlgHpStr = serializeHealthDialogues(chapterData.healthDialogues)
+  
+  local ai1 = tostring(p2ai[1] or chapterData.ai or 6)
+  local ai2str = (#p2char > 1) and ("      setCom(4, " .. tostring(p2ai[2] or chapterData.ai or 6) .. ")") or ""
+  local ai3str = (#p2char > 2) and ("      setCom(6, " .. tostring(p2ai[3] or chapterData.ai or 6) .. ")") or ""
+  local ai1r = tostring(p2ai[1] or chapterData.ai or 6)
+  local ai2r = (#p2char > 1) and ("           setCom(4, " .. tostring(p2ai[2] or chapterData.ai or 6) .. ")") or ""
+  local ai3r = (#p2char > 2) and ("           setCom(6, " .. tostring(p2ai[3] or chapterData.ai or 6) .. ")") or ""
+  local p1SubOverrideStr = buildCharMapScriptLines(p1Players, "_iksys_subOverride", 1)
+  local p2SubOverrideStr = buildCharMapScriptLines(p2Players, "_iksys_subOverride", 1)
+  local p1SubMaxStr = buildCharMapScriptLines(p1Players, "_iksys_subMax", p1Substitutions)
+  local p2SubMaxStr = buildCharMapScriptLines(p2Players, "_iksys_subMax", p2Substitutions)
+
+  local aiScript = [=[
+    if roundstate() == 0 then
+]=] .. p1SubOverrideStr .. [=[
+]=] .. p2SubOverrideStr .. [=[
+]=] .. p1SubMaxStr .. [=[
+]=] .. p2SubMaxStr .. [=[
+      setCom(2, ]=] .. ai1 .. [=[)
+]=] .. ai2str .. [=[
+]=] .. ai3str .. [=[
     end
 
-    if _G.story_dialog_played == nil then _G.story_dialog_played = false end
-
-    if _G.storyDlgData == nil and not _G.story_dialog_played then
-       _G.storyDlgData = %s
-       _G.storyDlgIdx = 1
-       _G.storyDlgWait = 0
-       _G.storyDlgFont = fontNew("font/Open_Sans.def", -1)
-      if not _G.storyDlgFont then
-          _G.storyDlgFont = fontNew("font/f-6x9.def", -1)
-      end
-       _G.storyDlgTxt = textImgNew()
+    if _G.story_status == nil then
+       _G.story_status = {
+          intro_done = false, r1_done = false, r2_done = false, r3_done = false,
+          health_done = {}
+       }
     end
 
-    if roundno() == 1 and roundstate() <= 1 and not _G.story_dialog_played then
+    if _G.storyDlgData == nil then
+       if roundno() == 1 and roundstate() <= 1 and not _G.story_status.intro_done then
+          local cand = ]=] .. dlgIntroStr .. [=[
+
+          if cand and #cand > 0 then
+             _G.storyDlgData = cand
+             _G.storyDlgCallback = function() _G.story_status.intro_done = true end
+          else
+             _G.story_status.intro_done = true
+          end
+       elseif roundno() == 1 and roundstate() == 4 and not _G.story_status.r1_done then
+          local cand = ]=] .. dlgR1Str .. [=[
+
+          if cand and #cand > 0 then
+             _G.storyDlgData = cand
+             _G.storyDlgCallback = function() _G.story_status.r1_done = true end
+          else
+             _G.story_status.r1_done = true
+          end
+       elseif roundno() == 2 and roundstate() == 4 and not _G.story_status.r2_done then
+          local cand = ]=] .. dlgR2Str .. [=[
+
+          if cand and #cand > 0 then
+             _G.storyDlgData = cand
+             _G.storyDlgCallback = function() _G.story_status.r2_done = true end
+          else
+             _G.story_status.r2_done = true
+          end
+       elseif roundno() == 3 and roundstate() == 4 and not _G.story_status.r3_done then
+          local cand = ]=] .. dlgR3Str .. [=[
+
+          if cand and #cand > 0 then
+             _G.storyDlgData = cand
+             _G.storyDlgCallback = function() _G.story_status.r3_done = true end
+          else
+             _G.story_status.r3_done = true
+          end
+       elseif roundstate() >= 2 and roundstate() <= 3 then
+          local healthData = ]=] .. dlgHpStr .. [=[
+
+          local triggered = {}
+          if healthData and #healthData > 0 then
+             for i, hpDlg in ipairs(healthData) do
+                 if not _G.story_status.health_done[i] then
+                     local curPct = 100
+                     local oldPl = 0
+                     if hpDlg.target == "p2" then
+                         if player(2) then curPct = (life() / lifemax()) * 100 end
+                     else
+                         if player(1) then curPct = (life() / lifemax()) * 100 end
+                     end
+                     player(1) -- restore local context safely
+
+                     if curPct <= hpDlg.threshold then
+                         table.insert(triggered, hpDlg)
+                         _G.story_status.health_done[i] = true
+                     end
+                 end
+             end
+          end
+          if #triggered > 0 then
+              _G.storyDlgData = triggered
+              _G.storyDlgCallback = function() end
+          end
+       end
+
+       if _G.storyDlgData ~= nil then
+           _G.storyDlgIdx = 1
+           _G.storyDlgWait = 0
+           _G.storyDlgFont = fontNew("font/Open_Sans.def", -1)
+           if not _G.storyDlgFont then _G.storyDlgFont = fontNew("font/f-6x9.def", -1) end
+           if not _G.storyDlgFont then _G.storyDlgFont = fontNew("font/8-BIT WONDER_STORY.def", -1) end
+           _G.storyDlgNameTxt = textImgNew()
+           _G.storyDlgBodyTxt = textImgNew()
+           _G.storyDlgHintTxt = textImgNew()
+       end
+    end
+
+    local function wrapDialogueText(str, maxChars, maxLines)
+       local text = tostring(str or ""):gsub("%s+", " "):match("^%s*(.-)%s*$")
+       if text == "" then
+          return ""
+       end
+       local words = {}
+       for word in text:gmatch("%S+") do
+          table.insert(words, word)
+       end
+       local lines = {}
+       local line = ""
+       for _, word in ipairs(words) do
+          local candidate = line == "" and word or (line .. " " .. word)
+          if #candidate <= maxChars then
+             line = candidate
+          else
+             if line ~= "" then
+                table.insert(lines, line)
+             end
+             line = word
+          end
+          if maxLines and #lines >= maxLines then
+             break
+          end
+       end
+       if line ~= "" and (not maxLines or #lines < maxLines) then
+          table.insert(lines, line)
+       end
+       if maxLines and #lines == maxLines then
+          local consumed = 0
+          for _, wrapped in ipairs(lines) do
+             for _ in wrapped:gmatch("%S+") do
+                consumed = consumed + 1
+             end
+          end
+          if consumed < #words then
+             lines[#lines] = lines[#lines]:sub(1, math.max(1, maxChars - 2)) .. ".."
+          end
+       end
+       return table.concat(lines, "\n")
+    end
+
+    if _G.storyDlgData ~= nil then
        if _G.storyDlgIdx <= #_G.storyDlgData then
            charMapSet(1, "storyDialogue", 1)
            charMapSet(2, "storyDialogue", 1)
-
-           local w = motif.info.localcoord and motif.info.localcoord[1] or 640
-           local h = motif.info.localcoord and motif.info.localcoord[2] or 480
+           setCom(1, 0)
+           setCom(2, 0)
+           setCom(3, 0)
+           setCom(4, 0)
 
            local dlg = _G.storyDlgData[_G.storyDlgIdx]
            local spk = dlg.speaker or "p1"
@@ -307,37 +551,66 @@ function story.playChapter(arcId, chapterId, chapterData)
            local sColor = isP1 and {100, 180, 255} or isP2 and {255, 80, 80} or {255, 220, 80}
            local sName  = isP1 and "Aliado:" or isP2 and "Rival:" or (spk .. ":")
 
-           local boxH = math.floor(h * 0.15)
-           local boxY = h - boxH
-           local px = math.floor(w * 0.04)
+           -- fillRect uses raw game pixels (640x480), textImgSetPos uses localcoord (320x240)
+           local gw = 640
+           local gh = 480
 
-           fillRect(0, 0, w, h, 10, 10, 15, 120, 0)
-           fillRect(0, boxY, w, boxH, 20, 26, 36, 240, 0)
-           fillRect(0, boxY, w, math.max(2, math.floor(h * 0.01)), sColor[1], sColor[2], sColor[3], 255, 0)
+           -- Keep the intro frozen via storyDialogue map while letting stage and idle anims render.
+           if setRoundTime then setRoundTime(time()) end
 
-           textImgSetFont(_G.storyDlgTxt, _G.storyDlgFont)
-           local tScale = math.max(0.6, (h / 960) * 0.95)
+           -- Dialogue box (fillRect in game coords 640x480)
+           local boxW_g = math.floor(gw * 0.94)
+           local boxH_g = math.floor(gh * 0.18)
+           local boxY_g = gh - boxH_g - 10
+           local offX = math.floor((gw - boxW_g) / 2)
 
-           textImgSetColor(_G.storyDlgTxt, sColor[1], sColor[2], sColor[3])
-           textImgSetPos(_G.storyDlgTxt, px, boxY + math.floor(boxH * 0.35))
-           textImgSetAlign(_G.storyDlgTxt, -1)
-           textImgSetScale(_G.storyDlgTxt, tScale * 1.1, tScale * 1.1)
-           textImgSetText(_G.storyDlgTxt, sName)
-           textImgDraw(_G.storyDlgTxt)
+           -- Semi-transparent screen overlay
+           fillRect(0, 0, gw, gh, 10, 10, 15, 18, 0)
+           -- Dark dialogue box at bottom
+           fillRect(offX, boxY_g, boxW_g, boxH_g, 15, 18, 28, 220, 0)
+           -- Colored speaker line at top of box
+           fillRect(offX, boxY_g, boxW_g, 2, sColor[1], sColor[2], sColor[3], 255, 0)
 
-           textImgSetColor(_G.storyDlgTxt, 250, 250, 250)
-           textImgSetPos(_G.storyDlgTxt, px, boxY + math.floor(boxH * 0.70))
-           textImgSetAlign(_G.storyDlgTxt, -1)
-           textImgSetScale(_G.storyDlgTxt, tScale, tScale)
-           textImgSetText(_G.storyDlgTxt, dlg.text)
-           textImgDraw(_G.storyDlgTxt)
+           -- TextSprite positioning in this build matches fight coordinates (640x480).
+           local textPadX = 10
+           local nameY = boxY_g + 12
+           local bodyY = boxY_g + 34
+           local promptY = boxY_g + boxH_g - 12
+           local bodyText = wrapDialogueText(dlg.text, 62, 3)
+           local winX = 0
+           local winY = 0
+           local winW = gw
+           local winH = gh
 
-           textImgSetColor(_G.storyDlgTxt, 150, 150, 150)
-           textImgSetPos(_G.storyDlgTxt, w - px, h - math.floor(boxH * 0.15))
-           textImgSetAlign(_G.storyDlgTxt, 1)
-           textImgSetScale(_G.storyDlgTxt, tScale * 0.6, tScale * 0.6)
-           textImgSetText(_G.storyDlgTxt, "Presiona A o Start para continuar")
-           textImgDraw(_G.storyDlgTxt)
+           -- Speaker name
+           textImgSetFont(_G.storyDlgNameTxt, _G.storyDlgFont)
+           textImgSetColor(_G.storyDlgNameTxt, sColor[1], sColor[2], sColor[3])
+           textImgSetPos(_G.storyDlgNameTxt, offX + textPadX, nameY)
+           textImgSetAlign(_G.storyDlgNameTxt, 1)
+           textImgSetWindow(_G.storyDlgNameTxt, winX, winY, winW, winH)
+           textImgSetScale(_G.storyDlgNameTxt, 0.40, 0.40)
+           textImgSetText(_G.storyDlgNameTxt, sName)
+           textImgDraw(_G.storyDlgNameTxt)
+
+           -- Dialogue text
+           textImgSetFont(_G.storyDlgBodyTxt, _G.storyDlgFont)
+           textImgSetColor(_G.storyDlgBodyTxt, 250, 250, 250)
+           textImgSetPos(_G.storyDlgBodyTxt, offX + textPadX, bodyY)
+           textImgSetAlign(_G.storyDlgBodyTxt, 1)
+           textImgSetWindow(_G.storyDlgBodyTxt, winX, winY, winW, winH)
+           textImgSetScale(_G.storyDlgBodyTxt, 0.34, 0.34)
+           textImgSetText(_G.storyDlgBodyTxt, bodyText)
+           textImgDraw(_G.storyDlgBodyTxt)
+
+           -- Prompt hint (bottom-right)
+           textImgSetFont(_G.storyDlgHintTxt, _G.storyDlgFont)
+           textImgSetColor(_G.storyDlgHintTxt, 120, 120, 120)
+           textImgSetPos(_G.storyDlgHintTxt, offX + boxW_g - textPadX, promptY)
+           textImgSetAlign(_G.storyDlgHintTxt, -1)
+           textImgSetWindow(_G.storyDlgHintTxt, winX, winY, winW, winH)
+           textImgSetScale(_G.storyDlgHintTxt, 0.24, 0.24)
+           textImgSetText(_G.storyDlgHintTxt, "[A]")
+           textImgDraw(_G.storyDlgHintTxt)
 
            local btnA = false
            if main and main.t_cmd then
@@ -350,27 +623,57 @@ function story.playChapter(arcId, chapterId, chapterData)
                if not _G.storyDlgSkip then
                    _G.storyDlgIdx = _G.storyDlgIdx + 1
                    _G.storyDlgSkip = true
-                   if main and main.f_cmdBufReset then main.f_cmdBufReset() end
                end
            else
                _G.storyDlgSkip = false
            end
+           
+           if main and main.f_cmdBufReset then main.f_cmdBufReset() end
 
        else
            charMapSet(1, "storyDialogue", 0)
            charMapSet(2, "storyDialogue", 0)
-           _G.story_dialog_played = true
+           setCom(2, ]=] .. ai1r .. [=[)
+]=] .. ai2r .. [=[
+]=] .. ai3r .. [=[
+           if _G.storyDlgCallback then _G.storyDlgCallback() end
            _G.storyDlgData = nil
+           _G.storyDlgIdx = 0
        end
     end
-  ]=],
-  p2ai[1] or chapterData.ai or 6,
-  (#p2char > 1) and string.format("      setCom(4, %d)", p2ai[2] or chapterData.ai or 6) or "",
-  (#p2char > 2) and string.format("      setCom(6, %d)", p2ai[3] or chapterData.ai or 6) or "",
-  dlgStr)
+  ]=]
 
-  -- Reseteo general antes de una partida nueva (Reset global flag)
-  _G.story_dialog_played = false
+  local fightStage = chapterData.stage or ""
+  if fightStage == "" or fightStage:lower() == "random" or not main.f_fileExists(fightStage) then
+      fightStage = "stages/01-Training_Field_NSUNS4/01-Training_Field_NSUNS4.def"
+      if not main.f_fileExists(fightStage) then
+          fightStage = "random"
+      end
+  end
+
+  local fightRoundTime = nil
+  if chapterData.roundTime ~= nil then
+      local parsedRoundTime = tonumber(chapterData.roundTime)
+      if parsedRoundTime ~= nil then
+          fightRoundTime = math.floor(parsedRoundTime)
+          if fightRoundTime < 0 then
+              fightRoundTime = -1
+          elseif fightRoundTime == 0 then
+              fightRoundTime = nil
+          end
+      end
+  end
+
+  _G.story_status = nil
+  _G.storyDlgData = nil
+  _G.storyDlgIdx = 0
+  _G.storyDlgWait = 0
+  _G.storyDlgSkip = false
+  _G.storyDlgCallback = nil
+  _G.storyDlgFont = nil
+  _G.storyDlgNameTxt = nil
+  _G.storyDlgBodyTxt = nil
+  _G.storyDlgHintTxt = nil
   main.f_cmdBufReset()
 
   local ok = launchFight{
@@ -381,7 +684,8 @@ function story.playChapter(arcId, chapterId, chapterData)
     p2teammode = chapterData.p2teammode or ((#p2char > 1) and "simul" or "single"),
     p2numchars = #p2char,
     p2rounds = chapterData.p2rounds or 2,
-    stage = chapterData.stage or "stages/01-Training_Field_NSUNS4.def",
+    roundTime = fightRoundTime,
+    stage = fightStage,
     vsscreen = chapterData.vsscreen or false,
     victoryscreen = chapterData.victoryscreen or false,
     ai = chapterData.ai or 6,
@@ -397,6 +701,17 @@ function story.playChapter(arcId, chapterId, chapterData)
   else
     launchStoryboardIfExists(chapterData.loseStoryboard)
   end
+
+  _G.story_status = nil
+  _G.storyDlgData = nil
+  _G.storyDlgIdx = 0
+  _G.storyDlgWait = 0
+  _G.storyDlgSkip = false
+  _G.storyDlgCallback = nil
+  _G.storyDlgFont = nil
+  _G.storyDlgNameTxt = nil
+  _G.storyDlgBodyTxt = nil
+  _G.storyDlgHintTxt = nil
   
   main.f_cmdBufReset()
   return cleared

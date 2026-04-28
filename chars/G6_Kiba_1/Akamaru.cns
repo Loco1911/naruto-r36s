@@ -1,0 +1,663 @@
+;===============================================================================
+; Akamaru:
+;-------------------------------------------------------------------------------
+; Stand
+[Statedef 4000]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 4000
+sprpriority = 3
+
+[State 0, PalFXWiz]
+type = PalFX
+triggerall = root,var(5) = 1
+trigger1 = gametime%1 = 0
+time = 1
+add = 256,0,0
+mul = 150,150,150
+ignorehitpause = 1
+persistent = 1
+
+[State 0, Desvanecerse]
+type = ChangeState
+trigger1 = numhelper(315) > 0||numhelper(415) > 0||root,numexplod(621) > 0||numhelper(1450) > 0
+trigger2 = root,stateno = 1500 && root,time >= 50
+trigger3 = root,stateno = 3101
+trigger4 = root,stateno = 3200 && root,time >= 30
+trigger5 = root,stateno = [1251101,1251133]
+value = 4090
+
+[State 0, Akamaru!]
+type = ChangeState
+trigger1 = root,stateno = 1100 && root,time = 32
+value = 4150
+
+[State 0, Akamaru Pills]
+type = ChangeState
+trigger1 = root,stateno = 1300 && root,time = 1
+value = 4200
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 = 1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 4080
+time = 999
+
+[State 0, PlayerPush]
+type = PlayerPush
+trigger1 = 1
+value = 0
+
+[State 0, Turn]
+type = Turn
+trigger1 = p2bodydist x < -30
+trigger2 = rootdist x < -150
+
+[State 0, Walk FWD]
+type = ChangeState
+trigger1 = rootdist x > 150
+value = 4020
+
+[State 0, DestroySelf]
+type = DestroySelf
+trigger1 = time = -1
+;-------------------------------------------------------------------------------
+; Walk FWD
+[Statedef 4020]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 4020
+sprpriority = 3
+
+[State 0, PalFXWiz]
+type = PalFX
+triggerall = root,var(5) = 1
+trigger1 = gametime%1 = 0
+time = 1
+add = 256,0,0
+mul = 150,150,150
+ignorehitpause = 1
+persistent = 1
+
+[State 0, Desvanecerse]
+type = ChangeState
+trigger1 = numhelper(315) > 0||numhelper(415) > 0||root,numexplod(621) > 0||numhelper(1450) > 0
+trigger2 = root,stateno = 1500 && root,time >= 50
+trigger3 = root,stateno = 3101
+value = 4090
+
+[State 0, Akamaru!]
+type = ChangeState
+trigger1 = root,stateno = 1100 && root,time = 32
+value = 4150
+
+[State 0, Akamaru Pills]
+type = ChangeState
+trigger1 = root,stateno = 1300 && root,time = 1
+value = 4200
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 = 1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 4080
+time = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 3
+value = S52,2
+volume = 0
+
+[State 0, PlayerPush]
+type = PlayerPush
+trigger1 = 1
+value = 0
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = 1
+x = 4
+
+[State 200, End]
+type = ChangeState
+trigger1 = rootdist x = [-30,0]
+value = 4000
+;-------------------------------------------------------------------------------
+; HITEED
+[Statedef 4080]
+type    = S
+movetype= H
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 4080
+sprpriority = -1
+
+[State 0, PalFXWiz]
+type = PalFX
+triggerall = root,var(5) = 1
+trigger1 = gametime%1 = 0
+time = 1
+add = 256,0,0
+mul = 150,150,150
+ignorehitpause = 1
+persistent = 1
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+
+[State 0, Desvanecerse]
+type = ChangeState
+trigger1 = numhelper(315) > 0||numhelper(415) > 0||root,numexplod(621) > 0
+value = 4090
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 = 1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 4080
+time = 999
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+x = ifelse(facing = 1,gethitvar(xvel),-gethitvar(xvel))
+
+[State 200, End]
+type = ChangeState
+trigger1 = hitover
+value = 4000
+;-------------------------------------------------------------------------------
+; Desvanecido
+[Statedef 4090]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 9999
+sprpriority = 3
+
+[State 0, Humo]
+type = Explod
+trigger1 = time = 0
+anim = 25016
+ID = 1150
+pos = 0,-30
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .7,.7
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 0
+supermove = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,22
+volume = 50
+
+[State 200, End]
+type = ChangeState
+triggerall = root,stateno != [1251101,1251133]
+trigger1 = numhelper(315) = 0 && numhelper(415) = 0 && root,numexplod(621) = 0 && numhelper(1450) = 0 && root,stateno != 1500 && root,stateno != 3101 && root,stateno != 3200
+value = 4095
+;-------------------------------------------------------------------------------
+; Apareciendo
+[Statedef 4095]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 9999
+poweradd = 0
+sprpriority = 3
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+
+[State 0, PosAdd]
+type = PosAdd
+trigger1 = time = 0
+x = rootdist x - 30
+
+[State 0, Humo]
+type = Explod
+trigger1 = time = 0
+anim = 25016
+ID = 1150
+pos = 0,-30
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .7,.7
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 0
+supermove = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,22
+volume = 50
+
+[State 200, End]
+type = ChangeState
+trigger1 = time = 1
+value = 4000
+;-------------------------------------------------------------------------------
+; Desaparicion Akamaru Falso
+[Statedef 4096]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 9999
+poweradd = 0
+sprpriority = 3
+
+[State 0, Humo]
+type = Explod
+trigger1 = time = 0
+anim = 25016
+ID = 1150
+pos = 10,-20
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .7,.7
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 0
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 1
+;===============================================================================
+; Akamaru!:
+;-------------------------------------------------------------------------------
+[Statedef 4150]
+type    = A
+movetype= A
+physics = N
+juggle  = 2
+velset = 0,0
+ctrl = 0
+anim = 1150
+sprpriority = 3
+
+[State 0, PalFXWiz]
+type = PalFX
+triggerall = root,var(5) = 1
+trigger1 = gametime%1 = 0
+time = 1
+add = 256,0,0
+mul = 150,150,150
+ignorehitpause = 1
+persistent = 1
+
+[State 0, AttackMulSet]
+type = AttackMulSet
+trigger1 = 1
+value = 1+fvar(2)+fvar(4)+fvar(5)
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S1,15
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S1,15
+volume = 999
+
+[State 0, Turn]
+type = Turn
+triggerall = p2bodydist x < - 30
+trigger1 = time = 0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 = 1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 4080
+time = 999999999
+ignorehitpause = 1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,22
+volume = 999
+
+[State 0, Humo]
+type = Explod
+trigger1 = time = 0
+anim = 25016
+ID = 1150
+pos = 0,-30
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .7,.7
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 0
+supermove = 999
+
+[State 0, Hondas]
+type = Explod
+triggerall = time = [16,50]
+trigger1 = timemod = 5,0
+anim = 9023
+ID = 9023
+pos = 55,10
+postype = p1
+facing = -1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .25,.25
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 1
+
+[State 0, PosAdd]
+type = PosAdd
+trigger1 = time = 19
+y = -20
+
+[State 0, StateTypeSet]
+type = StateTypeSet
+trigger1 = time = 19
+statetype = A
+movetype = A
+physics = N
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 19
+x = 16
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 31
+trigger2 = movecontact
+x = 6
+
+[State 0, PlayerPush]
+type = PlayerPush
+trigger1 = time > 9
+value = 0
+
+[State 0, Viento]
+type = Explod
+trigger1 = time = 16
+anim = 9012
+ID = 1060
+pos = -10,32
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .7,.7
+sprpriority = 3
+ontop = 1
+ownpal = 1
+removeongethit = 1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 5||animelem = 7||animelem = 9||animelem = 11
+value = S5,4
+volume = 50
+
+[State 200, 1]
+type = HitDef
+trigger1 = animelem = 5||animelem = 7||animelem = 9||animelem = 11
+attr = A, SA
+animtype  = medium
+damage    = 16
+Hitflag = MAFDE
+guardflag = MA
+pausetime = 7,7
+sparkno = -1
+guard.sparkno = s7000
+sparkxy = -8,-25
+hitsound   = S1,12
+guardsound = S4,1
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 25
+ground.velocity = -4,ifelse(time > 50,-4,0)
+air.velocity = -4,ifelse(time > 50,-4,0)
+Fall = ifelse(time > 50,1,0)
+Fall.recover = 0
+Envshake.time = 5
+getpower = 0,0
+
+[State 200, Spark CVS]
+type = Explod
+triggerall = Numexplod(7001) = 0
+triggerall = Movehit = 1
+trigger1 = hitcount = 1||hitcount = 3||hitcount = 5||hitcount = 7||hitcount = 9||hitcount = 11||hitcount = 13
+anim = 7001
+ID = 7001
+postype = P2
+pos = 0,-30
+facing = 1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = .7,.7
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 200, Spark CVS]
+type = Explod
+triggerall = Numexplod(7002) = 0
+triggerall = Movehit = 1
+trigger1 = hitcount = 2||hitcount = 4||hitcount = 6||hitcount = 8||hitcount = 10||hitcount = 12||hitcount = 14
+anim = 7001
+ID = 7002
+postype = P2
+pos = 0,-30
+facing = -1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = .7,.7
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+trigger1 = time = 31
+trigger2 = time = 43
+value = 220
+elem = 5
+
+[State 200, End]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 4151
+;-------------------------------------------------------------------------------
+; Apareciendo
+[Statedef 4151]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 9999
+poweradd = 0
+sprpriority = 3
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+
+[State 0, Humo]
+type = Explod
+trigger1 = time = 0
+anim = 25016
+ID = 1150
+pos = 0,-30
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .7,.7
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 0
+supermove = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,22
+volume = 50
+
+[State 200, End]
+type = ChangeState
+trigger1 = time = 1
+value = 4000
+;===============================================================================
+; Akamaru Pills:
+;-------------------------------------------------------------------------------
+[Statedef 4200]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 1350
+sprpriority = 3
+
+[State 0, AngleDraw]
+type = AngleDraw
+trigger1 = time = [1,6]
+scale = 1.1,1.1
+
+[State 0, PalFXWiz]
+type = PalFX
+trigger1 = time = [1,6]
+time = 200
+add = 256,0,0
+mul = 150,150,150
+ignorehitpause = 1
+persistent = 1
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = time = 1
+time = 10
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 1
+value = S5,11
+volume = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 1||time = 2
+trigger2 = time = 20||time = 21
+value = S0,10
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 1||time = 2
+trigger2 = time = 20||time = 21
+value = S0,10
+volume = 999
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 = 1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 4080
+time = 999
+
+[State 0, PlayerPush]
+type = PlayerPush
+trigger1 = 1
+value = 0
+
+[State 200, End]
+type = ChangeState
+trigger1 = animtime = 0
+value = 4000
+;===============================================================================
+; VACIO:
+;-------------------------------------------------------------------------------
+; VACIO
+[Statedef 999]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 9999
+poweradd = 0
+sprpriority = 2
+
+
+[State 200, End]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 0
+ctrl = 1

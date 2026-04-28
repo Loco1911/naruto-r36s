@@ -2038,6 +2038,7 @@ function motif.setBaseOptionInfo()
 	motif.option_info.menu_itemname_menuinput = "Input Settings"
 	motif.option_info.menu_itemname_menuinput_keyboard = "Key Config"
 	motif.option_info.menu_itemname_menuinput_gamepad = "Joystick Config"
+	motif.option_info.menu_itemname_menuinput_substitutionbutton = "Substitution Button"
 	motif.option_info.menu_itemname_menuinput_empty = ""
 	motif.option_info.menu_itemname_menuinput_inputdefault = "Default"
 	motif.option_info.menu_itemname_menuinput_back = "Back"
@@ -2157,6 +2158,7 @@ function motif.setBaseOptionInfo()
 		"menuinput",
 		"menuinput_keyboard",
 		"menuinput_gamepad",
+		"menuinput_substitutionbutton",
 		"menuinput_empty",
 		"menuinput_inputdefault",
 		"menuinput_back",

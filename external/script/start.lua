@@ -739,41 +739,100 @@ function start.f_animGet(ref, side, member, t, subname, prefix, loop, default)
 	if ref == nil then
 		return nil
 	end
-	for _, v in pairs({
+	local char_data = start.f_getCharData(ref)
+	local function f_prepareAnim(a, v)
+		if a == nil then
+			return nil
+		end
+		local portrait_scale = tonumber(char_data.portrait_scale) or 1
+		if t == motif.select_info and subname == '_face' and portrait_scale > 2 then
+			portrait_scale = 1
+		end
+		local xscale = portrait_scale / (main.SP_Viewport43[3] / main.SP_Localcoord[1])
+		local yscale = xscale
+		if v[2] == -1 then
+			xscale = xscale * (char_data.cns_scale[1] or 1)
+			yscale = yscale * (char_data.cns_scale[2] or 1)
+		elseif t == motif.select_info and subname == '_face' then
+			local face_scale = tonumber(char_data.select_face_scale) or 1
+			xscale = xscale * face_scale
+			yscale = yscale * face_scale
+		end
+		animSetScale(
+			a,
+			t['p' .. side .. subname .. '_scale'][1] * (main.f_tableExists(t['p' .. side .. '_member' .. member .. subname .. '_scale'])[1] or 1) * xscale,
+			t['p' .. side .. subname .. '_scale'][2] * (main.f_tableExists(t['p' .. side .. '_member' .. member .. subname .. '_scale'])[2] or 1) * yscale,
+			false
+		)
+		animSetWindow(
+			a,
+			t['p' .. side .. subname .. '_window'][1],
+			t['p' .. side .. subname .. '_window'][2],
+			t['p' .. side .. subname .. '_window'][3],
+			t['p' .. side .. subname .. '_window'][4]
+		)
+		animUpdate(a)
+		return a
+	end
+	local override = nil
+	local override_sff = nil
+	if t == motif.select_info and subname == '_face' then
+		local face_group = tonumber(char_data.select_face_group)
+		local face_item = tonumber(char_data.select_face_item)
+		override_sff = char_data.select_face_sff or char_data.select_sff
+		if face_group ~= nil and face_item ~= nil then
+			override = {face_group, face_item}
+		end
+	end
+	if override_sff ~= nil and override_sff ~= '' then
+		local group = nil
+		local item = nil
+		if override ~= nil then
+			group = override[1]
+			item = override[2]
+		elseif t['p' .. side .. subname .. prefix .. '_spr'] ~= nil and t['p' .. side .. subname .. prefix .. '_spr'][1] ~= nil then
+			group = t['p' .. side .. subname .. prefix .. '_spr'][1]
+			item = t['p' .. side .. subname .. prefix .. '_spr'][2]
+		elseif t['p' .. side .. subname .. '_spr'] ~= nil and t['p' .. side .. subname .. '_spr'][1] ~= nil then
+			group = t['p' .. side .. subname .. '_spr'][1]
+			item = t['p' .. side .. subname .. '_spr'][2]
+		end
+		local a = main.f_getSelectSffAnim(override_sff, group, item)
+		if a ~= nil then
+			return f_prepareAnim(a, {group, item})
+		end
+	end
+	local t_anim = {
 		{t['p' .. side .. '_member' .. member .. subname .. prefix .. '_anim'], -1},
 		{t['p' .. side .. subname .. prefix .. '_anim'], -1},
-		t['p' .. side .. '_member' .. member .. subname .. prefix .. '_spr'],
-		t['p' .. side .. subname .. prefix .. '_spr'],
-		default
-	}) do
+	}
+	if override ~= nil then
+		table.insert(t_anim, override)
+	end
+	local t_candidates = {t_anim[1], t_anim[2]}
+	if override ~= nil then
+		table.insert(t_candidates, override)
+	end
+	table.insert(t_candidates, t['p' .. side .. '_member' .. member .. subname .. prefix .. '_spr'])
+	table.insert(t_candidates, t['p' .. side .. subname .. prefix .. '_spr'])
+	table.insert(t_candidates, default)
+	for _, v in ipairs(t_candidates) do
 		if v[1] ~= nil and v[1] ~= -1 then
 			local a = animGetPreloadedData('char', ref, v[1], v[2], loop)
 			if a ~= nil then
-				local xscale = start.f_getCharData(ref).portrait_scale / (main.SP_Viewport43[3] / main.SP_Localcoord[1])
-				local yscale = xscale
-				if v[2] == -1 then
-					xscale = xscale * (start.f_getCharData(ref).cns_scale[1] or 1)
-					yscale = yscale * (start.f_getCharData(ref).cns_scale[2] or 1)
-				end
-				animSetScale(
-					a,
-					t['p' .. side .. subname .. '_scale'][1] * (main.f_tableExists(t['p' .. side .. '_member' .. member .. subname .. '_scale'])[1] or 1) * xscale,
-					t['p' .. side .. subname .. '_scale'][2] * (main.f_tableExists(t['p' .. side .. '_member' .. member .. subname .. '_scale'])[2] or 1) * yscale,
-					false
-				)
-				animSetWindow(
-					a,
-					t['p' .. side .. subname .. '_window'][1],
-					t['p' .. side .. subname .. '_window'][2],
-					t['p' .. side .. subname .. '_window'][3],
-					t['p' .. side .. subname .. '_window'][4]
-				)
-				animUpdate(a)
-				return a
+				return f_prepareAnim(a, v)
 			end
 		end
 	end
 	return nil
+end
+
+local function f_selectFaceCharOffsets(ref, t, subname)
+	if ref == nil or t ~= motif.select_info or subname ~= '_face' then
+		return 0, 0
+	end
+	local char_data = start.f_getCharData(ref)
+	return tonumber(char_data.select_face_offset_x) or 0, tonumber(char_data.select_face_offset_y) or 0
 end
 
 --calculate portraits slide.dist offset
@@ -826,11 +885,12 @@ function start.f_drawPortraits(t_portraits, side, t, subname, last, icon)
 	if t['p' .. side .. subname .. '_num'] == 1 and last and not main.coop then
 		if t_portraits[#t_portraits].anim_data ~= nil then
 			local v = t_portraits[#t_portraits]
+			local face_offset_x, face_offset_y = f_selectFaceCharOffsets(v.ref, t, subname)
 			f_slideDistCalc(v.slide_dist, t['p' .. side .. '_member1' .. subname .. '_slide_dist'], t['p' .. side .. '_member1' .. subname .. '_slide_speed'])
 			main.f_animPosDraw(
 				v.anim_data,
-				f_portraitsXCalc(side, t, subname, 1) + main.f_round(v.slide_dist[1]),
-				t['p' .. side .. subname .. '_pos'][2] + t['p' .. side .. subname .. '_offset'][2] + (main.f_tableExists(t['p' .. side .. '_member1' .. subname .. '_offset'])[2] or 0) + main.f_round(v.slide_dist[2]),
+				f_portraitsXCalc(side, t, subname, 1) + face_offset_x + main.f_round(v.slide_dist[1]),
+				t['p' .. side .. subname .. '_pos'][2] + t['p' .. side .. subname .. '_offset'][2] + (main.f_tableExists(t['p' .. side .. '_member1' .. subname .. '_offset'])[2] or 0) + face_offset_y + main.f_round(v.slide_dist[2]),
 				t['p' .. side .. subname .. '_facing'],
 				true
 			)
@@ -842,11 +902,12 @@ function start.f_drawPortraits(t_portraits, side, t, subname, last, icon)
 		if member <= t['p' .. side .. subname .. '_num'] --[[or (last and main.coop)]] then
 			if t_portraits[member].anim_data ~= nil then
 				local v = t_portraits[member]
+				local face_offset_x, face_offset_y = f_selectFaceCharOffsets(v.ref, t, subname)
 				f_slideDistCalc(v.slide_dist, t['p' .. side .. '_member' .. member .. subname .. '_slide_dist'], t['p' .. side .. '_member' .. member .. subname .. '_slide_speed'])
 					main.f_animPosDraw(
 					v.anim_data,
-					f_portraitsXCalc(side, t, subname, member) + main.f_round(v.slide_dist[1]),
-					t['p' .. side .. subname .. '_pos'][2] + t['p' .. side .. subname .. '_offset'][2] + (main.f_tableExists(t['p' .. side .. '_member' .. member .. subname .. '_offset'])[2] or 0) + (member - 1) * t['p' .. side .. subname .. '_spacing'][2] + main.f_round(v.slide_dist[2]),
+					f_portraitsXCalc(side, t, subname, member) + face_offset_x + main.f_round(v.slide_dist[1]),
+					t['p' .. side .. subname .. '_pos'][2] + t['p' .. side .. subname .. '_offset'][2] + (main.f_tableExists(t['p' .. side .. '_member' .. member .. subname .. '_offset'])[2] or 0) + (member - 1) * t['p' .. side .. subname .. '_spacing'][2] + face_offset_y + main.f_round(v.slide_dist[2]),
 					t['p' .. side .. subname .. '_facing'],
 					true
 				)
@@ -1404,10 +1465,11 @@ function start.f_game(lua)
 	if main.debugLog and start ~= nil then main.f_printTable(start.p, 'debug/t_p.txt') end
 	local p2In = main.t_pIn[2]
 	main.t_pIn[2] = 2
-	if lua ~= '' then commonLuaInsert(lua) end
+	local fightLua = main.f_buildFightConfigLua(lua)
+	if fightLua ~= '' then commonLuaInsert(fightLua) end
 	local winner, tbl = game()
 	main.f_restoreInput()
-	if lua ~= '' then commonLuaDelete(lua) end
+	if fightLua ~= '' then commonLuaDelete(fightLua) end
 	if gameend() then
 		clearColor(0, 0, 0)
 		os.exit()
@@ -2039,10 +2101,13 @@ function start.f_selectScreen()
 						)
 					--draw face cell
 					elseif t.char ~= nil and t.hidden == 0 then
+						local char_data = start.f_getCharData(t.char_ref)
+						local cell_offset_x = tonumber(char_data.select_portrait_offset_x) or 0
+						local cell_offset_y = tonumber(char_data.select_portrait_offset_y) or 0
 						main.f_animPosDraw(
-							start.f_getCharData(t.char_ref).cell_data,
-							motif.select_info.pos[1] + t.x + motif.select_info.portrait_offset[1],
-							motif.select_info.pos[2] + t.y + motif.select_info.portrait_offset[2],
+							char_data.cell_data,
+							motif.select_info.pos[1] + t.x + motif.select_info.portrait_offset[1] + cell_offset_x,
+							motif.select_info.pos[2] + t.y + motif.select_info.portrait_offset[2] + cell_offset_y,
 							(motif.select_info['cell_' .. col .. '_' .. row .. '_facing'] or motif.select_info.portrait_facing)
 						)
 					end
