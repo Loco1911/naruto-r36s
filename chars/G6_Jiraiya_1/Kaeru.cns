@@ -1,0 +1,310 @@
+;--------------------------------------------------------------------------
+;Turn Into Frog
+[StateDef 1682]
+type = S
+movetype = H
+physics = N
+sprpriority = -1
+ctrl = 0
+
+[State 0, PowerAdd]
+type = PowerAdd
+trigger1 = 1
+value = 5
+ignorehitpause = 1
+
+[State 1682, ChangeAnim2]
+type = ChangeAnim2
+trigger1 = !time
+value = 1401
+
+[State 0]
+type = AssertSpecial
+trigger1 = time >20 && time < 26
+flag = invisible
+
+[State 1682, ChangeAnim2]
+type = ChangeAnim2
+trigger1 = time=26
+value = 16382
+
+[State 1682, Gravity]
+type = Gravity
+trigger1 = pos y < 0 && !GetHitVar(isbound)
+
+[State 1682, VelSet]
+type = VelSet
+trigger1 = pos y > 0
+x = 0
+y = 0
+
+[State 1682, PosSet]
+type = PosSet
+trigger1 = pos y > 0
+y = 0
+
+[State 1682, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 1
+
+[State 1682, ChangeState]
+type = ChangeState
+trigger1 = pos y = 0
+value = 1683
+ctrl = 0
+
+;---------------------------------------------------------------------------
+;Frog Hurt
+[StateDef 1683]
+type = S
+movetype = H
+physics = S
+ctrl = 0
+velset = 0,0
+
+[State 0, PowerAdd]
+type = PowerAdd
+trigger1 = 1
+value = 5
+ignorehitpause = 1
+
+[State 1683, StateTypeSet]
+type = StateTypeSet
+trigger1 = pos y < 0
+statetype = A
+
+[State 1683, StatetypeSet]
+type = StateTypeSet
+trigger1 = pos y = 0
+statetype = S
+
+[State 1683, VelSet]
+type = VelSet
+trigger1 = !GetHitVar(hitshaketime)
+x = GetHitVar(xvel)*facing
+y = GetHitVar(yvel)
+persistent = 0
+
+[State 1683, VelSet]
+type = VelSet
+trigger1 = GetHitVar(hitshaketime)
+x = 0
+y = 0
+
+[State 1683, NotHitBy]
+type = NotHitBy
+trigger1 = AnimElemTime(5)>=0 && AnimElemTime(7)<0
+value = SCA,AA,AT,AP
+time = 1
+
+[State 1683, ChangeAnim2]
+type = ChangeAnim2
+trigger1 = pos y < 0 && (Anim!=16382 && Anim!=17382)
+value = 16382
+
+[State 1683, Gravity]
+type = Gravity
+trigger1 = pos y < 0
+
+[state 1683, VelSet]
+type = VelSet
+trigger1 = pos y > 0
+y = 0
+
+[State 1683, PosSet]
+type = PosSet
+trigger1 = pos y > 0
+y = 0
+
+[State 1683, ChangeAnim2]
+type = ChangeAnim2
+trigger1 = pos y = 0 && (Anim!=16385 && Anim!=17385)
+value = 16385
+
+[State 1683, ChangeState]
+type = ChangeState
+trigger1 = (Anim=16385 || Anim=17385) && AnimTime = 0
+value = 1684
+ctrl = 0
+
+;--------------------------------------------------------------------------
+;Frog Idle
+[StateDef 1684]
+type = S
+movetype = H
+physics = S
+velset = 0,0
+
+[State 0, PowerAdd]
+type = PowerAdd
+trigger1 = 1
+value = 5
+ignorehitpause = 1
+
+[State 1684, ChangeAnim2]
+type = ChangeAnim2
+trigger1 = !time
+value = 16383
+
+[State 1684, ChangeState]
+type = ChangeState
+trigger1 = random%50 = 0
+value = 1685
+
+;-------------------------------------------------------------------------
+;Frog Move
+[StateDef 1685]
+type = S
+movetype = H
+physics = N
+velset = 0,0
+
+[State 0, PowerAdd]
+type = PowerAdd
+trigger1 = 1
+value = 5
+ignorehitpause = 1
+
+[State 1685, PlayerPush]
+type = PlayerPush
+trigger1 = AnimElemTime(2)>=0
+value = 0
+
+[State 1685, Turn]
+type = Turn
+trigger1 = !time && (random%2=0 || FrontEdgeBodyDist < 30)
+
+[State 1685, ChangeAnim2]
+type = ChangeAnim2
+trigger1 = !time
+value = 16384
+
+[State 1685, VelSet]
+type = VelSet
+trigger1 = AnimElem = 2
+x = 2
+y = -3
+
+[State 1685, Gravity]
+type = Gravity
+trigger1 = AnimElemTime(3)>=0 && pos y < 0
+
+[State 1685, VelSet]
+type = VelSet
+trigger1 = pos y > 0
+y = 0
+x = 0
+
+[state 1685, PosSet]
+type = PosSet
+trigger1 = pos y > 0
+y = 0
+
+[State 1685, ChangeState]
+type = ChangeState
+trigger1 = pos y = 0 && AnimElemTime(3)>=0
+value = 1684
+
+;--------------------------------------------------------------------------
+;Turn Back
+[StateDef 1686]
+type = S
+movetype = H
+physics = S
+velset = 0,0
+anim = -1
+
+[State 0, PowerAdd]
+type = PowerAdd
+trigger1 = 1
+value = 5
+ignorehitpause = 1
+
+[State 1686, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 1
+
+[State 1686, ChangeAnim2]
+type = ChangeAnim2
+trigger1 = !time
+value = 16385
+
+[State 1686, SelfState]
+type = SelfState
+trigger1 = AnimElemTime(4)>=6
+value = 5100
+
+;---------------------------------------------------------------------------
+;Generic Frog
+[StateDef 1610]
+anim = 9999
+
+[State 1610, Turn]
+type = Turn
+trigger1 = facing!=enemy,facing
+
+[State 1610, ChangeAnim]
+type = ChangeAnim
+trigger1 = anim != enemy,anim-72 && enemy,anim-72=[16310,16313]
+value = enemy,anim-72
+
+[State 1610, PosSet]
+type = PosSet
+trigger1 = 1
+x = enemynear(0),pos x
+y = enemynear(0),pos y
+
+[State 1610, DestroySelf]
+type = DestroySelf
+trigger1 = enemy,stateno!=[1682,1686]
+
+;---------------------------------------------------------------------------
+;Retain Target Helper
+[StateDef 1611]
+type = A
+movetype = A
+physics = N
+anim = 1404
+
+[State 1611, HitDef]
+type = HitDef
+trigger1 = !time
+attr = A,SA
+hitflag = MAFD
+damage = 0,0
+p1stateno = 1612
+p2stateno = 1682
+hitsound = -1
+guardsound = -1
+sparkno = -1
+guard.sparkno = -1
+hitonce = 1
+
+;---------------------------------------------------------------------------
+;Retain Target Helper - Main
+[StateDef 1612]
+type = A
+movetype = I
+physics = N
+anim = 9999
+
+[State 1612, TargetState]
+type = TargetState
+trigger1 = target,stateno=[5000,5099]
+value = 1683
+ignorehitpause = 1
+
+[State 1684, TargetState]
+type = TargetState
+triggerall = target,stateno!=1686
+trigger1 = root,Win || root,Lose
+trigger2 = time = 900
+value = 1686
+
+[State 1612, DestroySelf]
+type = DestroySelf
+trigger1 = !NumTarget || target,stateno=1686

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/_debug_env.sh"
+
+LOG_FILE="${VALGRIND_LOG:-$ROOT_DIR/debug/valgrind.%p.log}"
+
+exec "$DEBUG_ROOT/usr/bin/valgrind" \
+  --tool=memcheck \
+  --trace-children=yes \
+  --leak-check=full \
+  --show-leak-kinds=all \
+  --num-callers=30 \
+  --log-file="$LOG_FILE" \
+  "$ROOT_DIR/Ikemen_GO_Linux" "$@"
+

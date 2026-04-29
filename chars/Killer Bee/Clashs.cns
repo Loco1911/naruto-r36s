@@ -1,0 +1,280 @@
+;Clash - Start
+[Statedef 10000]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 1003
+sprpriority = 2
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,11
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,11
+volume = 999
+
+[State 0, PlayerPush]
+type = PlayerPush
+trigger1 = 1
+value = 0
+
+[State 0, Explod]
+type = Explod
+trigger1 = timemod = 6,0
+anim = 7015
+ID = 2000
+pos = 40,10
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .3,1
+sprpriority = 3
+ontop = 1
+ownpal = 1
+removeongethit = 1
+vel = -10,0
+
+[State 0, Explod]
+type = Explod
+trigger1 = time = 0
+anim = 1053
+ID = 1053
+pos = 5,3
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = -1
+scale = 1,1
+sprpriority = 3
+ontop = 1
+ownpal = 1
+removeongethit = 1
+IGNOREHITPAUSE = 0
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+trigger1 = time = 0
+id = 1052
+
+[State 0, Clash FX]
+type = Helper
+trigger1 = time = 0
+helpertype = Normal
+name = "Clash FX"
+ID = 10050
+stateno = 10050
+pos = 0,0
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+
+[State 200, End]
+type = ChangeState
+trigger1 = numhelper(10500) = 1
+value = 10001
+
+;-------------------------------------
+;Clash - End
+[Statedef 10001]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+sprpriority = 2
+
+[State 0, RemoveExplod]
+type = RemoveExplod
+trigger1 = time = 30
+id = 1053
+
+[State 200, End]
+type = ChangeState
+trigger1 = time = 40
+value = 0
+ctrl = 1
+
+;-------------------------------------
+;Clash FX
+[Statedef 10050]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 8400
+sprpriority = 3
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+trigger2 = time%20 = 0
+value = S1,24
+volume = 999
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = time = 0
+trigger2 = time%10 = 0
+time = 10
+freq = 60
+ampl = -2
+phase = 90
+
+[State 0, BindToParent]
+type = BindToParent
+trigger1 = 1
+pos = 70,-40
+
+[State 0, Trans]
+type = Trans
+trigger1 = 1
+trans = add
+
+[State 0, AngleDraw]
+type = AngleDraw
+trigger1 = 1
+value = -1-(time*45)
+scale = .5,.5
+ignorehitpause = 0
+
+[State 0, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = noshadow
+ignorehitpause = 1
+
+[State 200, End]
+type = Destroyself
+trigger1 = root,stateno != 10000
+
+;-------------------------------------
+;Clash Helper
+[Statedef 10500]
+type    = S
+movetype= A
+physics = S
+juggle  = 9
+velset = 0,0
+ctrl = 0
+anim = 10500
+sprpriority = -1
+
+[State 0, BindToRoot]
+type = BindToRoot
+trigger1 = time = 0
+time = 1
+pos = 70,-40
+
+[State 0, Explosion]
+type = Explod
+trigger1 = time = 1
+anim = 9022
+ID = 9022
+pos = 0,0
+postype = left
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = -2
+scale = 999,999
+sprpriority = 9
+ontop = 1
+ownpal = 1
+removeongethit = 0
+ignorehitpause = 1
+supermove = 99999
+pausemove = 99999
+supermovetime = 99999
+pausemovetime = 99999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 1
+value = S2,4
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 1
+value = S2,4
+volume = 999
+
+[State 0, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = unguardable
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = S, HA
+animtype  = Heavy
+damage    = 200
+guardflag = MA
+pausetime = 5,5
+sparkno = -1
+guard.sparkno = -1
+sparkxy = -8,-25
+hitsound   = -1
+guardsound = -1
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = -6,-8
+air.velocity = -6,-8
+Fall = 1
+Fall.recover = 0
+getpower = 0,0
+hitonce = 1
+envshake.time = 50
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 5
+
+;-------------------------------------
+;Push The Buttons FX
+[Statedef 10800]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 10800
+sprpriority = 9
+
+[State 0, BindToParent]
+type = BindToroot
+trigger1 = 1
+pos = 20,-100
+
+[State 0, Trans]
+type = Trans
+trigger1 = 1
+trans = addalpha
+alpha = 256-(time*3),256
+
+[State 0, AngleDraw]
+type = AngleDraw
+trigger1 = 1
+value = 0
+scale = .25+(time*.0005),.25+(time*.0005)
+
+[State 200, End]
+type = Destroyself
+trigger1 = root,stateno != 10000

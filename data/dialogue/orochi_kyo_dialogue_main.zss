@@ -1,0 +1,68 @@
+#===============================================================================
+# This is a simple example of the use of dialogue sctrl introduced in Ikemen GO 0.96, updated to 0.98.2
+# done by Orochi_Kyo. The idea behind this file is to show you how to use this new
+# powerful tool to call helpers and explods, so you can create advanced dialogue
+# scenarios. Sorry for CNS users but I made it in ZSS. Still youll be able to recognize
+# a lot of triggers and sctrls from Mugen, the only difference is the scope.
+# The code is free to use but if you want to credit me if you use it on your proyect,
+# I'll appreciate it.
+# For more info and explanations please visit my site
+# https://costaricaonfoot.blog/2022/07/12/dialogue-system-for-ikemen-go/
+#===============================================================================
+# New patch November 2024
+# Updated to Ikemen Go Nightly Build November 2024
+# Module is now completely isolated, you do not need to overwrite any files
+# Added a sound file, not needed for now, but you can use it to add your own sound effects or even audios
+# removed Localscale as it was deprecated a long time ago
+# The prefix to call animations from the ZSS/CNS code is DIALOGUE. For example Explod{anim: F9060;} now is Explod{anim: DIALOGUE9060;}
+#===============================================================================
+
+
+[Statedef -4]
+#;-------Added by Orochi Kyo
+#;setting the map to detect active player before the dialogue becomes active
+if !indialogue {
+mapset{map:"isActivePlayer";value:1} #;change this between 0 and 1 according to which player initiates the dialogue
+}
+
+
+#===============================================================================
+# Story dialogue for Naruto vs Kakashi in naruto_chunin
+#===============================================================================
+if teamside = 1 && (stateno = 2520 || stateno = [191,195]) && name = "Uzumaki Naruto Kid" && enemynear,name = "Hatake Kakashi" && animtime = 0 && const(DualOrSingleWindow) = 1 && map(storyNarutoChuninDialogue) = 1 && map(storyNarutoChuninDialogueDone) = 0 {
+Dialogue {
+hidebars : 1;
+text1 : "<p1><p1name=enemy(0)><map=self,storyNarutoChuninDialogueDone,1,set><map=self,isActivePlayer,1,set>Naruto, no te apresures.<wait=9999>";
+text2 : "<p1><p1name=enemy(0)><map=self,isActivePlayer,1,set>Mantente firme. Quiero ver si de verdad estas listo para esto.<wait=9999>";
+	}
+}
+
+#===============================================================================
+# End of block for dual window
+#===============================================================================
+
+#===============================================================================
+# Dialogue for single window
+# Copy this block and change the name and the enemynear,name conditionals to activate
+# the dialogue between two chars
+#===============================================================================
+
+if teamside = 1 && stateno = [191,195] && (name = "Kung Fu Man" || name = "Kung Fu Man 720") && (enemynear,name = "Kung Fu Man" || enemynear,name = "Kung Fu Man 720") && animtime = 0 && const(DualOrSingleWindow) = 1 { #; a generic trigger to activate the dialogue
+Dialogue {
+hidebars : 1;
+text1 : "<p1><p1name=self><map=self,isActivePlayer,1,set>My name is Kung Fu Man!  Who are you?<wait=45>";
+text2 : "<p1><p1name=enemy(0)><map=self,isActivePlayer,0,set>I am <displayname=enemy(0)>.<wait=30>";
+text3 : "<p1><p1name=self><map=self,isActivePlayer,1,set>You dare to stand in my way, you clearly dont know who I am.<wait=30>";
+text4 : "<p1><p1name=enemy(0)><map=self,isActivePlayer,0,set>If you were aware of who I am, you'll be running away.<wait=45>";
+text5 : "<p1><p1name=self><map=self,isActivePlayer,1,set><map=self,callHelperP1,1,set>This is Kung Fu Man Number 2! He is strong and I am stronger!<wait=70>"; #;call a helper
+text6 : "<p1><p1name=enemy(0)><map=self,isActivePlayer,0,set><map=self,callHelperP2,1,set>This is Mini Me, if you think he looks strong, you can't even imagine my strenght.<wait=70>"; #call a helper
+text7 : "<p1><p1name=self><map=self,isActivePlayer,1,set><map=self,callHelperP1,0,set><map=self,callHelperP2,0,set>I am tired of this, just dont forget I'll give you the chance to get away alive.<wait=45>"; #remove helper
+text8 : "<p1><p1name=enemy(0)><map=self,isActivePlayer,0,set>Ok, Ill put that in your epitaph.<wait=45>"; #remove helper
+text9 : "<p1><p1name=self><map=self,isActivePlayer,1,set>Attack me.<wait=30>";
+text10 :"<p1><p1name=enemy(0)><map=self,isActivePlayer,0,set>You should be the one attacking.<wait=60>";
+	}
+}
+
+#===============================================================================
+# End of block for single window
+#===============================================================================

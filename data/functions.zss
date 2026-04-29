@@ -224,6 +224,20 @@ ignoreHitPause{
 #===============================================================================
 [StateDef -4]
 
+ignoreHitPause if map(storyDialogue) = 1 {
+	AssertSpecial{flag: intro}
+	AssertSpecial{flag: nobardisplay}
+	ctrlSet{value: 0}
+	velSet{x: 0; y: 0}
+	posFreeze{}
+	map(_iksys_storyDialogueHold) := 1;
+} else ignoreHitPause if map(_iksys_storyDialogueHold) = 1 {
+	if roundState >= 2 {
+		ctrlSet{value: 1}
+	}
+	map(_iksys_storyDialogueHold) := 0;
+}
+
 if teamSide = 0 {
 	# Do nothing, global code executed by stage
 } else if roundState = 0 {

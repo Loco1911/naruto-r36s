@@ -1,0 +1,1773 @@
+;===============================================================================
+;-------------------------------------Supers------------------------------------
+;===============================================================================
+;===============================================================================
+; Shin Tensin no Jutsu:
+;-------------------------------------------------------------------------------
+; Shin Tensin no Jutsu - Start
+[Statedef 3000]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3000
+poweradd = -1000
+sprpriority = 2
+
+[State 3000, SuperPause]
+type = SuperPause
+trigger1 = time = 0
+time = 30
+movetime = 30
+anim = -1
+sound = -1
+pos = 32,-80
+darken = 0
+unhittable = 1
+
+[State 3000, VarSet]
+type = Varset
+trigger1 = time = 0
+v = 12
+value = -100
+
+[State 3000, VarAdd]
+type = VarAdd
+trigger1 = time >= 20 && Var(12) < 0
+v = 12
+value = 6
+
+[State 3000, BGColorFX]
+type = BGPalFX
+trigger1 = Time > 0
+time = 1
+add = Var(12),Var(12),Var(12)
+
+[State 3000, Super Charge]
+type = Explod
+trigger1 = Time = 0
+anim = 7400
+ID = 7400
+pos = 1,-40
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = -1
+ownpal = 1
+scale = .7,.7
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 3000, PlaySnd - Super Charge]
+type = PlaySnd
+trigger1 = Time = 0
+value = S950,1
+volume = 50
+
+[State 0, VarSet]
+type = VarSet
+trigger1 = time = 0
+v = 18
+value = 0
+
+[State 0, Shin Tensin]
+type = Helper
+trigger1 = time = 65
+helpertype = normal
+name = "Shin Tensin"
+ID = 3050
+stateno = 3050
+pos = 0,0
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+
+[State 200, End]
+type = ChangeState
+triggerall = time >= 65
+trigger1 = var(18) = 1
+value = 3001
+
+[State 0, PalFX]
+type = PalFX
+trigger1 = time = 65
+trigger2 = time = 150
+time = 10
+add = 50,50,50
+sinadd = 0,0,0,1
+color = 256
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 150
+value = S4,9
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 150
+value = S4,9
+volume = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 2||animelem = 5
+value = S5,15
+volume = 50
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 7
+value = S5,16
+volume = 50
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,4
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,4
+volume = 999
+
+[State 200, End]
+type = ChangeState
+trigger1 = animtime = 0
+value = 12
+ctrl = 1
+;-------------------------------------------------------------------------------
+; Shin Tensin no Jutsu - Final
+[Statedef 3001]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3001
+sprpriority = 2
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 35
+value = S4,9
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 35
+value = S4,9
+volume = 999
+
+[State 0, PalFX]
+type = PalFX
+trigger1 = time = 35
+time = 10
+add = 50,50,50
+sinadd = 0,0,0,1
+color = 256
+
+[State 200, End]
+type = ChangeState
+trigger1 = time = 50
+value = 12
+ctrl = 1
+;-------------------------------------------------------------------------------
+; Shin Tensin Clon
+[Statedef 3050]
+type    = A
+movetype= A
+physics = N
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3050
+sprpriority = 3
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S1,19
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S1,19
+volume = 999
+
+[State 0, AngleDraw]
+type = AngleDraw
+trigger1 = vel y != 0
+value = (-vel y)*2
+ignorehitpause = 1
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+x = 20
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time > 0 && pos y >= 0
+x = 20
+y = 0
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 999
+
+[State 0, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = noshadow
+ignorehitpause = 1
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = pos y >= 0
+y = 0
+
+[State 0, StateTypeSet]
+type = StateTypeSet
+trigger1 = pos y >= 0
+statetype = S
+movetype = A
+physics = N
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,47
+volume = 50
+
+[State 0, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = unguardable
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = A, SP
+animtype  = Heavy
+damage    = 0
+HITFLAG = MAF
+guardflag = MA
+pausetime = 0,0
+sparkno = -1
+guard.sparkno = s7000
+sparkxy = -8,-25
+hitsound   = -1
+guardsound = S4,1
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = 0
+air.velocity = 0
+Fall = 0
+GETPOWER = 0,0
+p2stateno = 28050
+Palfx.time = 10
+Palfx.add = 50,50,50
+Palfx.sinadd = 0,0,0,1
+Palfx.color = 256
+
+[State 0, ParentVarSet]
+type = ParentVarSet
+trigger1 = movehit
+v = 18
+value = 1
+
+[State 0]
+type = Helper
+trigger1 = Movehit = 1
+helpertype = normal ;player
+name = "Kunai"
+ID = 3025
+stateno = 3025
+pos = 25,-40
+postype = p2    ;p2,front,back,left,right
+facing = 1
+ownpal = 1
+
+[State 0]
+type = Helper
+trigger1 = Movehit = 1
+helpertype = normal ;player
+name = "Kunai"
+ID = 3025
+stateno = 3025
+pos = -25,-40
+postype = p2    ;p2,front,back,left,right
+facing = -1
+ownpal = 1
+
+[State 0]
+type = Helper
+trigger1 = Movehit = 1
+helpertype = normal ;player
+name = "Sonido"
+ID = 3029
+stateno = 3029
+pos = 0,0
+postype = p2    ;p2,front,back,left,right
+facing = -1
+ownpal = 1
+
+[State 200, End]
+type = Destroyself
+trigger1 = movecontact
+trigger2 = frontedgebodydist <= -5
+trigger3 = time >= 500
+;-------------------------------------------------------------------------------
+; Helper
+[Statedef 3029]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 9999
+sprpriority = -1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 45
+value = S1,11
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 45
+value = S1,11
+volume = 999
+
+[State 0, Helper]
+type = Helper
+triggerall = numhelper(3220) = 0
+trigger1 = time = 45
+helpertype = normal
+name = "Camara Lenta"
+ID = 3220
+stateno =  3220
+pos = 999,999
+postype = p1
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 50
+;---------------------------------------------------------------------------
+[StateDef 28050]
+type = A
+movetype= H
+physics = S
+ctrl = 0
+sprpriority = 5
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 1
+
+[state 0]
+type = removeexplod
+trigger1 = time = 0
+value = 10
+
+[state 0]
+type = changeanim
+trigger1 = time = 0
+value = 10
+
+[state 0]
+type = changeanim
+trigger1 = time = 5
+value = 11
+
+[state 0]
+type = posset
+trigger1 = time = 0
+y = 0
+
+[state 0]
+type = velset
+trigger1 = time = 0
+x = 0
+y = 0
+
+[state 0]
+type = velset
+trigger1 = time = 45
+y = -8
+
+[state 0]
+type = Lifeadd
+trigger1 = time = 45
+value = -160
+
+[State 0, PowerAdd]
+type = PowerAdd
+trigger1 = time = 0
+value = -1000
+
+[state 0]
+type = envshake
+trigger1 = time = 45
+ampl = 6
+time = 20
+ignorehitpause = 1
+
+[State 0, PalFX]
+type = PalFX
+trigger1 = time = 45
+time = 30
+add = -200,-200,-200
+sinadd = 50,50,50,50
+color = 256
+invertall = 0
+
+[State 0]
+type = SelfState
+trigger1 = Time = 50
+value = 5050
+ctrl = 0
+;---------------------------------------------------------------------------
+[StateDef 3025]
+type = S
+physics = S
+ctrl = 0
+sprpriority = 10
+anim = 1125
+
+[state 0]
+type = angledraw
+trigger1 = 1
+scale = 1,1
+
+[state 0]
+type = posset
+trigger1 = time = 0
+y = -40
+
+[state 0]
+type = posset
+trigger1 = time = 10
+y = 0
+
+[state 0]
+type = velset
+trigger1 = time = 0
+y = 4
+
+[state 0]
+type = velset
+trigger1 = time = 10
+y = 0
+
+[State 0, Break FX ADD]
+type = Explod
+trigger1 = time = 45
+anim = 1050
+ID = 1270
+pos = 0,-20
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .6,.6
+sprpriority = 2
+ontop = 1
+ownpal = 1
+Angle = 0+Random%180
+ignorehitpause  = 1
+[State 0, Break FX ADD]
+type = Explod
+trigger1 = time = 45
+anim = 1050
+ID = 1270
+pos = 0,-20
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .6,.6
+sprpriority = 2
+ontop = 0
+ownpal = 1
+Angle = 0+Random%180
+ignorehitpause  = 1
+trans = sub
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 10
+value = S2,20
+volume = 50
+
+[State 0]
+type = Destroyself
+trigger1 = time = 45
+;-------------------------------------------------------------------------------
+; HELPER 3
+[Statedef 9123]
+type    = U                      ;State-type: S-stand, C-crouch, A-air, L-liedown
+movetype= U                      ;Move-type: A-attack, I-idle, H-gethit
+physics = U                      ;Physics: S-stand, C-crouch, A-air
+juggle  = 0                      ;Number of air juggle points move takes
+;Commonly-used controllers:
+velset = 0,0                     ;Set velocity (x,y) (Def: no change)
+ctrl = 0                          ;Set ctrl (Def: no change)
+sprpriority = 10
+
+[State 9123, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 1
+ignorehitpause = 1
+
+[State 9123, 2] ;this will allow the helper to replicate the same animation than the root
+type = ChangeAnim
+trigger1 = anim != (enemy, anim)
+trigger2 = AnimElemNo(0) > (enemy, AnimElemNo(0))
+value = enemy, anim
+elem = enemy,AnimElemNo(0)
+ignorehitpause = 1
+
+[State 9123, Pos] ;bind the helper to a fixed position
+type = PosSet
+trigger1 = 1
+x = (enemy, pos x)
+y = enemy, pos y
+ignorehitpause = 1
+
+[State 9123, turn] ;the helper will face the enemy
+type = Turn
+trigger1 = pos Y = 0
+trigger1 = facing = root,facing
+ignorehitpause = 1
+
+[State 0, DestroySelf]
+type = DestroySelf
+trigger1 = time = 500 ;it’s a good idea to kill the helper after some time, but we can find other ways to kill it. This is up to the author
+ignorehitpause = 1
+;-------------------------------------------------------------------------------
+; HELPER 1
+[Statedef 9124]
+type    = U                      ;State-type: S-stand, C-crouch, A-air, L-liedown
+movetype= U                      ;Move-type: A-attack, I-idle, H-gethit
+physics = U                      ;Physics: S-stand, C-crouch, A-air
+juggle  = 0                      ;Number of air juggle points move takes
+;Commonly-used controllers:
+velset = 0,0                     ;Set velocity (x,y) (Def: no change)
+ctrl = 0                         ;Set ctrl (Def: no change)                     ;Change animation (Def: no change)
+sprpriority = 10
+
+[State 9124, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 1
+ignorehitpause = 1
+;persistent =
+
+[State 9124, Pos] ;bind the helper to a fixed position
+type = PosSet
+trigger1 = 1
+x = (enemy, pos x)
+y = enemy, pos y
+ignorehitpause = 1
+
+[State 9124, turn] ;the helper will face the enemy
+type = Turn
+trigger1 = pos Y = 0
+trigger1 = facing = root,facing
+ignorehitpause = 1
+
+[State 9124, 2] ;this will allow the helper to replicate the same animation than the root
+type = ChangeAnim
+trigger1 = Anim != (enemy, anim)
+trigger2 = AnimElemNo(0) > (enemy, AnimElemNo(0))
+value = enemy, anim
+elem = enemy,AnimElemNo(0)
+ignorehitpause = 1
+
+[State 9124, DestroySelf]
+type = DestroySelf
+trigger1 = root,var(51)=0 ;time = 500
+ignorehitpause = 1
+;persistent =
+;-------------------------------------------------------------------------------
+; P2 STATE
+[Statedef 6000]
+type = U
+movetype = I
+physics = U
+ctrl = 0
+velset = 0,0
+poweradd = 0
+
+[State Enemy Helper on Player]
+type = Helper
+trigger1 = !time
+helpertype = normal ;player
+name = "P2onP1"
+ID = 9123
+stateno = 9123
+pos = 0,0
+postype = p2
+facing = 1
+keyctrl = 0
+ownpal = 0
+supermovetime = 0
+pausemovetime = 0
+
+[State ChangeState]
+type = SelfState
+trigger1 =  !time
+value = 0
+ctrl = 1
+;===============================================================================
+; Ninpou Hyakka Ryouran:
+;-------------------------------------------------------------------------------
+[Statedef 3100]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3100
+poweradd = -2000
+sprpriority = 2
+
+[State 3000, SuperPause]
+type = SuperPause
+trigger1 = time = 0
+time = 30
+movetime = 30
+anim = -1
+sound = -1
+pos = 32,-80
+darken = 0
+unhittable = 1
+
+[State 3000, VarSet]
+type = Varset
+trigger1 = time = 0
+v = 12
+value = -100
+
+[State 3000, VarAdd]
+type = VarAdd
+trigger1 = time >= 15 && Var(12) < 0
+v = 12
+value = 6
+
+[State 3000, BGColorFX]
+type = BGPalFX
+trigger1 = Time > 0
+time = 1
+add = Var(12),Var(12),Var(12)
+
+[State 3000, Super Charge]
+type = Explod
+trigger1 = Time = 0
+anim = 7400
+ID = 7400
+pos = 0,-25
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = -1
+ownpal = 1
+scale = .9,.9
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 3000, PlaySnd - Super Charge]
+type = PlaySnd
+trigger1 = Time = 0
+value = S950,2
+volume = 50
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,18
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,18
+volume = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 40
+value = S0,22
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 40
+value = S0,22
+volume = 999
+
+[State 0, Polvo 2]
+type = Explod
+trigger1 = time = 30
+anim = 7100
+ID = 7100
+pos = 35,10
+facing = -1
+postype = p1
+scale = .3,.3
+sprpriority = 2
+ownpal = 1
+[State 0, Polvo 2]
+type = Explod
+trigger1 = time = 30
+anim = 7100
+ID = 7100
+pos = -35,10
+facing = 1
+postype = p1
+scale = .3,.3
+sprpriority = 2
+ownpal = 1
+
+[State 0, Pause]
+type = Pause
+trigger1 = time = [31,41]
+time = 1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 30
+value = S40,2
+volume = 50
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 30
+value = S40,2
+volume = 50
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 30
+y = -10
+
+[State 0, StateTypeSet]
+type = StateTypeSet
+trigger1 = time = 36
+type    = A
+movetype= I
+physics = N
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 36
+y = -.25
+
+[State 0, Hyakka Ryouran]
+type = Explod
+triggerall = time > 35 && time < 215
+trigger1 = timemod = 5,0
+anim = 3110
+ID = 3110
+pos = 0,-30
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = -1
+removetime = -2
+scale = 0.2,0.5
+sprpriority = 3
+ontop = 1
+ownpal = 1
+removeongethit = 1
+
+[State 0, Hyakka Ryouran]
+type = Explod
+triggerall = time > 35 && time < 215
+trigger1 = timemod = 5,0
+facing = -1
+anim = 3110
+ID = 3110
+pos = 0,-30
+postype = p1
+vfacing = 1
+bindtime = -1
+removetime = -2
+scale = 0.2,0.5
+sprpriority = 3
+ontop = 1
+ownpal = 1
+removeongethit = 1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 35
+value = S1,21
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 35
+value = S1,21
+volume = 999
+
+[State 0, Flower Bomb]
+type = Helper
+triggerall = time > 35 && time < 210
+trigger1 = timemod = 5,0
+trigger2 = time = 35
+helpertype = Normal
+name = "Flower Bomb"
+ID = 3150
+stateno = 3150
+pos = 0,-20-random%40
+postype = p1
+facing = 1
+keyctrl = 0
+ownpal = 1
+
+[State 0, Flower Bomb]
+type = Helper
+triggerall = time > 35 && time < 210
+trigger1 = timemod = 5,0
+trigger2 = time = 35
+helpertype = Normal
+name = "Flower Bomb"
+ID = 3150
+stateno = 3150
+pos = 0,-20-random%40
+postype = p1
+facing = -1
+keyctrl = 0
+ownpal = 1
+
+[State 0, PlaySnd]
+type = PlaySnd
+triggerall = time > 35 && time < 220
+trigger1 = timemod = 5,0
+trigger2 = time = 35
+value = S5,5
+volume = 50
+
+[State 200, End]
+type = ChangeState
+trigger1 = time = 220
+value = 50
+ctrl = 1
+;-------------------------------------------------------------------------------
+; Flower Bomb - Helper Aire
+[Statedef 3150]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+ctrl = 0
+anim = 3150
+sprpriority = 2
+
+[State 0, AngleSet]
+type=AngleSet
+trigger1=1
+value=((atan((-1*Vel Y)/Vel X))*(360/(2*pi)))
+
+[State 0, AngleDraw]
+type=AngleDraw
+trigger1 = 1
+IgnoreHitPause = 1
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 1
+y = Var(26)/100.0
+
+[State 0, VarRandom]
+type = VarRandom
+trigger1 = time = 0
+v = 26
+range = 1000,-300
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = 1
+x = 15
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = A, SP
+animtype  = medium
+damage    = 10
+Hitflag = MAFDE
+guardflag = MA
+pausetime = 10,5
+sparkno = -1
+guard.sparkno = -1
+sparkxy = -8,-25
+hitsound   = S1,11
+guardsound = S1,11
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = -3,-6
+air.velocity = -2,-5
+Fall = 1
+Fall.recover = 1
+fall.recovertime = 30
+PalFX.time = 30
+PalFX.add = -200,-200,-200
+PalFX.mul = 256,256,256
+PalFX.sinadd = 50,50,50,50
+PalFX.invertall = 0
+PalFX.color = 256
+envshake.time = 5
+getpower = 0,0
+
+[State 200, Spark CVS]
+type = Explod
+triggerall = Numexplod(7001) = 0
+trigger1 = Movecontact = 1
+trigger2 = pos y >= -5
+anim = 1050
+ID = 7001
+pos = 0,0
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .2,.2
+sprpriority = 2
+ontop = 1
+ownpal = 1
+Angle = 0+Random%180
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = pos y >= -5
+value = S1,11
+volume = 50
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = pos y >= -5
+time = 5
+
+[State 200, End]
+type = Destroyself
+trigger1 = movecontact
+trigger2 = frontedgebodydist <= -5
+trigger3 = pos y >= -5
+trigger4 = time >= 500
+;===============================================================================
+; Ninpou Gekka Bijin :
+;-------------------------------------------------------------------------------
+; Ninpou Gekka Bijin - Start
+[Statedef 3200]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 3200
+poweradd = -1000
+sprpriority = 2
+
+[State 3000, SuperPause]
+type = SuperPause
+trigger1 = time = 0
+time = 30
+movetime = 30
+anim = -1
+sound = -1
+pos = 32,-80
+darken = 0
+unhittable = 1
+
+[State 3000, VarSet]
+type = Varset
+trigger1 = time = 0
+v = 12
+value = -100
+
+[State 3000, VarAdd]
+type = VarAdd
+trigger1 = time >= 15 && Var(12) < 0
+v = 12
+value = 6
+
+[State 3000, BGColorFX]
+type = BGPalFX
+trigger1 = Time > 0
+time = 1
+add = Var(12),Var(12),Var(12)
+
+[State 3000, Super Charge]
+type = Explod
+trigger1 = Time = 0
+anim = 7400
+ID = 7400
+pos = -6,-40
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = -1
+ownpal = 1
+scale = 1,1
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 3000, PlaySnd - Super Charge]
+type = PlaySnd
+trigger1 = Time = 0
+value = S950,2
+volume = 50
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,15
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,15
+volume = 999
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 35
+x = 8
+
+[State 0, Helper]
+type = Helper
+triggerall = numhelper(3220) = 0
+trigger1 = movehit = 1
+helpertype = normal
+name = "Camara Lenta"
+ID = 3220
+stateno =  3220
+pos = 999,999
+postype = p1
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = S, HA
+animtype  = HEAVY
+damage    = 20,10
+guardflag = MA
+sparkno = -1
+guard.sparkno = s7000
+sparkxy = -8,-25
+hitsound   = S2,3
+guardsound = S4,1
+ground.type = High
+ground.slidetime = 10
+ground.hittime  = 10
+ground.velocity = 0
+air.velocity = 0
+envshake.time = 10
+getpower = 0,0
+p2stateno = 28010
+
+[State 200, Spark CVS]
+type = Explod
+triggerall = Numexplod(7002) = 0
+trigger1 = Movehit = 1
+anim = 7001
+ID = 7002
+postype = P1
+pos = 20,-40
+facing = 1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = 0.8,0.8
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+[State 200, Spark CVS]
+type = Explod
+triggerall = Numexplod(7003) = 0
+trigger1 = Movehit = 1
+anim = 7012
+ID = 7003
+postype = P1
+pos = 20,-40
+facing = 1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = 0.5,0.5
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 0]
+type = ChangeState
+trigger1 = movehit = 1
+value = 6052
+ctrl = 0
+
+[State 200, End]
+type = ChangeState
+trigger1 = animtime = 0
+value = 0
+ctrl = 1
+;---------------------------------------------------------------------------
+[StateDef 6052]
+type = S
+movetype = A
+physics = S
+ctrl = 0
+anim = 3201
+poweradd = -1500
+velset = 0,0
+
+[state 0]
+type = turn
+triggerall = (p2dist x) < 0
+trigger1 = time = 0
+
+[state 0]
+type = angledraw
+trigger1 = 1
+scale = 1,1
+
+[state 0]
+type = angleset
+triggerall = time < 10
+trigger1 = 1
+value = 0
+
+[state 0]
+type = angleset
+trigger1 = animelem = 4
+value = 30
+
+[state 0]
+type = angleset
+triggerall = time > 190
+trigger1 = 1
+value = 0
+
+[state 0]
+type = angleadd
+triggerall = time > 165
+triggerall = time < 190
+trigger1 = 1
+value = -40
+
+[state 0]
+type = posset
+trigger1 = time = 0
+y = 0
+
+[state 0]
+type = posadd
+trigger1 = time = 1
+x = (p2dist x) -40
+
+[state 0]
+type = velset
+triggerall = time < 15
+trigger1 = 1
+x = -5
+
+[state 0]
+type = velset
+triggerall = time > 20
+triggerall = time < 40
+trigger1 = 1
+x = 1
+y = -5
+
+[state 0]
+type = velset
+triggerall = time > 40
+triggerall = time < 165
+trigger1 = 1
+x = 0.25
+y = -0.5
+
+[state 0]
+type = velset
+triggerall = time > 165
+triggerall = time < 170
+trigger1 = 1
+x = 3
+y = -8
+
+[state 0]
+type = velset
+triggerall = time > 170
+triggerall = time < 190
+trigger1 = 1
+x = 3.5
+
+[state 0]
+type = veladd
+triggerall = time > 170
+triggerall = time < 190
+trigger1 = 1
+y = 1.1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S1,18
+volume = 50
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 2
+value = S60,1
+volume = 50
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 3
+value = S0,23
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 3
+value = S0,23
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 3
+value = S0,23
+volume = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 4
+value = S5,15
+volume = 50
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 4
+value = S1,20
+volume = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 5
+value = S0,24
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 5
+value = S0,24
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 5
+value = S0,24
+volume = 999
+
+[state 0]
+type = playsnd
+triggerall = time >= 170
+triggerall = time <= 190
+trigger1 = timemod = 10,0
+value = S5,5
+
+[State 0, Helper]
+type = Helper
+triggerall = numhelper(3220) = 0
+trigger1 = movehit = 1
+helpertype = normal
+name = "Camara Lenta"
+ID = 3220
+stateno =  3220
+pos = 999,999
+postype = p1
+
+[State 0, AssertSpecial]
+type = AssertSpecial
+trigger1 = 1
+flag = unguardable
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = S, HA
+animtype  = Down
+damage    = 280
+guardflag = MA
+pausetime = 12,12
+sparkno = -1
+guard.sparkno = s7000
+sparkxy = -8,-25
+hitsound   = S2,4
+guardsound = S4,1
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 50
+ground.velocity = 0,12
+air.velocity = 0,12
+Fall = 1
+Fall.recover = 0
+envshake.time = 20
+getpower = 0,0
+
+[State 0, TargetState]
+type = TargetState
+triggerall = p2stateno != 325
+trigger1 = movehit = 1
+value = 325
+
+[State 200, Spark CVS]
+type = Explod
+triggerall = Numexplod(7003) = 0
+trigger1 = Movehit = 1
+anim = 7012
+ID = 7003
+postype = P1
+pos = 0,0
+facing = -1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = .5,.5
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 200, Spark CVS]
+type = Explod
+triggerall = Numexplod(70022) = 0
+trigger1 = Movehit = 1
+anim = 7001
+ID = 70022
+postype = P1
+pos = 0,0
+facing = -1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = .8,.8
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 0, Explod]
+type = Explod
+triggerall = Numexplod(360) = 0
+Triggerall = p2movetype = H && p2stateno != [120,155]
+trigger1 = Movehit = 1
+anim = 360
+ID = 360
+pos = 0,5
+postype = p2
+facing = -1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .9,.9
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 0
+ignorehitpause = 0
+
+[State 0, Explod]
+type = Explod
+triggerall = Numexplod(370) = 0
+Triggerall = p2movetype = H && p2stateno != [120,155]
+trigger1 = Movehit = 1
+anim =  370
+ID = 370
+pos = 0,5
+postype = p2
+facing = -1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .5,.5
+sprpriority = -2
+ontop = 0
+ownpal = 1
+removeongethit = 0
+ignorehitpause = 0
+
+[state 0]
+type = envshake
+trigger1 = movecontact = 1
+ampl = 5
+time = 50
+ignorehitpause = 1
+
+[State 0]
+type = Explod
+trigger1 = time = 2
+anim = 6056
+id = 6056
+pos = -30,-180
+postype = p1  ;p2,front,back,left,right
+removetime = 193
+ontop = 1
+scale = 0.2,0.2
+ownpal = 1
+supermove = 0
+
+[State 0]
+type = Explod
+trigger1 = time = 5
+anim = 6051
+pos = 5,5
+postype = p1  ;p2,front,back,left,right
+removetime = -2
+bindtime = -1
+ontop = 1
+scale = 1,0.5
+ownpal = 1
+supermove = 0
+facing = -1
+
+[State 0]
+type = Explod
+triggerall = time > 40
+trigger1 = timemod = 10,0
+anim = 6054
+pos = 0,-30
+postype = p2  ;p2,front,back,left,right
+removetime = -2
+ontop = 1
+scale = 0.25,0.5
+ownpal = 1
+supermove = 1
+sprpriority = 5
+
+[State 0]
+type = Explod
+triggerall = time > 40
+trigger1 = timemod = 10,0
+anim = 6054
+pos = 0,-30
+postype = p2  ;p2,front,back,left,right
+removetime = -2
+ontop = 1
+scale = 0.25,0.5
+ownpal = 1
+supermove = 1
+facing = -1
+sprpriority = 5
+
+[State 0]
+type = Explod
+triggerall = time > 40
+trigger1 = timemod = 15,0
+anim = 6054
+pos = -10,-30
+postype = p2  ;p2,front,back,left,right
+removetime = -2
+ontop = 1
+scale = 0.15,0.7
+ownpal = 1
+supermove = 1
+facing = -1
+sprpriority = 5
+
+[State 0]
+type = Explod
+triggerall = time > 40
+trigger1 = timemod = 15,0
+anim = 6054
+pos = 10,-30
+postype = p2  ;p2,front,back,left,right
+removetime = -2
+ontop = 1
+scale = 0.15,0.7
+ownpal = 1
+supermove = 1
+sprpriority = 5
+
+[State 0]
+type = Explod
+triggerall = time > 40
+trigger1 = timemod = 15,0
+anim = 6055
+pos = -20,-30
+postype = p2  ;p2,front,back,left,right
+removetime = -2
+ontop = 1
+scale = 0.25,0.5
+ownpal = 1
+supermove = 1
+vfacing = -1
+sprpriority = 5
+
+[State 0]
+type = Explod
+triggerall = time > 40
+trigger1 = timemod = 15,0
+anim = 6055
+pos = 20,-30
+postype = p2  ;p2,front,back,left,right
+removetime = -2
+ontop = 1
+scale = 0.25,0.5
+ownpal = 1
+supermove = 1
+vfacing = -1
+facing = -1
+sprpriority = 5
+
+[State 0]
+type = Explod
+trigger1 = time = 195
+anim = 6055
+pos = -125,-75
+postype = p2  ;p2,front,back,left,right
+removetime = -2
+ontop = 1
+scale = 0.5,0.75
+ownpal = 1
+supermove = 0
+vfacing = -1
+sprpriority = 5
+
+[State 0]
+type = Explod
+trigger1 = time = 195
+anim = 6055
+pos = 125,-75
+postype = p2  ;p2,front,back,left,right
+removetime = -2
+ontop = 1
+scale = 0.5,0.75
+ownpal = 1
+supermove = 0
+vfacing = -1
+facing = -1
+sprpriority = 5
+
+[state 0]
+type = velset
+trigger1 = movecontact = 1
+x = -2
+y = -8
+
+[State 0]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 3010
+ctrl = 1
+;-------------------------------------------------------------------------------
+[Statedef 3010]
+type    = A
+movetype= I
+physics = A
+juggle  = 2
+velset = 0,0
+ctrl = 0
+anim = 195
+sprpriority = 2
+
+[State 0, AngleDraw]
+type = AngleDraw
+trigger1 = 1
+value = 1+(time*60)
+ignorehitpause = 0
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time%8 = 0
+trigger2 = time = 0
+value = S5,5
+volume = 50
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+x = -5
+y = -7
+
+[State 200, End]
+type = ChangeState
+trigger1 = time = 20
+value = 50
+ctrl = 1
+;---------------------------------------------------------------------------
+[StateDef 28010]
+type = S
+movetype = H
+physics = S
+ctrl = 0
+velset = 0,0
+sprpriority = -5
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = time = 0
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 190
+
+[state 0]
+type = playerpush
+trigger1 = 1
+value = 0
+
+[state 0]
+type = turn
+triggerall = (p2dist x) < 0
+trigger1 = time = 0
+
+[state 0]
+type = posset
+trigger1 = time = 0
+y = 0
+
+[state 0]
+type = posadd
+trigger1 = time = 40
+x = (p2dist x) -125
+
+[state 0]
+type = posadd
+trigger1 = time = 1
+x = (p2dist x) -40
+
+[State 0, PalFX]
+type = PalFX
+trigger1 = time = 40
+time = 20
+add = 50,50,50
+sinadd = 0,0,0,1
+color = 256
+
+[state 0]
+type = changeanim
+trigger1 = time = 0
+value = 5000
+
+[state 0]
+type = lifeadd
+triggerall = time > 40
+triggerall = time <= 140
+trigger1 = 1
+value = -2
+kill = 0
+
+[State 0]
+type = SelfState
+trigger1 = Time = 200
+value = 0
+ctrl = 1
+
+
+
+;-------------------------------------------------------------------------------
+; Chance 1
+[Statedef 1276]
+type    = S
+movetype= I
+physics = N
+juggle  = 1
+anim = 9999
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 100
+;-------------------------------------------------------------------------------
+; Chance 2
+[Statedef 1277]
+type    = S
+movetype= I
+physics = N
+juggle  = 1
+anim = 9999
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 100
+;-------------------------------------------------------------------------------
+; Chance 3
+[Statedef 1278]
+type    = S
+movetype= I
+physics = N
+juggle  = 1
+anim = 9999
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 100
+;-------------------------------------------------------------------------------
+; Chance 4
+[Statedef 1279]
+type    = S
+movetype= I
+physics = N
+juggle  = 1
+anim = 9999
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 100
+;-------------------------------------------------------------------------------
+; Chance 5
+[Statedef 1280]
+type    = S
+movetype= I
+physics = N
+juggle  = 1
+anim = 9999
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 100
+;-------------------------------------------------------------------------------
+; Chance 6
+[Statedef 1281]
+type    = S
+movetype= I
+physics = N
+juggle  = 1
+anim = 9999
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 100
+

@@ -1,0 +1,875 @@
+;===================================================================================
+;---------------- Kage Bunshin No Jutsu --------------------------------------------
+;---------------------------------------------------------------------------
+; Kage Bunshin - Stand
+[Statedef 15000]
+type = S
+physics = S
+sprpriority = 0
+
+[State 0, Helper Tiempo]
+type = Helper
+Triggerall = numhelper(33100) = 0
+trigger1 = prevstateno = 15002 && time = 0
+helpertype = normal
+name = "Helper Tiempo"
+ID = 33100
+stateno = 33100
+pos = 0,0
+postype = p1
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, ChangeState]
+type = ChangeState
+trigger1 = parent,var(16) <= 0
+value = 15001
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15220
+time = 9999
+
+[State 0, Turn]
+type = Turn
+trigger1 = p2bodydist x < -5
+
+[State 0, 1]
+type = ChangeAnim
+trigger1 = (Anim != 0 && Anim != 5 && Anim != 15000 && Anim != 15005 && Anim != 17000 && Anim != 17005 && Anim != 19000 && Anim != 19005)
+trigger2 = (Anim = 5||Anim = 15005||Anim = 17005||Anim = 19005) && AnimTime = 0
+value = ifelse(parent,var(13) = 1||parent,var(15) = 1||parent,var(17) = 1,0+parent,var(11),0)
+
+[State 0, 2]
+type = VelSet
+trigger1 = Time = 0
+y = 0
+
+[State 0, 3]
+type = VelSet
+trigger1 = abs(vel x) < 2
+trigger2 = Time = 4
+x = 0
+
+[State 200, Eliminar]
+type = ChangeState
+trigger1 = parent,stateno = 170
+trigger2 = parent,stateno = 181
+trigger3 = numhelper(33100) = 0
+value = 15004
+
+[State 200, Eliminar]
+type = ChangeState
+trigger1 = parent,life = 0
+value = 15001
+
+[State 200, Andar]
+type = ChangeState
+triggerall = time > 20
+trigger1 = p2bodydist x > 30 && random < 700
+value = 15020
+
+[State 200, Salto Atras]
+type = ChangeState
+triggerall = time > 10
+trigger1 = p2movetype = A && random < 150 && p2bodydist x < 50
+trigger2 = random < 300 && p2bodydist x < 30
+value = 15105
+
+[State 200, Saltar]
+type = ChangeState
+triggerall = time > 20
+trigger1 = p2statetype = A && random < 100 && p2bodydist x < 70
+value = 15040
+;---------------------
+[State -1, Golpe 1]
+type = changestate
+triggerall = StateType = S
+triggerall = (p2statetype = S) || (p2statetype = C)|| (p2statetype = A)
+triggerall = P2BodyDist X <= 30
+trigger1 = Random = [10,50]
+value = 15190
+
+[State -1, Golpe 2]
+type = changestate
+triggerall = StateType = S
+triggerall = (p2statetype = S) || (p2statetype = C)|| (p2statetype = A)
+triggerall = P2BodyDist X <= 30
+trigger1 = Random = [10,50]
+value = 15195
+;-------------------------------------------------------------------------------
+; Helper Tiempo
+[Statedef 33100]
+type    = S
+movetype= I
+physics = N
+juggle  = 1
+anim = 9999
+
+[State 200, End]
+type = Destroyself
+trigger1 = time >= 750
+trigger2 = numhelper(15000) = 0
+;---------------------------------------------------------------------------
+; Kage Bunshin - Fin
+[Statedef 15001]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+ctrl = 0
+anim = 1107
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 999
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, VarSet]
+type = VarSet
+trigger1 = time = 0
+v = 12
+value = 0
+
+[State 0, VarSet]
+type = Varadd
+trigger1 = time >= 1
+v = 12
+value = 5
+
+[State 0, PalFX]
+type = PalFX
+trigger1 = time >= 1
+time = 1
+add = var(12),0,0
+
+[State 200, Eliminar]
+type = ChangeState
+trigger1 = time = 50
+value = 15003
+;---------------------------------------------------------------------------
+; Kage Bunshin - Fin
+[Statedef 15003]
+type    = A
+movetype= A
+physics = N
+juggle  = 1
+ctrl = 0
+anim = 1152
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 999
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,31
+volume = 50
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,31
+volume = 50
+
+[State 0, EnvShake]
+type = EnvShake
+trigger1 = time = 0
+time = 30
+
+[State 0, Explosion]
+type = Explod
+trigger1 = time = 0
+anim = 1151
+ID = 1151
+pos = 0,-40
+postype = p1
+scale = .4,.4
+sprpriority = 3
+ontop = 1
+ownpal = 1
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = A, SP
+animtype  = Heavy
+damage    = 200,0
+Hitflag = MAFDE
+guardflag = MA
+pausetime = 0,10
+sparkno = -1
+guard.sparkno = -1
+sparkxy = -8,-25
+hitsound   = -1
+guardsound = -1
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = -6,-8
+air.velocity = -6,-8
+Fall = 1
+Getpower = 0,0
+PalFX.time = 60
+PalFX.add = -100,-100,-100
+PalFX.mul = 100,100,100
+PalFX.sinadd = -100,-100,-100,10
+PalFX.invertall = 0
+PalFX.color = 256
+
+[State 0, Fuego en P2]
+type = Helper
+triggerall = numhelper(250) = 0
+trigger1 =  movehit = 1
+helpertype = normal
+name = "Fuego en P2"
+ID = 253
+stateno = 253
+pos = 10,0
+postype = p2
+facing = -1
+keyctrl = 0
+ownpal = 1
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 10
+
+;---------------------------------------------------------------------------
+; Kage Bunshin - Fin
+[Statedef 15004]
+type    = S
+movetype= I
+physics = S
+juggle  = 1
+ctrl = 0
+anim = 9999
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 999
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, Humo]
+type = Explod
+trigger1 = time = 0
+anim = 25016
+ID = 1150
+pos = 0,-40
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = 1
+removetime = -2
+scale = .8,.8
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 0
+supermove = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,22
+volume = 50
+
+[State 200, End]
+type = Destroyself
+trigger1 = time = 1
+;---------------------------------------------------------------------------
+; Kage Bunshin - Intro
+[Statedef 15002]
+type = S
+physics = S
+sprpriority = 0
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, NotHitBy]
+type = NotHitBy
+trigger1 = 1
+value = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+time = 5
+
+[State 0, ParentVarSet]
+type = ParentVarSet
+trigger1 = time = 0
+v = 16
+value = 100
+
+[State 0, ChangeAnim]
+type = ChangeAnim
+Triggerall = parent,var(13) = 0
+trigger1 = time = 0
+value = 1000
+elem = 3
+
+[State 0, PlayerPush]
+type = PlayerPush
+trigger1 =  1
+value = 0
+
+[State 200, Stand]
+type = ChangeState
+trigger1 = time = 10
+value = 15020
+;---------------------------------------------------------------------------
+; Kage Bunshin Andar
+[Statedef 15020]
+type    = S
+physics = S
+anim = 20
+sprpriority = 1
+
+[State 0, Helper Tiempo]
+type = Helper
+Triggerall = numhelper(33100) = 0
+trigger1 = prevstateno = 15002 && time = 0
+helpertype = normal
+name = "Helper Tiempo"
+ID = 33100
+stateno = 33100
+pos = 0,0
+postype = p1
+
+[State 0, ChangeState]
+type = ChangeState
+trigger1 = parent,var(16) <= 0
+value = 15001
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15220
+time = 9999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = animelem = 3||animelem = 6
+value = S20,1
+
+[State 100, 1]
+type = VelSet
+trigger1 = 1
+x = const(velocity.walk.fwd.x)
+
+[State 200, Saltar]
+type = ChangeState
+triggerall = time > 5
+trigger1 = p2statetype = A && random < 100 && p2bodydist x < 70
+value = 15040
+
+[State 100: ChangeState]
+type = ChangeState
+trigger1 = p2bodydist x < 30
+value = 15000
+;---------------------------------------------------------------------------
+; Kage Bunshin Salto Atras
+[Statedef 15105]
+type    = S
+physics = S
+ctrl = 0
+anim = 105
+sprpriority = 1
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15220
+time = 9999
+
+[State 0, Polvo 2]
+type = Explod
+trigger1 = time = 2
+anim = 7100
+ID = 7100
+pos = 25,5
+facing = -1
+postype = p1
+scale = .2,.2
+sprpriority = 2
+ownpal = 1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 2
+value = S40,1
+volume = 50
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 2
+x = -4
+y = -4
+
+[State 0, StateTypeSet]
+type = StateTypeSet
+trigger1 = time >= 2
+statetype = A
+movetype = I
+physics = A
+
+[State 200, End]
+type = ChangeState
+triggerall = time > 2
+trigger1 = pos y >= -1
+value = 15106
+ctrl = 1
+
+[State 200, Eliminate]
+type = ChangeState
+trigger1 = time > 30
+value = 15001
+;---------------------------------------------------------------------------
+; Kage Bunshin RUN_BACK2 (land)
+[Statedef 15106]
+type    = S
+physics = S
+ctrl = 0
+anim = 47
+
+[State 60, PlaySnd]
+type = PlaySnd
+trigger1 =  time = 1
+value = s20,1
+volume = 50
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15220
+time = 9999
+
+[State 106, 1]
+type = VelSet
+trigger1 = Time = 0
+y = 0
+
+[State 106, 2]
+type = PosSet
+trigger1 = Time = 0
+y = 0
+
+[State 106, 3]
+type = MakeDust
+trigger1 = Time = 2
+pos = -5,-2
+spacing = 1
+
+[State 106, 4]
+type = ChangeState
+trigger1 = Time = 7
+value = 15000
+;--------------------------------------------------------------------------
+; Kage Bunshin Jump Start
+[Statedef 15040]
+type            = A
+movetype        = I
+physics         = N
+anim            = 50
+velset          = 2.5,-5.5
+ctrl            = 0
+poweradd        = 0
+juggle          = 0
+facep2          = 0
+hitdefpersist   = 0
+movehitpersist  = 0
+hitcountpersist = 0
+sprpriority     = 2
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15221
+time = 9999
+
+[state 60, CtrlSet]
+type            = CtrlSet
+trigger1        = Time >= 1
+value           = 1
+
+[state 60, VelAdd]
+type            = VelAdd
+trigger1        = Time > 10
+x               = 0
+y               = .50
+
+[State 60, PlaySnd]
+type = PlaySnd
+trigger1 =  time = 1
+value = s40,1
+volume = 50
+
+[state 60, End]
+type            = ChangeState
+triggerall = time > 2
+trigger1        = Pos Y > -5
+value           = 15106
+;===============================================================================
+; Kage Bunshin - Golpes
+;-------------------------------------------------------------------------------
+; 1 Puños
+[Statedef 15190]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 200
+sprpriority = 2
+
+[State 0, Corte FX]
+type = Explod
+Triggerall = numexplod(7200) = 0
+trigger1 = animelem = 3
+anim = 7200
+ID = 7200
+pos = 30,-50
+postype = p1
+facing = 1
+vfacing = 1
+bindtime = -1
+scale = .5,.5
+sprpriority = 2
+ontop = 1
+ownpal = 1
+removeongethit = 1
+ignorehitpause  = 1
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,17
+volume = 999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,6
+volume = 50
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 4
+value = S5,34
+volume = 50
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15220
+time = 9999
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+x = 2
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = S, NA
+animtype  = Light
+damage    = 20
+guardflag = MA
+pausetime = 10,8
+sparkno = -1
+guard.sparkno = s7000
+sparkxy = -8,-25
+hitsound   = S1,16
+guardsound = S4,1
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = -2
+air.velocity = -2,-2
+Fall = 0
+getpower = 0,0
+envshake.time = 5
+
+[State 200, Spark CVS]
+type = Explod
+triggerall = Numexplod(7001) = 0
+trigger1 = Movehit = 1
+anim = 7001
+ID = 7001
+postype = P1
+pos = 45,-45
+facing = 1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = 0.6,0.6
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 200, End]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 15000
+;-------------------------------------------------------------------------------
+; 2 Patadas
+[Statedef 15195]
+type    = S
+movetype= A
+physics = S
+juggle  = 1
+velset = 0,0
+ctrl = 0
+anim = 310
+sprpriority = 2
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,16
+volume = 999
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S0,16
+volume = 999
+
+[State 0, ScreenBound]
+type = ScreenBound
+trigger1 = 1
+value = 0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15220
+time = 9999
+
+[State 0, PlaySnd]
+type = PlaySnd
+trigger1 = time = 0
+value = S5,6
+volume = 50
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+x = 3
+
+[State 200, 1]
+type = HitDef
+triggerall = !movecontact
+trigger1 = 1
+attr = A, NA
+animtype  = Light
+damage    = 30
+guardflag = MA
+pausetime = 10,8
+sparkno = -1
+guard.sparkno = s7000
+sparkxy = -8,-25
+hitsound   = S1,6
+guardsound = S4,1
+ground.type = High
+ground.slidetime = 12
+ground.hittime  = 15
+ground.velocity = -4
+air.velocity = -4,2
+Fall = 0
+getpower = 0,0
+envshake.time = 5
+
+[State 200, Spark CVS]
+type = Explod
+triggerall = Numexplod(7002) = 0
+trigger1 = Movehit = 1
+anim = 7001
+ID = 7002
+postype = P1
+pos = 30,-50
+facing = 1
+sprpriority = 2
+supermove = 1
+removetime = -2
+bindtime = 1
+ownpal = 1
+scale = 0.5,0.5
+removeongethit = 1
+ontop = 1
+supermovetime 	= 999
+ignorehitpause  = 1
+
+[State 200, End]
+type = ChangeState
+trigger1 = AnimTime = 0
+value = 15000
+
+;---------------------------------------------------------------------------
+;Hitted
+[Statedef 15220]
+type    = S
+physics = S
+movetype = H
+sprpriority = -1
+
+[State 0, PalFX]
+type = PalFX
+trigger1 = time = 0
+time = 15
+add = 100,0,0
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15220
+time = 9999
+
+[State 0, ParentVaradd]
+type = ParentVaradd
+trigger1 = time = 0
+v = 16
+value = -gethitvar(damage)
+
+[State 0, PosSet]
+type = PosSet
+trigger1 = time = 0
+y = 0
+
+[State 0, VelSet]
+type = VelSet
+trigger1 = time = 0
+y = 0
+
+[State 0, VelSet]
+type = Veladd
+trigger1 = time = 0
+x = ifelse(facing = 1,gethitvar(xvel)/2,-gethitvar(xvel)/2)
+
+[State 130, 1]
+type = ChangeAnim
+trigger1 = 1
+value = 1107
+
+[State 130, Hit End]
+type = ChangeState
+trigger1 = parent,var(16) > 0 && Hitover
+value = 15000
+
+[State 130, Hit End]
+type = ChangeState
+trigger1 = parent,var(16) <= 0 && Hitover
+value = 15001
+
+;---------------------------------------------------------------------------
+;Hitted in Air
+[Statedef 15221]
+type    = A
+physics = A
+movetype = H
+sprpriority = -1
+
+[State 0, HitOverride]
+type = HitOverride
+trigger1 =  1
+attr = SCA,NA,SA,HA,NP,SP,HP,NT,ST,HT
+stateno = 15221
+time = 9999
+
+[State 0, ParentVaradd]
+type = ParentVaradd
+trigger1 = time = 0
+v = 16
+value = -gethitvar(damage)
+
+[State 0, VelSet]
+type = Veladd
+trigger1 = time = 0
+x = ifelse(facing = 1,gethitvar(xvel)/2,-gethitvar(xvel)/2)
+
+[State 130, 1]
+type = ChangeAnim
+trigger1 = 1
+value = 1108
+
+[State 130, Hit End]
+type = ChangeState
+trigger1 = parent,var(16) > 0 && Hitover
+value = 15000
+
+[State 130, Hit End]
+type = ChangeState
+trigger1 = parent,var(16) <= 0 && Hitover
+value = 15001
+
+[State 130, Hit End]
+type = ChangeState
+trigger1 = parent,var(16) > 0 && Hitover
+value = 15040
+
+[State 0, ChangeState]
+type = ChangeState
+trigger1 = pos y >= -10
+value = 15220

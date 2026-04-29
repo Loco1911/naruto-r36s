@@ -1,0 +1,376 @@
+# Global substitution / kawarimi system
+# Based on the classic Naruto log substitution flow, but implemented as a shared IKEMEN module.
+
+#===============================================================================
+# Functions
+#===============================================================================
+[Function SubstitutionResolveMax() ret]
+let ret = const(Default.Substitution.Stocks);
+if map(_iksys_subOverride) != 0 {
+	let ret = map(_iksys_subMax);
+}
+if $ret < 0 {
+	let ret = 0;
+} else if $ret > 3 {
+	let ret = 3;
+}
+
+[Function SubstitutionFirstReadySlot() ret]
+let ret = 0;
+if map(_iksys_subSlot1) = 0 {
+	let ret = 1;
+} else if map(_iksys_subSlot2) = 0 {
+	let ret = 2;
+} else if map(_iksys_subSlot3) = 0 {
+	let ret = 3;
+}
+
+[Function SubstitutionButtonPressed() ret]
+let ret = 0;
+let button = map(_iksys_subButton);
+if $button <= 0 {
+	let button = const(Default.Substitution.Button);
+}
+switch $button {
+case 1:
+	let ret = command = "a";
+case 2:
+	let ret = command = "b";
+case 3:
+	let ret = command = "c";
+case 4:
+	let ret = command = "x";
+case 5:
+	let ret = command = "y";
+case 6:
+	let ret = command = "z";
+default:
+	let ret = command = "x";
+}
+
+[Function SubstitutionConsumePendingSlot()]
+switch map(_iksys_subPendingSlot) {
+case 1:
+	map(_iksys_subSlot1) := -1;
+case 2:
+	map(_iksys_subSlot2) := -1;
+case 3:
+	map(_iksys_subSlot3) := -1;
+default:
+	# Do nothing
+}
+map(_iksys_subPendingSlot) := 0;
+
+[Function SubstitutionResetStocks()]
+let maxStocks = call SubstitutionResolveMax();
+map(_iksys_subResolvedMax) := $maxStocks;
+map(_iksys_subPendingSlot) := 0;
+map(_iksys_subSlot1) := ifElse($maxStocks >= 1, 0, -1);
+map(_iksys_subSlot2) := ifElse($maxStocks >= 2, 0, -1);
+map(_iksys_subSlot3) := ifElse($maxStocks >= 3, 0, -1);
+map(_iksys_subReuseCooldown) := 0;
+map(_iksys_subInitialized) := 1;
+removeExplod{id: 6575701}
+removeExplod{id: 6575702}
+removeExplod{id: 6575703}
+
+#===============================================================================
+# StateSubstitutionGround
+#===============================================================================
+[StateDef const(StateSubstitutionGround); type: S; movetype: I; physics: S; anim: const(AnimStanding); velset: 0, 0; ctrl: 0;]
+
+notHitBy{value: SCA; time: 1}
+playerPush{value: 0}
+assertSpecial{flag: invisible}
+velSet{x: 0; y: 0}
+
+if time = 0 {
+	posSet{y: 0}
+	call SubstitutionConsumePendingSlot();
+	map(_iksys_subReuseCooldown) := const(Default.Substitution.ReuseDelay);
+	playSnd{value: F 7, 0; channel: 2}
+	explod{
+		anim: F const(FxSubstitutionSmoke);
+		postype: p1;
+		pos: 0, -const240p(30);
+		scale: 1, 1;
+		sprpriority: 6;
+		ontop: 1;
+		ownpal: 1;
+		pausemovetime: -1;
+		ignorehitpause: 1;
+	}
+	explod{
+		anim: F const(FxSubstitutionLog);
+		postype: p1;
+		pos: 0, -const240p(30);
+		scale: 2.25, 2.25;
+		sprpriority: 5;
+		ontop: 1;
+		ownpal: 1;
+		pausemovetime: -1;
+		ignorehitpause: 1;
+	}
+	explod{
+		anim: F const(FxSubstitutionDust);
+		postype: p1;
+		pos: 0, 0;
+		scale: 1, 1;
+		sprpriority: 4;
+		ontop: 1;
+		ownpal: 1;
+		pausemovetime: -1;
+		ignorehitpause: 1;
+	}
+}
+
+if time = 3 {
+	if command = "holdback" {
+		posAdd{x: -const240p(const(Default.Substitution.BackDistance)) * facing}
+	} else if numEnemy {
+		turn{}
+		posAdd{x: p2BodyDist x - const240p(const(Default.Substitution.BehindOffset))}
+	}
+}
+
+if time = 4 {
+	explod{
+		anim: F const(FxSubstitutionSmoke);
+		postype: p1;
+		pos: 0, -const240p(30);
+		scale: 1, 1;
+		sprpriority: 6;
+		ontop: 1;
+		ownpal: 1;
+		pausemovetime: -1;
+		ignorehitpause: 1;
+	}
+}
+
+if time >= const(Default.Substitution.Duration) {
+	selfState{value: const(StateStand); ctrl: 1}
+}
+
+#===============================================================================
+# StateSubstitutionAir
+#===============================================================================
+[StateDef const(StateSubstitutionAir); type: A; movetype: I; physics: N; anim: const(AnimJumpNeutral_upwards); velset: 0, 0; ctrl: 0;]
+
+notHitBy{value: SCA; time: 1}
+playerPush{value: 0}
+assertSpecial{flag: invisible}
+velSet{x: 0; y: 0}
+
+if time = 0 {
+	call SubstitutionConsumePendingSlot();
+	map(_iksys_subReuseCooldown) := const(Default.Substitution.ReuseDelay);
+	playSnd{value: F 7, 0; channel: 2}
+	explod{
+		anim: F const(FxSubstitutionSmoke);
+		postype: p1;
+		pos: 0, -const240p(30);
+		scale: 0.7, 0.7;
+		sprpriority: 6;
+		ontop: 1;
+		ownpal: 1;
+		pausemovetime: -1;
+		ignorehitpause: 1;
+	}
+	explod{
+		anim: F const(FxSubstitutionLog);
+		postype: p1;
+		pos: 0, -const240p(30);
+		scale: 2.25, 2.25;
+		sprpriority: 5;
+		ontop: 1;
+		ownpal: 1;
+		pausemovetime: -1;
+		ignorehitpause: 1;
+	}
+}
+
+if time = 4 {
+	if command = "holdback" {
+		posAdd{x: -const240p(const(Default.Substitution.BackDistance)) * facing}
+	} else if numEnemy {
+		turn{}
+		posAdd{x: p2BodyDist x - const240p(const(Default.Substitution.BehindOffset))}
+	}
+	explod{
+		anim: F const(FxSubstitutionSmoke);
+		postype: p1;
+		pos: 0, -const240p(30);
+		scale: 1, 1;
+		sprpriority: 6;
+		ontop: 1;
+		ownpal: 1;
+		pausemovetime: -1;
+		ignorehitpause: 1;
+	}
+}
+
+if time >= const(Default.Substitution.Duration) {
+	selfState{value: const(StateJumpUp); ctrl: 1}
+}
+
+#===============================================================================
+# Global states
+#===============================================================================
+[StateDef -2]
+
+if !const(Default.Enable.Substitution) || isHelper || teamSide = 0 {
+	# Do nothing, global code disabled locally or executed by helper/stage
+} else if roundState = 0 {
+	call SubstitutionResetStocks();
+} else ignoreHitPause if roundState = 2 && alive && !standby {
+	if map(_iksys_subInitialized) = 0 {
+		call SubstitutionResetStocks();
+	}
+	let hudRow = floor((playerNo - teamSide) / 2);
+	let hudY = 47 + $hudRow * 10;
+	let hudX1 = ifElse(teamSide = 1, 10, 310);
+	let hudX2 = ifElse(teamSide = 1, 20, 300);
+	let hudX3 = ifElse(teamSide = 1, 30, 290);
+	let hudFacing = ifElse(teamSide = 1, 1, -1);
+	let hudScale = 0.4;
+
+	if map(_iksys_subSlot1) > 0 {
+		mapAdd{map: "_iksys_subSlot1"; value: -1}
+	}
+	if map(_iksys_subSlot2) > 0 {
+		mapAdd{map: "_iksys_subSlot2"; value: -1}
+	}
+	if map(_iksys_subSlot3) > 0 {
+		mapAdd{map: "_iksys_subSlot3"; value: -1}
+	}
+	if map(_iksys_subReuseCooldown) > 0 {
+		mapAdd{map: "_iksys_subReuseCooldown"; value: -1}
+	}
+
+	if map(_iksys_subResolvedMax) >= 1 && map(_iksys_subSlot1) = 0 {
+		if !numExplod(6575701) {
+			explod{
+				id: 6575701;
+				anim: F const(FxSubstitutionStock);
+				space: screen;
+				postype: left;
+				pos: $hudX1, $hudY;
+				facing: $hudFacing;
+				scale: $hudScale, $hudScale;
+				sprpriority: 10;
+				ontop: 1;
+				ownpal: 1;
+				bindtime: -1;
+				supermovetime: -1;
+				pausemovetime: -1;
+				ignorehitpause: 1;
+			}
+		} else {
+			modifyExplod{
+				id: 6575701;
+				anim: F const(FxSubstitutionStock);
+				space: screen;
+				postype: left;
+				pos: $hudX1, $hudY;
+				facing: $hudFacing;
+				scale: $hudScale, $hudScale;
+				sprpriority: 10;
+				ontop: 1;
+			}
+		}
+	} else if numExplod(6575701) {
+		removeExplod{id: 6575701}
+	}
+
+	if map(_iksys_subResolvedMax) >= 2 && map(_iksys_subSlot2) = 0 {
+		if !numExplod(6575702) {
+			explod{
+				id: 6575702;
+				anim: F const(FxSubstitutionStock);
+				space: screen;
+				postype: left;
+				pos: $hudX2, $hudY;
+				facing: $hudFacing;
+				scale: $hudScale, $hudScale;
+				sprpriority: 10;
+				ontop: 1;
+				ownpal: 1;
+				bindtime: -1;
+				supermovetime: -1;
+				pausemovetime: -1;
+				ignorehitpause: 1;
+			}
+		} else {
+			modifyExplod{
+				id: 6575702;
+				anim: F const(FxSubstitutionStock);
+				space: screen;
+				postype: left;
+				pos: $hudX2, $hudY;
+				facing: $hudFacing;
+				scale: $hudScale, $hudScale;
+				sprpriority: 10;
+				ontop: 1;
+			}
+		}
+	} else if numExplod(6575702) {
+		removeExplod{id: 6575702}
+	}
+
+	if map(_iksys_subResolvedMax) >= 3 && map(_iksys_subSlot3) = 0 {
+		if !numExplod(6575703) {
+			explod{
+				id: 6575703;
+				anim: F const(FxSubstitutionStock);
+				space: screen;
+				postype: left;
+				pos: $hudX3, $hudY;
+				facing: $hudFacing;
+				scale: $hudScale, $hudScale;
+				sprpriority: 10;
+				ontop: 1;
+				ownpal: 1;
+				bindtime: -1;
+				supermovetime: -1;
+				pausemovetime: -1;
+				ignorehitpause: 1;
+			}
+		} else {
+			modifyExplod{
+				id: 6575703;
+				anim: F const(FxSubstitutionStock);
+				space: screen;
+				postype: left;
+				pos: $hudX3, $hudY;
+				facing: $hudFacing;
+				scale: $hudScale, $hudScale;
+				sprpriority: 10;
+				ontop: 1;
+			}
+		}
+	} else if numExplod(6575703) {
+		removeExplod{id: 6575703}
+	}
+
+	let readySlot = call SubstitutionFirstReadySlot();
+	let subPressed = call SubstitutionButtonPressed();
+	if $readySlot = 0 || map(_iksys_subReuseCooldown) > 0 {
+		map(_iksys_subPendingSlot) := 0;
+	} else if ctrl = 0 && getHitVar(isBound) = 0 && (moveType = H || inCustomState || stateNo = const(StateDownedGetHit_gettingUp)) {
+		if stateType = S || stateType = C {
+			if $subPressed || (aiLevel > 0 && random < aiLevel) {
+				map(_iksys_subPendingSlot) := $readySlot;
+				selfState{value: const(StateSubstitutionGround)}
+			}
+		} else if stateType = A && pos y < -const240p(const(Default.Substitution.AirMinHeight)) {
+			if $subPressed || (aiLevel > 0 && random < aiLevel) {
+				map(_iksys_subPendingSlot) := $readySlot;
+				selfState{value: const(StateSubstitutionAir)}
+			}
+		}
+	}
+} else {
+	removeExplod{id: 6575701}
+	removeExplod{id: 6575702}
+	removeExplod{id: 6575703}
+}

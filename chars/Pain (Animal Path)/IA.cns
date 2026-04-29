@@ -17,6 +17,47 @@ supermove = 9999999999
 pausemove = 9999999999
 supermovetime = 99999999
 pausemovetime = 99999999999
+
+[State 0, Summon Damage Queue]
+type = ParentVarAdd
+triggerall = ishelper
+triggerall = movetype = H
+triggerall = time = 0
+triggerall = gethitvar(damage) > 0
+trigger1 = ishelper(11000)
+trigger2 = ishelper(12000)
+trigger3 = ishelper(13000)
+trigger4 = ishelper(14900)
+trigger5 = ishelper(1350)
+v = 59
+value = -gethitvar(damage)
+ignorehitpause = 1
+
+[State 0, Apply Summon Damage]
+type = LifeAdd
+triggerall = !ishelper
+trigger1 = var(59) < 0
+value = var(59)
+kill = 1
+ignorehitpause = 1
+
+[State 0, Clear Summon Damage]
+type = VarSet
+triggerall = !ishelper
+trigger1 = var(59) != 0
+v = 59
+value = 0
+ignorehitpause = 1
+
+[State 0, Helper Cleanup]
+type = DestroySelf
+triggerall = ishelper
+triggerall = roundstate > 2 || parent,life <= 0
+trigger1 = ishelper(11000)
+trigger2 = ishelper(12000)
+trigger3 = ishelper(13000)
+trigger4 = ishelper(14900)
+trigger5 = ishelper(1350)
 ;===============================================================================
 ; IA:
 ;-------------------------------------------------------------------------------

@@ -232,6 +232,8 @@ menu.t_itemname = {
 			sndPlay(motif.files.snd_data, motif[section].cursor_done_snd[1], motif[section].cursor_done_snd[2])
 			menu.f_commandlistParse()
 			menu.itemname = t.items[item].itemname
+			menu.commandlistDebounce = 2
+			main.f_cmdBufReset()
 		end
 		return true
 	end,
@@ -480,10 +482,39 @@ function menu.f_trainingReset()
 end
 
 menu.movelistChar = 1
-function menu.f_init()
+menu.commandlistDebounce = 0
+menu.commandlistRepeatState = {u = 0, d = 0, b = 0, f = 0}
+
+function menu.f_commandlistRepeat(id, keys, delay, step)
+	local held = false
+	for _, pn in ipairs(main.t_players) do
+		for _, key in ipairs(keys) do
+			if commandGetState(main.t_cmd[pn], key) then
+				main.playerInput = pn
+				held = true
+				break
+			end
+		end
+		if held then
+			break
+		end
+	end
+	if held then
+		menu.commandlistRepeatState[id] = (menu.commandlistRepeatState[id] or 0) + 1
+		local d = delay or 10
+		local s = step or 2
+		return menu.commandlistRepeatState[id] == 1 or (menu.commandlistRepeatState[id] > d and (menu.commandlistRepeatState[id] - d) % s == 0)
+	end
+	menu.commandlistRepeatState[id] = 0
+	return false
+end
+
+function menu.f_init(initialItem)
 	esc(false)
 	togglePause(true)
 	main.pauseMenu = true
+	menu.itemname = ''
+	menu.commandlistRepeatState = {u = 0, d = 0, b = 0, f = 0}
 	main.f_bgReset(motif.optionbgdef.bg)
 	if gamemode('training') then
 		sndPlay(motif.files.snd_data, motif.training_info.enter_snd[1], motif.training_info.enter_snd[2])
@@ -498,6 +529,14 @@ function menu.f_init()
 		--menu.menu.moveTxt = 0
 		--menu.menu.item = 1
 		menu.currentMenu = {menu.menu.loop, menu.menu.loop}
+	end
+	if initialItem == 'commandlist' then
+		menu.f_commandlistParse()
+		if #menu.t_movelists > 0 then
+			menu.itemname = 'commandlist'
+			menu.commandlistDebounce = 2
+			main.f_cmdBufReset()
+		end
 	end
 end
 
@@ -529,6 +568,180 @@ end
 --;===========================================================
 --; COMMAND LIST
 --;===========================================================
+local function f_hexColor(hex)
+	hex = tostring(hex or ''):gsub('#', '')
+	if #hex ~= 6 then
+		return {}
+	end
+	return {
+		r = tonumber(hex:sub(1, 2), 16) or 255,
+		g = tonumber(hex:sub(3, 4), 16) or 255,
+		b = tonumber(hex:sub(5, 6), 16) or 255,
+	}
+end
+
+local function f_prettifyInput(str)
+	str = tostring(str or '')
+	local inputMap = {
+		['↖'] = 'UB',
+		['↗'] = 'UF',
+		['↙'] = 'DB',
+		['↘'] = 'DF',
+		['↑'] = 'U',
+		['↓'] = 'D',
+		['←'] = 'B',
+		['→'] = 'F',
+	}
+	for src, dst in pairs(inputMap) do
+		str = str:gsub(src, dst)
+	end
+	str = str:gsub('Hold%s+', 'Charge ')
+	str = str:gsub('rel%s+', 'Release ')
+	local motions = {
+		{'D%s*,%s*DF%s*,%s*F', 'QCF'},
+		{'D%s*,%s*DB%s*,%s*B', 'QCB'},
+		{'F%s*,%s*D%s*,%s*DF', 'DP'},
+		{'B%s*,%s*D%s*,%s*DB', 'RDP'},
+		{'B%s*,%s*DB%s*,%s*D%s*,%s*DF%s*,%s*F', 'HCF'},
+		{'F%s*,%s*DF%s*,%s*D%s*,%s*DB%s*,%s*B', 'HCB'},
+	}
+	for _, pattern in ipairs(motions) do
+		str = str:gsub(pattern[1], pattern[2])
+	end
+	str = str:gsub('%s*%+%s*', ' + ')
+	str = str:gsub('%s*,%s*', ', ')
+	str = str:gsub('%s+', ' ')
+	return str:match('^%s*(.-)%s*$')
+end
+
+local function f_movelistTrim(str, maxLen)
+	str = tostring(str or '')
+	if #str <= maxLen then
+		return str
+	end
+	return str:sub(1, math.max(1, maxLen - 2)) .. '..'
+end
+
+local function f_movelistWrapInput(str, maxLen)
+	str = tostring(str or ''):gsub('%s+', ' '):match('^%s*(.-)%s*$')
+	maxLen = maxLen or 42
+	if str == '' then
+		return {''}
+	end
+	local lines = {}
+	local line = ''
+	for part in str:gmatch('[^,]+,?') do
+		part = part:gsub('^%s+', ''):gsub('%s+$', '')
+		if part ~= '' then
+			local candidate = line == '' and part or (line .. ' ' .. part)
+			if #candidate <= maxLen then
+				line = candidate
+			else
+				if line ~= '' then
+					table.insert(lines, line)
+				end
+				while #part > maxLen do
+					table.insert(lines, part:sub(1, maxLen))
+					part = part:sub(maxLen + 1)
+				end
+				line = part
+			end
+		end
+	end
+	if line ~= '' then
+		table.insert(lines, line)
+	end
+	if #lines == 0 then
+		table.insert(lines, str)
+	end
+	return lines
+end
+
+local function f_movelistIsAiCommand(name)
+	local text = tostring(name or ''):lower():match('^%s*(.-)%s*$')
+	return text == 'ai' or text:match('^ai%d') or text:match('^ai[%s_-]')
+end
+
+local function f_movelistJson(ref)
+	local charData = start.f_getCharData(ref)
+	if type(charData) ~= 'table' then
+		return nil
+	end
+	local candidates = {}
+	local seen = {}
+	local def = tostring(charData.def or ''):gsub('\\', '/')
+	local folder = def:match('^chars/([^/]+)/') or def:match('/([^/]+)/[^/]+%.def$')
+
+	local function add(path)
+		if path and path ~= '' and not seen[path:lower()] then
+			seen[path:lower()] = true
+			table.insert(candidates, path)
+		end
+	end
+
+	if folder and folder ~= '' then
+		add('moves/' .. folder .. '/movelist.json')
+	end
+	if charData.name and charData.name ~= '' then
+		add('moves/' .. charData.name .. '/movelist.json')
+	end
+
+	for _, path in ipairs(candidates) do
+		if main.f_fileExists(path) then
+			local ok, decoded = pcall(function()
+				return json.decode(main.f_fileRead(path))
+			end)
+			if ok and type(decoded) == 'table' and type(decoded.sections) == 'table' and #decoded.sections > 0 then
+				return decoded
+			end
+		end
+	end
+	return nil
+end
+
+local function f_movelistJsonToCommandlist(data)
+	local out = {}
+	local typeColors = {
+		normal = f_hexColor('B6E388'),
+		special = f_hexColor('73B7FF'),
+		super = f_hexColor('FFC561'),
+	}
+	local function displayInput(str)
+		return f_prettifyInput(str)
+	end
+	for _, section in ipairs(data.sections or {}) do
+		if type(section) == 'table' then
+			local sectionRows = {}
+			for _, move in ipairs(type(section.moves) == 'table' and section.moves or {}) do
+				if type(move) == 'table' and not f_movelistIsAiCommand(move.name) then
+					local inputLines = f_movelistWrapInput(displayInput(move.input), 42)
+					for lineIndex, inputText in ipairs(inputLines) do
+						table.insert(sectionRows, {
+							{glyph = false, text = lineIndex == 1 and f_movelistTrim(move.name or 'Movimiento', 28) or '', align = 1, col = {}},
+							{glyph = false, text = inputText, align = -1, col = typeColors[move.type] or f_hexColor('E6EBF4')},
+						})
+					end
+				end
+			end
+			if #sectionRows > 0 then
+				table.insert(out, {
+					{glyph = false, text = f_movelistTrim(section.name or 'Seccion', 32), align = 1, col = f_hexColor('FFB132')}
+				})
+				for _, row in ipairs(sectionRows) do
+					table.insert(out, row)
+				end
+				table.insert(out, {
+					{glyph = false, text = '', align = 1, col = {}}
+				})
+			end
+		end
+	end
+	if #out > 0 and #out[#out] == 1 and out[#out][1].text == '' then
+		table.remove(out)
+	end
+	return out
+end
+
 local function f_commandlistData(t, str, align, col)
 	local t_insert = {}
 	str = str .. '<#>'
@@ -567,34 +780,39 @@ function menu.f_commandlistParse()
 					sel.movelistLine = 1
 				end
 				if start.f_getCharData(sel.ref).commandlist == nil then
-					local movelist = getCharMovelist(sel.ref)
-					if movelist ~= '' then
-						for k, v in main.f_sortKeys(motif.glyphs, function(t, a, b) return string.len(a) > string.len(b) end) do
-							movelist = movelist:gsub(main.f_escapePattern(k), '<' .. numberToRune(v[1] + 0xe000) .. '>')
-						end
-						local t = {}
-						local col = {}
-						for line in movelist:gmatch('([^\n]*)\n?') do
-							line = line:gsub('%s+$', '')
-							local subt = {}
-							for m in line:gmatch('(	*[^	]+)') do
-								local tabs = 0
-								m = m:gsub('^(	*)', function(m1)
-									tabs = string.len(m1)
-									return ''
-								end)
-								local align = 1 --left align
-								if tabs == 1 then
-									align = 0 --center align
-								elseif tabs > 1 then
-									align = -1 --right align
-								end
-								subt, col = f_commandlistData(subt, m, align, col)
+					local jsonMovelist = f_movelistJson(sel.ref)
+					if jsonMovelist ~= nil then
+						start.f_getCharData(sel.ref).commandlist = f_movelistJsonToCommandlist(jsonMovelist)
+					else
+						local movelist = getCharMovelist(sel.ref)
+						if movelist ~= '' then
+							for k, v in main.f_sortKeys(motif.glyphs, function(t, a, b) return string.len(a) > string.len(b) end) do
+								movelist = movelist:gsub(main.f_escapePattern(k), '<' .. numberToRune(v[1] + 0xe000) .. '>')
 							end
-							table.insert(t, subt)
+							local t = {}
+							local col = {}
+							for line in movelist:gmatch('([^\n]*)\n?') do
+								line = line:gsub('%s+$', '')
+								local subt = {}
+								for m in line:gmatch('(	*[^	]+)') do
+									local tabs = 0
+									m = m:gsub('^(	*)', function(m1)
+										tabs = string.len(m1)
+										return ''
+									end)
+									local align = 1 --left align
+									if tabs == 1 then
+										align = 0 --center align
+									elseif tabs > 1 then
+										align = -1 --right align
+									end
+									subt, col = f_commandlistData(subt, m, align, col)
+								end
+								table.insert(t, subt)
+							end
+							t[#t] = nil --blank line produced by regexp matching
+							start.f_getCharData(sel.ref).commandlist = t
 						end
-						t[#t] = nil --blank line produced by regexp matching
-						start.f_getCharData(sel.ref).commandlist = t
 					end
 				end
 				local pn = player
@@ -617,40 +835,54 @@ function menu.f_commandlistParse()
 end
 
 function menu.f_commandlistRender(section, t)
+	if type(t) ~= 'table' or type(t.tbl) ~= 'table' then
+		return
+	end
 	main.f_cmdInput()
+	if getKey() ~= '' then
+		resetKey()
+	end
 	local cmdList = {}
 	if t.commandlist ~= nil then
 		cmdList = t.commandlist
 	else
 		table.insert(cmdList, {{glyph = false, text = motif[section].movelist_text_text, align = 1, col = {}}})
 	end
-	if esc() or main.f_input(main.t_players, {'m'}) then
+	t.tbl.movelistLine = math.max(1, math.min(t.tbl.movelistLine or 1, math.max(1, #cmdList)))
+	if menu.commandlistDebounce > 0 then
+		menu.commandlistDebounce = menu.commandlistDebounce - 1
+		if type(main.f_cmdBufReset) == 'function' then
+			main.f_cmdBufReset()
+		end
+	elseif esc() or main.f_input(main.t_players, {'m'}) then
 		sndPlay(motif.files.snd_data, motif[section].cancel_snd[1], motif[section].cancel_snd[2])
+		menu.commandlistDebounce = 0
 		menu.itemname = ''
 		return
 	elseif main.f_input(main.t_players, {'pal', 's'}) then
 		sndPlay(motif.files.snd_data, motif[section].cursor_done_snd[1], motif[section].cursor_done_snd[2])
+		menu.commandlistDebounce = 0
 		menu.itemname = ''
 		togglePause(false)
 		main.pauseMenu = false
 		menu.currentMenu[1] = menu.currentMenu[2]
 		return
-	elseif main.f_input(main.t_players, {'$B'}) and #menu.t_movelists > 1 then
+	elseif menu.f_commandlistRepeat('b', {'$B'}) and #menu.t_movelists > 1 then
 		sndPlay(motif.files.snd_data, motif[section].cursor_move_snd[1], motif[section].cursor_move_snd[2])
 		menu.movelistChar = menu.movelistChar - 1
 		if menu.movelistChar < 1 then
 			menu.movelistChar = #menu.t_movelists
 		end
-	elseif main.f_input(main.t_players, {'$F'}) and #menu.t_movelists > 1 then
+	elseif menu.f_commandlistRepeat('f', {'$F'}) and #menu.t_movelists > 1 then
 		sndPlay(motif.files.snd_data, motif[section].cursor_move_snd[1], motif[section].cursor_move_snd[2])
 		menu.movelistChar = menu.movelistChar + 1
 		if menu.movelistChar > #menu.t_movelists then
 			menu.movelistChar = 1
 		end
-	elseif main.f_input(main.t_players, {'$U'}) and t.tbl.movelistLine > 1 then
+	elseif menu.f_commandlistRepeat('u', {'$U'}) and t.tbl.movelistLine > 1 then
 		sndPlay(motif.files.snd_data, motif[section].cursor_move_snd[1], motif[section].cursor_move_snd[2])
 		t.tbl.movelistLine = t.tbl.movelistLine - 1
-	elseif main.f_input(main.t_players, {'$D'}) and t.tbl.movelistLine <= #cmdList - motif[section].movelist_window_visibleitems then
+	elseif menu.f_commandlistRepeat('d', {'$D'}) and t.tbl.movelistLine <= #cmdList - motif[section].movelist_window_visibleitems then
 		sndPlay(motif.files.snd_data, motif[section].cursor_move_snd[1], motif[section].cursor_move_snd[2])
 		t.tbl.movelistLine = t.tbl.movelistLine + 1
 	end
@@ -667,7 +899,7 @@ function menu.f_commandlistRender(section, t)
 		local lengthOffset = 0
 		local align = 1
 		local width = 0
-		for k, v in ipairs(cmdList[n]) do
+		for k, v in ipairs(type(cmdList[n]) == 'table' and cmdList[n] or {}) do
 			if v.text ~= '' then
 				alignOffset = 0
 				if v.align == 0 then --center align

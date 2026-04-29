@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/_debug_env.sh"
+
+LOG_FILE="${STRACE_LOG:-$ROOT_DIR/debug/strace-ikemen.log}"
+
+exec "$DEBUG_ROOT/usr/bin/strace" \
+  -ff \
+  -s 256 \
+  -o "$LOG_FILE" \
+  "$ROOT_DIR/Ikemen_GO_Linux" "$@"
+

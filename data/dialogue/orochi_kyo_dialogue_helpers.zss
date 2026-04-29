@@ -1,0 +1,692 @@
+#===============================================================================
+# This is file containing helpers and explods for the Orochi Kyo's dialogue module
+# Use it alongside the dialogue.zss file 
+#===============================================================================
+
+
+#===============================================================================
+# Helper animation for p1 KFM clone for player 1
+#===============================================================================
+[Statedef 42000; type: S;movetype: I; physics: S; ctrl: 0; anim: 100; poweradd: 0; sprpriority: 2;]      
+
+persistent(0) if root,map(charLocalCoord720) {
+		mapset{map:"enemyNearDistance";value:520}
+		} else {
+		mapset{map:"enemyNearDistance";value:130}
+		}
+
+if parent,map(callHelperP1) = 1 {
+if p2bodydist x > map(enemyNearDistance) {
+VelSet{x: Const(velocity.run.fwd.x)}
+}
+ 
+if p2bodydist x <= map(enemyNearDistance) && helper(42000),anim != [200,210]  {
+	VelSet{x: 0}
+	Changeanim{value: 200}
+	}
+
+if helper(42000),anim = 200 && helper(42000),animtime = 0  {
+	Changeanim{value: 210}
+	}
+
+if helper(42000),anim = 210 && helper(42000),animtime = 0 {
+	Changeanim{value: 200}
+		}
+	}
+
+if parent,map(callHelperP1) = 0{
+	if facing = 1 {
+		turn{} 
+		Changeanim{value: 100;}
+		}
+	VelSet{x: Const(velocity.run.fwd.x)}
+	}
+
+if roundstate = 2 {
+	destroyself{}
+}
+#; end of helper 42000
+#===============================================================================
+# Helper animation for p2 KFM CLONE for Player 2
+#===============================================================================
+[Statedef 42001; type: S;movetype: I; physics: S; ctrl: 0; anim: 100; poweradd: 0; sprpriority: 2;]      
+
+if parent,map(callHelperP2) = 1 {
+	
+	if p2bodydist x > 0{
+	VelSet{x: Const(velocity.run.fwd.x)}
+	}
+ 
+if p2bodydist x <= 0 && helper(42001),anim != [430,440]  {
+	VelSet{x: 0}
+	Changeanim{value: 430}
+	}
+
+if helper(42001),anim = 430 && helper(42001),animtime = 0  {
+	Changeanim{value: 440}
+	}
+
+if helper(42001),anim = 440 && helper(42001),animtime = 0 {
+	Changeanim{value: 430}
+		}
+	}
+
+if parent,map(callHelperP2) = 0{
+	if facing = -1 {
+		turn{} 
+		Changeanim{value: 100;}
+		}
+	VelSet{x: Const(velocity.run.fwd.x)}
+	}
+
+if roundstate = 2 {
+	destroyself{}
+}
+#; end of helper 42001
+
+[Statedef -4]
+
+#===============================================================================
+#; calculating character localcoord
+#===============================================================================
+if roundstate = [0,1] && !ishelper {
+	mapset{map:"charLocalCoord";value:screenwidth;}
+	if map(charLocalCoord) <= 360 && map(charLocalCoord) > 0 {
+		mapset{map:"charLocalCoord360";value:1;}
+	} else {
+		mapset{map:"charLocalCoord360";value:0;}
+	}
+	if map(charLocalCoord) >= 960 { 
+		mapset{map:"charLocalCoord720";value:1;}
+	} else {
+		mapset{map:"charLocalCoord720";value:0;}
+	}	
+
+}
+
+#===============================================================================
+# Map definition for configuration purposes
+#===============================================================================
+
+if roundstate = 1 {
+	mapset{map:"dualWindow";value:1;}
+	mapset{map:"singleWindow";value:0;}
+}
+
+#;setting the map to detect active player before the dialogue becomes active
+#; isActivePlayer changes according to your dialogue needs, use it carefully. It is not needed to have it on all lines, just when the dialogue switch between players
+
+if indialogue {
+#;This avoid the explod calling loop
+if map(playerChange) != map(isActivePlayer) {
+mapset{map:"playerChange";value:map(isActivePlayer)}
+RemoveExplod {id:2999;}
+RemoveExplod {id:2998;}
+RemoveExplod {id:2997;}
+RemoveExplod {id:2996;}
+RemoveExplod {id:2995;}
+}
+
+#;Call for an KFM clone for player 1
+	if teamside = 1 && map(callHelperP1) = 1 && numhelper(42000) = 0 && !ishelper {
+		helper{postype: left;
+		helpertype: normal;	 
+		pos: 0,0;
+		id : 42000;
+		stateno: 42000;
+		size.xscale:1; 
+		size.yscale:1;}
+		}
+		
+#;Call for an KFM clone for player 2
+	if teamside = 1 && map(callHelperP2) = 1 && numhelper(42001) = 0 && !ishelper {
+		helper{postype: right;
+		helpertype: normal;
+		pos: 0,0;
+		id : 42001;
+		stateno: 42001;
+		facing:-1;
+		size.xscale:0.8; 
+		size.yscale:0.8;}
+		}		
+		
+		
+#===============================================================================
+# Dual window 360
+#===============================================================================		
+		
+if const(DualOrSingleWindow) = 0 && const(res360or720) = 0 {	 	
+		
+#=======================
+# Background black bar
+#=======================
+if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2998) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9051; 
+		postype: left;
+		pos: const(blackBackground1pPosXDual)*ifelse(map(charLocalCoord720),4,1),const(blackBackground1pPosYDual)*ifelse(map(charLocalCoord720),4,1);
+		id : 2998;
+		removetime: -1;
+		ontop:1;
+		scale: const(blackBackgroundScaleXDual),const(blackBackgroundScaleYDual);}
+		}
+
+#;Call for background if enemy is active 		
+	if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2998) = 0 && !ishelper {
+	Explod{
+		anim: DIALOGUE9051; 
+		postype: right;
+		pos: const(blackBackground2pPosXDual)*ifelse(map(charLocalCoord720),4,1), const(blackBackground2pPosYDual)*ifelse(map(charLocalCoord720),4,1);
+		id : 2998;
+		removetime: -1;
+		scale: const(blackBackgroundScaleXDual),const(blackBackgroundScaleYDual);
+		ontop:1;
+		facing:-1;}
+	}
+
+#;Call for background if player is active 
+	if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2996) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9051;
+		postype: left;
+		pos: const(blackBackground1pPosXDual)*ifelse(map(charLocalCoord720),4,1),const(blackBackground1pPosYDual)*ifelse(map(charLocalCoord720),4,1);
+		id : 2996;
+		removetime: -1;
+		ontop:1;
+		scale: const(blackBackgroundScaleXDual),const(blackBackgroundScaleYDual);}
+		}
+
+#;Call for background if enemy is active 		
+	if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2996) = 0 && !ishelper {
+	Explod{
+		anim: DIALOGUE9051;
+		postype: right;
+		pos: const(blackBackground2pPosXDual)*ifelse(map(charLocalCoord720),4,1), const(blackBackground2pPosYDual)*ifelse(map(charLocalCoord720),4,1);
+		id : 2996;
+		removetime: -1;
+		scale: const(blackBackgroundScaleXDual),const(blackBackgroundScaleYDual);
+		ontop:1;
+		facing:-1;}
+	}
+
+#========================
+# Background animation
+#========================
+
+#;Call for animation if player is active 
+	if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2997) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9055; 
+		postype: left;
+		pos: const(backgroundAnimated1pPosXDual)*ifelse(map(charLocalCoord720),4,1),const(backgroundAnimated1pPosYDual)*ifelse(map(charLocalCoord720),4,1);
+		id : 2997;
+		removetime: -1;
+		ontop:1;
+		scale: const(backgroundAnimatedScaleXDual),const(backgroundAnimatedScaleYDual);}
+		}
+
+#;Call for animation if enemy is active 		
+	if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2997) = 0 && !ishelper {
+	Explod{
+		anim: DIALOGUE9055; 
+		postype: right;
+		pos: const(backgroundAnimated2pPosXDual)*ifelse(map(charLocalCoord720),4,1), const(backgroundAnimated2pPosYDual)*ifelse(map(charLocalCoord720),4,1);
+		id : 2997;
+		removetime: -1;
+		scale: const(backgroundAnimatedScaleXDual),const(backgroundAnimatedScaleYDual);
+		ontop:1;
+		facing:-1;}
+	}
+
+#======================
+# Frame
+#======================
+
+#;Call for frame if player is active 
+	if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2999) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9050;
+		postype: left;
+		pos: const(frame1pPosXDual)*ifelse(map(charLocalCoord720),4,1),const(frame1pPosYDual)*ifelse(map(charLocalCoord720),4,1);
+		id : 2999;
+		removetime: -1;
+		ontop:1;
+		scale: const(frameScaleXDual),const(frameScaleYDual);}
+		}
+
+#;Call for Frame if enemy is active 		
+	if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2999) = 0 && !ishelper {
+	Explod{
+		anim: DIALOGUE9050; 
+		postype: right;
+		pos: const(frame2pPosXDual)*ifelse(map(charLocalCoord720),4,1), const(frame2pPosYDual)*ifelse(map(charLocalCoord720),4,1);
+		id : 2999;
+		removetime: -1;
+		scale: const(frameScaleXDual),const(frameScaleYDual);
+		ontop:1;
+		facing:-1;}
+	}
+
+		
+#=========================
+# Portrait animation
+#=========================
+		
+#;Call for Portrait if player or p1 is active 
+	if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2995) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9060;
+		postype: left;
+		pos: const(portraitBackground1pPosXDual)*ifelse(map(charLocalCoord720),4,1),const(portraitBackground1pPosYDual)*ifelse(map(charLocalCoord720),4,1);
+		id : 2995;
+		removetime: -1;
+		ontop:1;
+		scale: const(portraitScaleXDual),const(portraitScaleYDual);}
+		}
+
+#;Call for Portrait if player or p1 is NO active 
+	if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2995) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9060;
+		postype: right;
+		pos: const(portraitBackground2pPosXDual)*ifelse(map(charLocalCoord720),4,1), const(portraitBackground2pPosYDual)*ifelse(map(charLocalCoord720),4,1);
+		id : 2995;
+		removetime: -1;
+		ontop:1;
+		scale: const(portraitScaleXDual),const(portraitScaleYDual);}		
+	}
+
+}
+#===============================================================================
+# Single Window 360
+#===============================================================================	
+	
+if const(DualOrSingleWindow) = 1 && const(res360or720) = 0 {	 	
+		
+#============================
+# Background black bar
+#============================
+if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2998) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9051;
+		postype: left;
+		pos: const(blackBackground1pPosXSingle)*ifelse(map(charLocalCoord720),4,1),const(blackBackground1pPosYSingle)*ifelse(map(charLocalCoord720),4,1);
+		id : 2998;
+		removetime: -1;
+		ontop:1;
+		scale: const(blackBackgroundScaleXSingle),const(blackBackgroundScaleYSingle);}
+		}
+
+if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2998) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9051;
+		postype: left;
+		pos: const(blackBackground2pPosXSingle)*ifelse(map(charLocalCoord720),4,1),const(blackBackground2pPosYSingle)*ifelse(map(charLocalCoord720),4,1); 
+		id : 2998;
+		removetime: -1;
+		ontop:1;
+		scale: const(blackBackgroundScaleXSingle),const(blackBackgroundScaleYSingle);}
+		}	
+
+#==========================
+# Background animation
+#==========================
+
+#;Call for animation if enemy is active 		
+	if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2997) = 0 && !ishelper {
+	Explod{
+		anim: DIALOGUE9055; 
+		postype: left;
+		pos: const(backgroundAnimated1pPosXSingle), const(backgroundAnimated1pPosYSingle)*ifelse(map(charLocalCoord720),4,1);
+		id : 2997;
+		removetime: -1;
+		scale: const(backgroundAnimatedScaleXSingle),const(backgroundAnimatedScaleYSingle);
+		ontop:1;
+		facing:1;}
+	}
+
+#;Call for animation if enemy is active 		
+	if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2997) = 0 && !ishelper {
+	Explod{
+		anim: DIALOGUE9055; #; substitute this animation for the one you need
+		postype: left;
+		pos: const(backgroundAnimated2pPosXSingle), const(backgroundAnimated2pPosYSingle)*ifelse(map(charLocalCoord720),4,1);
+		id : 2997;
+		removetime: -1;
+		scale: const(backgroundAnimatedScaleXSingle),const(backgroundAnimatedScaleYSingle);
+		ontop:1;
+		facing:1;}
+	}
+
+#==========================
+# Frame
+#==========================
+
+#;Call for frame if player is active 
+	if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2999) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9050; #; substitute this animation for the one you need
+		postype: left;
+		pos: const(frame1pPosXSingle),const(frame1pPosYSingle)*ifelse(map(charLocalCoord720),4,1); #0,140
+		id : 2999;
+		removetime: -1;
+		ontop:1;
+		scale: const(frameScaleXSingle),const(frameScaleYSingle);}
+		}
+
+#;Call for frame if player is active 
+	if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2999) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9049; #; substitute this animation for the one you need
+		postype: left;
+		pos: const(frame2pPosXSingle),const(frame2pPosYSingle)*ifelse(map(charLocalCoord720),4,1); #0,140
+		id : 2999;
+		removetime: -1;
+		ontop:1;
+		scale: const(frameScaleXSingle),const(frameScaleYSingle);}
+		}
+
+#=========================
+# Portrait animation
+#=========================
+		
+#;Call for Portrait if player or p1 is active 
+	if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2995) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9060; #; substitute this animation for the one you need
+		postype: left;
+		pos: const(portraitBackground1pPosXSingle)*ifelse(map(charLocalCoord720),4,1),const(portraitBackground1pPosYSingle)*ifelse(map(charLocalCoord720),4,1);
+		id : 2995;
+		removetime: -1;
+		ontop:1;
+		scale: const(portraitScaleXSingle),const(portraitScaleYSingle);}
+		}
+
+#;Call for Portrait if player or p1 is NO active 
+	if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2995) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9060; #; substitute this animation for the one you need
+		postype: right;
+		pos: const(portraitBackground2pPosXSingle)*ifelse(map(charLocalCoord720),4,1), const(portraitBackground2pPosYSingle)*ifelse(map(charLocalCoord720),4,1);
+		id : 2995;
+		removetime: -1;
+		ontop:1;
+		scale: const(portraitScaleXSingle),const(portraitScaleYSingle);}
+		}		
+	}
+
+
+		
+#===============================================================================
+# Dual window 720
+#===============================================================================		
+		
+if const(DualOrSingleWindow) = 0 && const(res360or720) = 1 {	 	
+		
+#=======================
+# Background black bar
+#=======================
+if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2998) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9051; 
+		postype: left;
+		pos: const(blackBackground1pPosXDual720)*ifelse(map(charLocalCoord720),4,1),const(blackBackground1pPosYDual720)*ifelse(map(charLocalCoord720),4,1);
+		id : 2998;
+		removetime: -1;
+		ontop:1;
+		scale: const(blackBackgroundScaleXDual720),const(blackBackgroundScaleYDual720);}
+		}
+
+#;Call for background if enemy is active 		
+	if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2998) = 0 && !ishelper {
+	Explod{
+		anim: DIALOGUE9051; 
+		postype: right;
+		pos: const(blackBackground2pPosXDual720)*ifelse(map(charLocalCoord720),4,1), const(blackBackground2pPosYDual720)*ifelse(map(charLocalCoord720),4,1);
+		id : 2998;
+		removetime: -1;
+		scale: const(blackBackgroundScaleXDual720),const(blackBackgroundScaleYDual720);
+		ontop:1;
+		facing:-1;}
+	}
+
+#;Call for background if player is active 
+	if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2996) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9051;
+		postype: left;
+		pos: const(blackBackground1pPosXDual720)*ifelse(map(charLocalCoord720),4,1),const(blackBackground1pPosYDual720)*ifelse(map(charLocalCoord720),4,1);
+		id : 2996;
+		removetime: -1;
+		ontop:1;
+		scale: const(blackBackgroundScaleXDual720),const(blackBackgroundScaleYDual720);}
+		}
+
+#;Call for background if enemy is active 		
+	if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2996) = 0 && !ishelper {
+	Explod{
+		anim: DIALOGUE9051;
+		postype: right;
+		pos: const(blackBackground2pPosXDual720)*ifelse(map(charLocalCoord720),4,1), const(blackBackground2pPosYDual720)*ifelse(map(charLocalCoord720),4,1);
+		id : 2996;
+		removetime: -1;
+		scale: const(blackBackgroundScaleXDual720),const(blackBackgroundScaleYDual720);
+		ontop:1;
+		facing:-1;}
+	}
+
+#========================
+# Background animation
+#========================
+
+#;Call for animation if player is active 
+	if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2997) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9055; 
+		postype: left;
+		pos: const(backgroundAnimated1pPosXDual720)*ifelse(map(charLocalCoord720),4,1),const(backgroundAnimated1pPosYDual720)*ifelse(map(charLocalCoord720),4,1);
+		id : 2997;
+		removetime: -1;
+		ontop:1;
+		scale: const(backgroundAnimatedScaleXDual720),const(backgroundAnimatedScaleYDual720);}
+		}
+
+#;Call for animation if enemy is active 		
+	if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2997) = 0 && !ishelper {
+	Explod{
+		anim: DIALOGUE9055; 
+		postype: right;
+		pos: const(backgroundAnimated2pPosXDual720)*ifelse(map(charLocalCoord720),4,1), const(backgroundAnimated2pPosYDual720)*ifelse(map(charLocalCoord720),4,1);
+		id : 2997;
+		removetime: -1;
+		scale: const(backgroundAnimatedScaleXDual720),const(backgroundAnimatedScaleYDual720);
+		ontop:1;
+		facing:-1;}
+	}
+
+#======================
+# Frame
+#======================
+
+#;Call for frame if player is active 
+	if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2999) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9050;
+		postype: left;
+		pos: const(frame1pPosXDual720)*ifelse(map(charLocalCoord720),4,1),const(frame1pPosYDual720)*ifelse(map(charLocalCoord720),4,1);
+		id : 2999;
+		removetime: -1;
+		ontop:1;
+		scale: const(frameScaleXDual720),const(frameScaleYDual720);}
+		}
+
+#;Call for Frame if enemy is active 		
+	if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2999) = 0 && !ishelper {
+	Explod{
+		anim: DIALOGUE9050; 
+		postype: right;
+		pos: const(frame2pPosXDual720)*ifelse(map(charLocalCoord720),4,1), const(frame2pPosYDual720)*ifelse(map(charLocalCoord720),4,1);
+		id : 2999;
+		removetime: -1;
+		scale: const(frameScaleXDual720),const(frameScaleYDual720);
+		ontop:1;
+		facing:-1;}
+	}
+
+		
+#=========================
+# Portrait animation
+#=========================
+		
+#;Call for Portrait if player or p1 is active 
+	if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2995) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9060;
+		postype: left;
+		pos: const(portraitBackground1pPosXDual720)*ifelse(map(charLocalCoord720),4,1),const(portraitBackground1pPosYDual720)*ifelse(map(charLocalCoord720),4,1);
+		id : 2995;
+		removetime: -1;
+		ontop:1;
+		scale: const(portraitScaleXDual720),const(portraitScaleYDual720);}
+		}
+
+#;Call for Portrait if player or p1 is NO active 
+	if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2995) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9060;
+		postype: right;
+		pos: const(portraitBackground2pPosXDual720)*ifelse(map(charLocalCoord720),4,1), const(portraitBackground2pPosYDual720)*ifelse(map(charLocalCoord720),4,1);
+		id : 2995;
+		removetime: -1;
+		ontop:1;
+		scale: const(portraitScaleXDual720),const(portraitScaleYDual720);}		
+	}
+
+}
+#===============================================================================
+# Single Window 720
+#===============================================================================	
+	
+if const(DualOrSingleWindow) = 1 && const(res360or720) = 1 {	 	
+		
+#============================
+# Background black bar
+#============================
+if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2998) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9051;
+		postype: left;
+		pos: const(blackBackground1pPosXSingle720)*ifelse(map(charLocalCoord720),4,1),const(blackBackground1pPosYSingle720)*ifelse(map(charLocalCoord720),4,1);
+		id : 2998;
+		removetime: -1;
+		ontop:1;
+		scale: const(blackBackgroundScaleXSingle720),const(blackBackgroundScaleYSingle720);}
+		}
+
+if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2998) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9051;
+		postype: left;
+		pos: const(blackBackground2pPosXSingle720)*ifelse(map(charLocalCoord720),4,1),const(blackBackground2pPosYSingle720)*ifelse(map(charLocalCoord720),4,1); 
+		id : 2998;
+		removetime: -1;
+		ontop:1;
+		scale: const(blackBackgroundScaleXSingle720),const(blackBackgroundScaleYSingle720);}
+		}	
+
+#==========================
+# Background animation
+#==========================
+
+#;Call for animation if enemy is active 		
+	if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2997) = 0 && !ishelper {
+	Explod{
+		anim: DIALOGUE9055; 
+		postype: left;
+		pos: const(backgroundAnimated1pPosXSingle720), const(backgroundAnimated1pPosYSingle720)*ifelse(map(charLocalCoord720),4,1);
+		id : 2997;
+		removetime: -1;
+		scale: const(backgroundAnimatedScaleXSingle720),const(backgroundAnimatedScaleYSingle720);
+		ontop:1;
+		facing:1;}
+	}
+
+#;Call for animation if enemy is active 		
+	if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2997) = 0 && !ishelper {
+	Explod{
+		anim: DIALOGUE9055; #; substitute this animation for the one you need
+		postype: left;
+		pos: const(backgroundAnimated2pPosXSingle720), const(backgroundAnimated2pPosYSingle720)*ifelse(map(charLocalCoord720),4,1);
+		id : 2997;
+		removetime: -1;
+		scale: const(backgroundAnimatedScaleXSingle720),const(backgroundAnimatedScaleYSingle720);
+		ontop:1;
+		facing:1;}
+	}
+
+#==========================
+# Frame
+#==========================
+
+#;Call for frame if player is active 
+	if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2999) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9050; #; substitute this animation for the one you need
+		postype: left;
+		pos: const(frame1pPosXSingle720),const(frame1pPosYSingle720)*ifelse(map(charLocalCoord720),4,1); #0,140
+		id : 2999;
+		removetime: -1;
+		ontop:1;
+		scale: const(frameScaleXSingle720),const(frameScaleYSingle720);}
+		}
+
+#;Call for frame if player is active 
+	if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2999) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9049; #; substitute this animation for the one you need
+		postype: left;
+		pos: const(frame2pPosXSingle720),const(frame2pPosYSingle720)*ifelse(map(charLocalCoord720),4,1); #0,140
+		id : 2999;
+		removetime: -1;
+		ontop:1;
+		scale: const(frameScaleXSingle720),const(frameScaleYSingle720);}
+		}
+
+#=========================
+# Portrait animation
+#=========================
+		
+#;Call for Portrait if player or p1 is active 
+	if teamside = 1 && map(isActivePlayer) = 1 && numexplod(2995) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9060; #; substitute this animation for the one you need
+		postype: left;
+		pos: const(portraitBackground1pPosXSingle720)*ifelse(map(charLocalCoord720),4,1),const(portraitBackground1pPosYSingle720)*ifelse(map(charLocalCoord720),4,1);
+		id : 2995;
+		removetime: -1;
+		ontop:1;
+		scale: const(portraitScaleXSingle720),const(portraitScaleYSingle720);}
+		}
+
+#;Call for Portrait if player or p1 is NO active 
+	if teamside = 1 && map(isActivePlayer) = 0 && numexplod(2995) = 0 && !ishelper {
+		Explod{
+		anim: DIALOGUE9060; #; substitute this animation for the one you need
+		postype: right;
+		pos: const(portraitBackground2pPosXSingle720)*ifelse(map(charLocalCoord720),4,1), const(portraitBackground2pPosYSingle720)*ifelse(map(charLocalCoord720),4,1);
+		id : 2995;
+		removetime: -1;
+		ontop:1;
+		scale: const(portraitScaleXSingle720),const(portraitScaleYSingle720);}
+		}		
+	}
+}
+
+#;remove explod once dialogue is ended
+if !indialogue {
+RemoveExplod {id:2999;}
+RemoveExplod {id:2998;} 
+RemoveExplod {id:2997;}
+RemoveExplod {id:2996;}
+RemoveExplod {id:2995;}
+}	

@@ -254,8 +254,17 @@ function loop()
 		menu.f_run()
 	else
 		main.f_cmdInput()
+		--quick move list
+		if main.f_input(main.t_players, {'s'})
+			and not network()
+			and not gamemode('demo')
+			and not gamemode('randomtest')
+			and not start.challengerInit
+			and winnerteam() == -1
+			and roundstate() >= 2 then
+			menu.f_init('commandlist')
 		--esc / m
-		if (esc() or (main.f_input(main.t_players, {'m'}) and not network())) and not start.challengerInit then
+		elseif (esc() or (main.f_input(main.t_players, {'m'}) and not network())) and not start.challengerInit then
 			if network() or gamemode('demo') or gamemode('randomtest') or (not config.EscOpensMenu and esc()) then
 				endMatch()
 			else

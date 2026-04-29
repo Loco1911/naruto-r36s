@@ -49,16 +49,47 @@ flag2 = Noshadow
 ; LIFEADD
 [State 0, VarAdd]
 type = VarAdd
-trigger1 = ishelper
+triggerall = ishelper(1000)
+triggerall = movetype = H
+triggerall = time = 0
+trigger1 = gethitvar(damage) > 0
 v = 6
 value = -gethitvar(damage)
+
+[State 0, Parent Life Damage]
+type = ParentVarAdd
+triggerall = ishelper(1000)
+triggerall = movetype = H
+triggerall = time = 0
+trigger1 = gethitvar(damage) > 0
+v = 4
+value = -gethitvar(damage)
+ignorehitpause = 1
+
+[State 0, Helper Death]
+type = ChangeState
+triggerall = ishelper(1000)
+triggerall = roundstate = 2
+triggerall = var(6) <= 0
+triggerall = stateno != 1001
+triggerall = stateno != 1002
+triggerall = stateno != 1010
+triggerall = stateno != 1011
+trigger1 = 1
+value = 1001
 
 ; MUERTE
 [State 0, ChangeState]
 type = ChangeState
-trigger1 = ishelper && stateno = 5110 && var(6) <= 0
-trigger2 = ishelper && stateno = 5110 && roundstate > 2
+trigger1 = ishelper(1000) && stateno = 5110 && var(6) <= 0
+trigger2 = ishelper(1000) && stateno = 5110 && roundstate > 2
 value = 1002
+
+[State 0, Helper Cleanup]
+type = DestroySelf
+triggerall = ishelper(1000)
+trigger1 = roundstate > 2
+trigger2 = parent,life <= 0
 
 [State 0, Air Hit 1]
 type = ChangeState
