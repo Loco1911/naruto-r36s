@@ -4688,6 +4688,54 @@ class StoryEditorHandler(BaseHTTPRequestHandler):
                 rel = f"storymode/storyboards/{saga_dir}/{file_name}"
                 return self.end_json({"success": True, "name": file_name, "path": rel, "type": "storyboard_asset"})
 
+            if upload_type == "storyboard_video":
+                import tempfile, subprocess
+                if not shutil.which('ffmpeg'):
+                    return self.end_json({"success": False, "error": "El servidor no tiene ffmpeg instalado. Ejecuta: sudo apt install ffmpeg"})
+                saga_dir = saga.replace(" ", "_")
+                name_base = os.path.splitext(file_name)[0]
+                name_clean = re.sub(r'[^a-zA-Z0-9_\-]', '_', name_base)
+                sb_dir = os.path.join(PROJECT_ROOT, "storymode", "storyboards", saga_dir, name_clean)
+                os.makedirs(sb_dir, exist_ok=True)
+                
+                with tempfile.TemporaryDirectory() as tmp_dir:
+                    tmp_vid = os.path.join(tmp_dir, "input_vid" + ext)
+                    with open(tmp_vid, "wb") as f: f.write(file_data)
+                    
+                    # Extract audio
+                    out_mp3 = os.path.join(sb_dir, f"{name_clean}.mp3")
+                    subprocess.run(["ffmpeg", "-y", "-i", tmp_vid, "-vn", "-c:a", "libmp3lame", "-q:a", "2", out_mp3], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    
+                    # Extract frames
+                    frames_dir = os.path.join(tmp_dir, "frames")
+                    os.makedirs(frames_dir, exist_ok=True)
+                    fps = 15
+                    subprocess.run(["ffmpeg", "-y", "-i", tmp_vid, "-r", str(fps), "-vf", "scale=640:480:force_original_aspect_ratio=decrease,pad=640:480:(ow-iw)/2:(oh-ih)/2", "-pix_fmt", "rgba", os.path.join(frames_dir, "frame_%04d.png")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    
+                    # Pack SFF
+                    out_sff = os.path.join(sb_dir, f"{name_clean}.sff")
+                    frame_files = sorted([os.path.join(frames_dir, f) for f in os.listdir(frames_dir) if f.endswith('.png')])
+                    if not frame_files:
+                        return self.end_json({"success": False, "error": "No se extrajeron frames"})
+                        
+                    build_video_sff_v2(frame_files, out_sff)
+                    
+                    ticks_per_frame = 60 // fps
+                    total_ticks = len(frame_files) * ticks_per_frame
+                    
+                    seq_lines = []
+                    for i in range(len(frame_files)):
+                        delay = -1 if i == len(frame_files) - 1 else ticks_per_frame
+                        seq_lines.append(f"0,{i}, 0,0, {delay}")
+                        
+                    seq_str = "\n".join(seq_lines)
+                    snd_rel = f"storymode/storyboards/{saga_dir}/{name_clean}/{name_clean}.mp3"
+                    
+                    content = f"[SceneDef]\nspr = {name_clean}.sff\nstartscene = 0\n\n[Scene 0]\nfadein.time = 40\nfadein.col = 0,0,0\nfadeout.time = 40\nfadeout.col = 0,0,0\nclearcolor = 0,0,0\nlayerall.pos = 0,0\nlayer0.anim = 0\nlayer0.offset = 0,0\nlayer0.starttime = 0\nbgm = {snd_rel}\nbgm.loop = 0\nend.time = {total_ticks}\n\n[Begin Action 0]\n{seq_str}\n"
+                    with open(os.path.join(sb_dir, name_clean + ".def"), 'w', encoding='utf-8') as f: f.write(content)
+                    
+                return self.end_json({"success": True})
+
             # Archive upload for chars/stages/lifebars
             valid_exts = ('.zip', '.rar', '.7z')
             if not any(file_name.lower().endswith(e) for e in valid_exts):
@@ -4813,3 +4861,67 @@ if __name__ == '__main__':
         print("Abre esta direccion en tu navegador: http://localhost:8080")
         server.serve_forever()
     except Exception as e: print("Error bindeando puerto 8080:", e)
+import struct
+import io
+from PIL import Image
+
+def save_png_bytes(image: Image.Image) -> bytes:
+    buf = io.BytesIO()
+    image.save(buf, format="PNG")
+    return buf.getvalue()
+
+def build_video_sff_v2(image_paths, out_path):
+    version_bytes = bytes([0, 1, 0, 2])
+    sprite_count = len(image_paths)
+    sprite_offset = 0x200
+    palette_offset = sprite_offset + sprite_count * 28
+    palette_count = 0
+    ldata_offset = palette_offset
+
+    blob = bytearray(b"\x00" * ldata_offset)
+    blob[:12] = b"ElecbyteSpr\x00"
+    blob[12:16] = version_bytes
+
+    struct.pack_into("<I", blob, 0x10, 0)
+    struct.pack_into("<I", blob, 0x14, 0)
+    struct.pack_into("<I", blob, 0x18, 0)
+    struct.pack_into("<I", blob, 0x1C, 0)
+    struct.pack_into("<I", blob, 0x20, 0)
+    struct.pack_into("<I", blob, 0x24, sprite_offset)
+    struct.pack_into("<I", blob, 0x28, sprite_count)
+    struct.pack_into("<I", blob, 0x2C, palette_offset)
+    struct.pack_into("<I", blob, 0x30, palette_count)
+    struct.pack_into("<I", blob, 0x34, ldata_offset)
+
+    comment = b"Generated Video Storyboard\0"
+    blob[0x44 : 0x44 + len(comment)] = comment
+
+    ldata = bytearray()
+    for idx, path in enumerate(image_paths):
+        img = Image.open(path).convert("RGB") # 24-bit RGB
+        width, height = img.size
+        payload = struct.pack("<I", width * height * 3) + save_png_bytes(img)
+        data_offset = len(ldata)
+        ldata.extend(payload)
+        off = sprite_offset + idx * 28
+        struct.pack_into("<H", blob, off + 0, 0)
+        struct.pack_into("<H", blob, off + 2, idx)
+        struct.pack_into("<H", blob, off + 4, width)
+        struct.pack_into("<H", blob, off + 6, height)
+        struct.pack_into("<h", blob, off + 8, 0)
+        struct.pack_into("<h", blob, off + 10, 0)
+        struct.pack_into("<H", blob, off + 12, 0)
+        blob[off + 14] = 11 # format 11 is 24-bit PNG
+        blob[off + 15] = 24
+        struct.pack_into("<I", blob, off + 16, data_offset)
+        struct.pack_into("<I", blob, off + 20, len(payload))
+        struct.pack_into("<H", blob, off + 24, 0)
+        struct.pack_into("<H", blob, off + 26, 0)
+
+    blob.extend(ldata)
+    struct.pack_into("<I", blob, 0x38, len(ldata))
+    struct.pack_into("<I", blob, 0x3C, ldata_offset + len(ldata))
+    struct.pack_into("<I", blob, 0x40, 0)
+
+    with open(out_path, 'wb') as f:
+        f.write(blob)

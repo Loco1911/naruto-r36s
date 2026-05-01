@@ -433,8 +433,6 @@
                 <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                 <span class="text-sm font-semibold text-gray-200">{{ projectName }}</span>
             </div>
-            <button v-if="activeTab==='editor'" @click="saveData" class="btn-primary">💾 Guardar Historia</button>
-        </div>
     </header>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -814,7 +812,11 @@
         <div class="w-60 border-r border-[#1e2a3a] bg-[#0a0e14] flex flex-col overflow-hidden flex-shrink-0">
             <div class="panel-header flex justify-between items-center">
                 <span class="font-bold text-sm text-orange-400">🎬 Storyboards</span>
-                <button @click="newStoryboard" class="text-[10px] bg-orange-600/70 px-2 py-0.5 rounded font-bold text-white hover:bg-orange-500">+ Nuevo</button>
+                <div>
+                    <input type="file" ref="sbVideoInput" accept="video/mp4,video/webm,video/x-matroska,video/*" @change="uploadStoryboardVideo" class="hidden">
+                    <button @click="$refs.sbVideoInput.click()" class="text-[10px] bg-indigo-600/70 px-2 py-0.5 rounded font-bold text-white hover:bg-indigo-500 mr-1">🎥 Importar Video</button>
+                    <button @click="newStoryboard" class="text-[10px] bg-orange-600/70 px-2 py-0.5 rounded font-bold text-white hover:bg-orange-500">+ Nuevo</button>
+                </div>
             </div>
             <div class="flex-1 overflow-y-auto custom-scroll">
                 <div v-if="storyboardList.length===0" class="text-xs text-gray-600 text-center p-6">Sin storyboards.</div>
@@ -1170,7 +1172,6 @@
                             {{ movelistGenerating ? '⏳ Generando...' : '⚡ Generar desde .cmd' }}
                         </button>
                         <button @click="createEmptyMovelist" class="btn-secondary text-xs" :disabled="!selectedMovelistChar">+ Vacío</button>
-                        <button @click="saveMovelistEditor" class="btn-primary text-xs" :disabled="!movelistEditor || movelistLoading">💾 Guardar Move List</button>
                     </div>
                 </div>
 
@@ -1249,7 +1250,6 @@
                 </div>
                 <div class="flex gap-2">
                     <input v-model="stageSearch" placeholder="Buscar..." class="input-dark py-1 w-40">
-                    <button @click="saveStages" class="btn-primary text-xs">💾 Guardar</button>
                 </div>
             </div>
             <div v-if="sel.stages.size>0" class="px-4 py-1.5 bg-emerald-950/20 border-b border-emerald-800/30 flex items-center gap-2 text-xs">
@@ -1425,6 +1425,8 @@ createApp({
         projectRoot:null, pickerCurrent:"~", pickerParent:"~", pickerDirs:[], pickerLoading:false, rootError:"", loading:false,
         catalog:[], assets:{chars:[],stages:[],storyboard_defs:[],storyboard_sffs:[],storyboard_sounds:[]},
         selectedArcIndex:-1, selectedChapterIndex:-1, activeTab:'editor',
+        // Global State & Undo/Redo
+        history:[], historyIndex:-1, isRestoringState:false, globalSaveTimeout:null, dataIsLoading:false,
         // Storyboard tab
         storyboardList:[], selectedSBPath:'', selectedSB:null,
         sbForm:{name:'',saga:'General',spr:'',snd:'',duration:300},
@@ -1722,16 +1724,10 @@ createApp({
         }
     },
     watch: {
-        charRoster: {
-            deep: true,
-            handler() {
-                if (this.charRosterLoading) return;
-                if (this.charRosterSaveTimeout) clearTimeout(this.charRosterSaveTimeout);
-                this.charRosterSaveTimeout = setTimeout(() => {
-                    this.saveChars(true);
-                }, 1000);
-            }
-        },
+        charRoster: { deep: true, handler() { this.onStateChange(); } },
+        catalog: { deep: true, handler() { this.onStateChange(); } },
+        stageRoster: { deep: true, handler() { this.onStateChange(); } },
+        movelistEditor: { deep: true, handler() { this.onStateChange(); } },
         charPreviewKey(){
             if(this.activeTab === 'chars'){
                 this.reloadCharPreview();
@@ -2986,11 +2982,74 @@ createApp({
             }
         },
 
+        // ── Undo/Redo & Auto-Save ──
+        handleKeydown(e) {
+            if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+                e.preventDefault();
+                this.undo();
+            } else if (e.ctrlKey && e.key.toLowerCase() === 'y') {
+                e.preventDefault();
+                this.redo();
+            }
+        },
+        onStateChange() {
+            if (this.isRestoringState || this.dataIsLoading) return;
+            if (this.globalSaveTimeout) clearTimeout(this.globalSaveTimeout);
+            this.globalSaveTimeout = setTimeout(() => {
+                this.pushHistory();
+                this.triggerAllSaves();
+            }, 1000);
+        },
+        pushHistory() {
+            if (this.historyIndex < this.history.length - 1) {
+                this.history = this.history.slice(0, this.historyIndex + 1);
+            }
+            const snapshot = {
+                catalog: JSON.parse(JSON.stringify(this.catalog)),
+                charRoster: JSON.parse(JSON.stringify(this.charRoster)),
+                stageRoster: JSON.parse(JSON.stringify(this.stageRoster)),
+                movelistEditor: this.movelistEditor ? JSON.parse(JSON.stringify(this.movelistEditor)) : null
+            };
+            this.history.push(snapshot);
+            if (this.history.length > 50) this.history.shift();
+            else this.historyIndex++;
+        },
+        undo() {
+            if (this.historyIndex > 0) {
+                this.historyIndex--;
+                this.restoreSnapshot(this.history[this.historyIndex]);
+                this.triggerAllSaves();
+            }
+        },
+        redo() {
+            if (this.historyIndex < this.history.length - 1) {
+                this.historyIndex++;
+                this.restoreSnapshot(this.history[this.historyIndex]);
+                this.triggerAllSaves();
+            }
+        },
+        restoreSnapshot(snap) {
+            this.isRestoringState = true;
+            this.catalog = JSON.parse(JSON.stringify(snap.catalog));
+            this.charRoster = JSON.parse(JSON.stringify(snap.charRoster));
+            this.stageRoster = JSON.parse(JSON.stringify(snap.stageRoster));
+            if (snap.movelistEditor) this.movelistEditor = JSON.parse(JSON.stringify(snap.movelistEditor));
+            else this.movelistEditor = null;
+            this.$nextTick(() => { this.isRestoringState = false; });
+        },
+        async triggerAllSaves() {
+            await this.saveCatalog(true);
+            await this.saveChars(true);
+            await this.saveStages(true);
+            if (this.movelistEditor && this.selectedMovelistChar) await this.saveMovelist(true);
+        },
+
         // ── Setup ──
         async navigatePicker(p){ this.pickerLoading=true;try{let r=await fetch('/api/list_dir?path='+encodeURIComponent(p));let d=await r.json();if(d.current){this.pickerCurrent=d.current;this.pickerParent=d.parent;this.pickerDirs=d.dirs}}catch(e){}this.pickerLoading=false },
         async checkStatus(){ let r=await fetch('/api/status');let d=await r.json();if(d.root){this.projectRoot=d.root;this.loadData()}else this.navigatePicker('~') },
         async submitRoot(){ if(!this.pickerCurrent)return;this.loading=true;this.rootError="";try{let r=await fetch('/api/set_root',{method:'POST',body:JSON.stringify({path:this.pickerCurrent}),headers:{'Content-Type':'application/json'}});let o=await r.json();if(o.success)this.checkStatus();else this.rootError=o.error||"Inválida"}catch(e){this.rootError="Error"}this.loading=false },
         async loadData(){
+            this.dataIsLoading = true;
             try{
                 let r=await fetch('/api/catalog');let cd=await r.json();
                 (cd||[]).forEach(a=>{
@@ -3011,15 +3070,24 @@ createApp({
                 this.catalog=cd||[];
                 let r2=await fetch('/api/assets');this.assets=await r2.json();
             }catch(e){}
+            
+            this.dataIsLoading = false;
+            if (this.historyIndex === -1) this.pushHistory();
+            else if (!this.isRestoringState) {
+                // Update current snapshot with newly loaded data without pushing new undo step
+                this.history[this.historyIndex].catalog = JSON.parse(JSON.stringify(this.catalog));
+            }
         },
-        async saveData(){
+        async saveCatalog(silent=false){
             this.catalog.forEach(arc=>(arc.chapters||[]).forEach(ch=>this.ensureChapterId(ch,'cap')));
             try{
                 const payload=this.buildCatalogPayload();
                 await fetch('/api/catalog',{method:'POST',body:JSON.stringify(payload),headers:{'Content-Type':'application/json'}});
                 this.catalog.forEach(arc=>(arc.chapters||[]).forEach(ch=>{this.normalizeChapterRoundTime(ch);this.normalizeChapterSubstitutions(ch)}));
-                alert('¡Guardado!')
-            }catch(e){alert('Error')}
+                if(!silent) alert('¡Guardado!');
+            }catch(e){
+                if(!silent) alert('Error');
+            }
         },
 
         // ── Arc/Chapter ──
@@ -3076,6 +3144,47 @@ createApp({
         // ── Storyboard ──
         async loadStoryboards(){ try{let r=await fetch('/api/storyboards');let d=await r.json();if(!d.error)this.storyboardList=d.storyboards||[]}catch(e){} },
         newStoryboard(){ this.selectedSBPath='__new__';this.selectedSB={name:'',isNew:true};this.sbForm={name:'',saga:'General',spr:'',snd:'',duration:300} },
+        async uploadStoryboardVideo(e){
+            const file=e.target.files[0];
+            if(!file)return;
+            let defaultName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "_");
+            let name = prompt("Nombre del storyboard (sin espacios):", defaultName);
+            if(!name) { e.target.value=''; return; }
+            let saga = prompt("Nombre de la saga destino:", "General");
+            if(saga === null) { e.target.value=''; return; }
+            
+            const fd=new FormData();
+            fd.append('video',file);
+            fd.append('type','storyboard_video');
+            fd.append('name',name);
+            fd.append('saga',saga);
+            
+            // Reutilizamos el panel de storyboard activo para mostrar el progreso
+            this.newStoryboard();
+            this.sbForm.name = name;
+            this.sbForm.saga = saga;
+            this.sbMsg = 'Procesando video... (esto puede tardar unos minutos, no cierres la pestaña)';
+            this.sbMsgOk = true;
+            
+            try{
+                let r=await fetch('/api/upload',{method:'POST',body:fd});
+                let d=await r.json();
+                if(d.success){
+                    this.sbMsg='Video convertido y guardado ✓';
+                    this.sbMsgOk = true;
+                    await this.loadStoryboards();
+                    await this.loadData();
+                    setTimeout(()=>this.sbMsg='',4000);
+                } else {
+                    this.sbMsg=d.error||'Error al convertir video';
+                    this.sbMsgOk=false;
+                }
+            }catch(err){
+                this.sbMsg='Error de red al subir el video';
+                this.sbMsgOk=false;
+            }
+            e.target.value='';
+        },
         selectStoryboard(sb){ this.selectedSBPath=sb.path;this.selectedSB={...sb,isNew:false};this.sbForm={name:sb.name,saga:sb.saga,spr:sb.spr,snd:sb.snd,duration:sb.duration} },
         async saveStoryboard(){
             if(!this.sbForm.name){this.sbMsg='Nombre requerido';this.sbMsgOk=false;return}
@@ -3539,6 +3648,7 @@ createApp({
         },
         async loadMovelistEditor(charName){
             this.movelistLoading=true;
+            this.dataIsLoading=true;
             try{
                 const r=await fetch('/api/movelist/get?char='+encodeURIComponent(charName));
                 const d=await r.json();
@@ -3553,12 +3663,16 @@ createApp({
                 this.movelistEditor=this.buildEmptyMovelist(charName);
                 this.setMovelistMsg('No se pudo leer la move list.',false);
             }
+            this.dataIsLoading=false;
+            if (this.historyIndex > -1 && !this.isRestoringState) {
+                this.history[this.historyIndex].movelistEditor = this.movelistEditor ? JSON.parse(JSON.stringify(this.movelistEditor)) : null;
+            }
             this.movelistLoading=false;
         },
         createEmptyMovelist(){
             if(!this.selectedMovelistChar)return;
             this.movelistEditor=this.buildEmptyMovelist(this.selectedMovelistChar);
-            this.setMovelistMsg('Move list vacía creada en memoria. Guarda para escribirla.',true);
+            this.setMovelistMsg('Move list vacía creada en memoria. Escribe para auto-guardar.',true);
         },
         async generateSelectedMovelist(){
             if(!this.selectedMovelistChar)return;
@@ -3579,7 +3693,7 @@ createApp({
             }
             this.movelistGenerating=false;
         },
-        async saveMovelistEditor(){
+        async saveMovelist(silent=false){
             if(!this.selectedMovelistChar||!this.movelistEditor)return;
             try{
                 const payload=this.normalizeMovelistData(this.movelistEditor,this.selectedMovelistChar);
@@ -3593,12 +3707,12 @@ createApp({
                 if(d.success){
                     this.movelistEditor=payload;
                     this.movelistChars=this.movelistChars.map(char=>char.name===this.selectedMovelistChar?{...char,hasJson:true}:char);
-                    this.setMovelistMsg('Move list guardada.',true);
+                    if(!silent) this.setMovelistMsg('Move list guardada.',true);
                 }else{
-                    this.setMovelistMsg(d.error||'No se pudo guardar la move list.',false);
+                    if(!silent) this.setMovelistMsg(d.error||'No se pudo guardar la move list.',false);
                 }
             }catch(e){
-                this.setMovelistMsg('Error al guardar la move list.',false);
+                if(!silent) this.setMovelistMsg('Error al guardar la move list.',false);
             }
         },
         addMovelistSection(){
@@ -3632,8 +3746,36 @@ createApp({
                 if(!silent) this.showMsg('chars','Error','err');
             }
         },
-        async loadStages(){ try{let r=await fetch('/api/stages');let d=await r.json();if(d.error)return this.showMsg('stages',d.error,'err');this.stageRoster=d.roster||[];this.stageAvailable=d.available||[];this.stageUnused=d.unused||[];this.stageNameMap=d.name_map||{}}catch(e){this.showMsg('stages','Error','err')} },
-        async saveStages(){ try{let r=await fetch('/api/stages/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({stages:this.stageRoster})});let d=await r.json();if(d.success){this.showMsg('stages','Guardado ✓','ok');this.loadData()}else this.showMsg('stages',d.error,'err')}catch(e){this.showMsg('stages','Error','err')} },
+        async loadStages(){
+            this.dataIsLoading = true;
+            try{
+                let r=await fetch('/api/stages');let d=await r.json();
+                if(d.error)return this.showMsg('stages',d.error,'err');
+                this.stageRoster=d.roster||[];
+                this.stageAvailable=d.available||[];
+                this.stageUnused=d.unused||[];
+                this.stageNameMap=d.name_map||{};
+            }catch(e){
+                this.showMsg('stages','Error','err');
+            }
+            this.dataIsLoading = false;
+            if (this.historyIndex > -1 && !this.isRestoringState) {
+                this.history[this.historyIndex].stageRoster = JSON.parse(JSON.stringify(this.stageRoster));
+            }
+        },
+        async saveStages(silent=false){
+            try{
+                let r=await fetch('/api/stages/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({stages:this.stageRoster})});
+                let d=await r.json();
+                if(d.success){
+                    if(!silent) this.showMsg('stages','Guardado ✓','ok');
+                }else{
+                    if(!silent) this.showMsg('stages',d.error,'err');
+                }
+            }catch(e){
+                if(!silent) this.showMsg('stages','Error','err');
+            }
+        },
         async cleanMissingStages(){
             if(!confirm('Se eliminarán referencias a stages que ya no existan en el disco y los capítulos afectados pasarán a random. ¿Continuar?'))return;
             try{
@@ -4038,7 +4180,13 @@ createApp({
         },
         showMsg(t,m,tp){ this.msg[t]=m;this.msgType[t]=tp;setTimeout(()=>this.msg[t]='',4000) }
     },
-    mounted(){ this.checkStatus() }
+    mounted(){ 
+        this.checkStatus();
+        window.addEventListener('keydown', this.handleKeydown);
+    },
+    unmounted(){
+        window.removeEventListener('keydown', this.handleKeydown);
+    }
 }).mount('#app');
 </script>
 </body>
