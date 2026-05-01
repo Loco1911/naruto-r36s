@@ -13,8 +13,8 @@ fi
 
 source $controlfolder/control.txt
 [ -f "${controlfolder}/mod_${CFW_NAME}.txt" ] && source "${controlfolder}/mod_${CFW_NAME}.txt"
-GAMEDIR=/$directory/ports/ikemen/
+GAMEDIR=/$directory/ports/naruto-r36s/
 cd $GAMEDIR
 > "log.txt" && exec > >(tee "log.txt") 2>&1
 
-./sdlGamepadMapper  "external/gamecontrollerdb.txt"
+./sdlGamepadMapper "external/gamecontrollerdb.txt"

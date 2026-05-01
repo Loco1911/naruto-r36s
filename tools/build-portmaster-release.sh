@@ -8,12 +8,12 @@ Build an ARM64 PortMaster release zip from the repository root.
 The repository root is the canonical game tree used for local x64 testing.
 This script creates the PortMaster shape in a temporary staging folder:
 
-  Ikemen.sh
-  IkemenDebug.sh
-  IkemenGamepad.sh
-  ikemen/
+  NarutoR36S.sh
+  NarutoR36SDebug.sh
+  NarutoR36SGamepad.sh
+  naruto-r36s/
 
-The ikemen/ folder contains game data plus ARM64 binaries only. Desktop x64
+The naruto-r36s/ folder contains game data plus ARM64 binaries only. Desktop x64
 binaries, development tools, logs, editor files, old nested staging folders,
 and Windows metadata are excluded.
 
@@ -21,7 +21,7 @@ Usage:
   tools/build-portmaster-release.sh [options]
 
 Options:
-  -o, --output PATH   Output zip path. Default: dist/ikemen.zip
+  -o, --output PATH   Output zip path. Default: dist/naruto-r36s.zip
   -n, --dry-run       Show the rsync plan without creating a zip.
   --keep-staging      Keep the temporary staging folder after building.
   -h, --help          Show this help.
@@ -72,15 +72,15 @@ command -v rsync >/dev/null 2>&1 || die "rsync is required"
 command -v python3 >/dev/null 2>&1 || die "python3 is required"
 
 if [[ -z "$OUTPUT" ]]; then
-  OUTPUT="$REPO_ROOT/dist/ikemen.zip"
+  OUTPUT="$REPO_ROOT/dist/naruto-r36s.zip"
 elif [[ "$OUTPUT" != /* ]]; then
   OUTPUT="$REPO_ROOT/$OUTPUT"
 fi
 
 REQUIRED_ROOT_FILES=(
-  "Ikemen.sh"
-  "IkemenDebug.sh"
-  "IkemenGamepad.sh"
+  "NarutoR36S.sh"
+  "NarutoR36SDebug.sh"
+  "NarutoR36SGamepad.sh"
   "ikemen_linux.aarch64"
   "sdlGamepadMapper"
   "port.json"
@@ -128,7 +128,7 @@ cleanup() {
 trap cleanup EXIT
 
 ZIP_ROOT="$STAGE_ROOT/ziproot"
-GAME_DIR="$ZIP_ROOT/ikemen"
+GAME_DIR="$ZIP_ROOT/naruto-r36s"
 mkdir -p "$GAME_DIR"
 
 RSYNC_ARGS=(
@@ -143,6 +143,8 @@ RSYNC_ARGS=(
   --exclude='/.portmaster-build/***'
   --exclude='/dist/***'
   --exclude='/ikemen/***'
+  --exclude='/naruto-r36s/***'
+  --exclude='/Stages/***'
   --exclude='/tools/***'
   --exclude='/storymode_editor/***'
   --exclude='/Malusardi N4rut0 MUG3N 2022 V5/***'
@@ -151,6 +153,9 @@ RSYNC_ARGS=(
   --exclude='/Ikemen.sh'
   --exclude='/IkemenDebug.sh'
   --exclude='/IkemenGamepad.sh'
+  --exclude='/NarutoR36S.sh'
+  --exclude='/NarutoR36SDebug.sh'
+  --exclude='/NarutoR36SGamepad.sh'
   --exclude='/Ikemen_GO'
   --exclude='/Ikemen_GO_Linux'
   --exclude='/Ikemen_GO.command'
@@ -190,12 +195,12 @@ if [[ "$DRY_RUN" -eq 1 ]]; then
   LAUNCHER_RSYNC_ARGS+=(--dry-run)
 fi
 rsync "${LAUNCHER_RSYNC_ARGS[@]}" \
-  "$REPO_ROOT/Ikemen.sh" \
-  "$REPO_ROOT/IkemenDebug.sh" \
-  "$REPO_ROOT/IkemenGamepad.sh" \
+  "$REPO_ROOT/NarutoR36S.sh" \
+  "$REPO_ROOT/NarutoR36SDebug.sh" \
+  "$REPO_ROOT/NarutoR36SGamepad.sh" \
   "$ZIP_ROOT/"
 
-info "copying game tree into ikemen/"
+info "copying game tree into naruto-r36s/"
 rsync "${RSYNC_ARGS[@]}" "$REPO_ROOT/" "$GAME_DIR/"
 
 if [[ "$DRY_RUN" -eq 1 ]]; then
@@ -204,9 +209,9 @@ if [[ "$DRY_RUN" -eq 1 ]]; then
 fi
 
 chmod +x \
-  "$ZIP_ROOT/Ikemen.sh" \
-  "$ZIP_ROOT/IkemenDebug.sh" \
-  "$ZIP_ROOT/IkemenGamepad.sh" \
+  "$ZIP_ROOT/NarutoR36S.sh" \
+  "$ZIP_ROOT/NarutoR36SDebug.sh" \
+  "$ZIP_ROOT/NarutoR36SGamepad.sh" \
   "$GAME_DIR/ikemen_linux.aarch64" \
   "$GAME_DIR/sdlGamepadMapper"
 
@@ -281,8 +286,10 @@ copy_if_present "$GAME_DIR/stages/Konoha_Night_(Rain_Ver).def" "$GAME_DIR/stages
 copy_if_present "$GAME_DIR/stages/Konoha_Night_(Rain_Ver).sff" "$GAME_DIR/stages/Konoha_Night_(Rain_Ver)/"
 copy_if_present "$GAME_DIR/stages/01-Training_Field_NSUNS4/01-Training_Field_NSUNS4.def" "$GAME_DIR/stages/"
 copy_if_present "$GAME_DIR/stages/01-Training_Field_NSUNS4/01-Training_Field_NSUNS4.sff" "$GAME_DIR/stages/"
-copy_if_present "$GAME_DIR/Stages/NS_Valley1.1.def" "$GAME_DIR/stages/"
-copy_if_present "$GAME_DIR/Stages/NS_Valley.sff" "$GAME_DIR/stages/"
+
+for rel in "stages/NS_Valley1.1.def" "stages/NS_Valley.sff"; do
+  [[ -f "$GAME_DIR/$rel" ]] || die "expected stage asset missing: $rel"
+done
 
 info "validating package staging"
 python3 - "$GAME_DIR" <<'PY'
@@ -292,6 +299,21 @@ import re
 import sys
 
 root = Path(sys.argv[1])
+zip_root = root.parent
+
+case_seen = {}
+case_collisions = []
+for path in sorted(zip_root.rglob("*")):
+    rel = path.relative_to(zip_root).as_posix()
+    key = rel.lower()
+    previous = case_seen.setdefault(key, rel)
+    if previous != rel:
+        case_collisions.append(f"{previous} <-> {rel}")
+if case_collisions:
+    raise SystemExit(
+        "Case-insensitive path collisions detected; Windows extraction would prompt/overwrite:\n"
+        + "\n".join(case_collisions)
+    )
 
 for rel in ("save/config.json", "storymode/catalog.json", "port.json"):
     with (root / rel).open() as f:

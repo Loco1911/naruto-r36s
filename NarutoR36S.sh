@@ -14,7 +14,7 @@ fi
 source $controlfolder/control.txt
 [ -f "${controlfolder}/mod_${CFW_NAME}.txt" ] && source "${controlfolder}/mod_${CFW_NAME}.txt"
 #get_controls
-GAMEDIR=/$directory/ports/ikemen/
+GAMEDIR=/$directory/ports/naruto-r36s/
 cd $GAMEDIR
 > "$GAMEDIR/log.txt" && exec > >(tee "$GAMEDIR/log.txt") 2>&1
 
@@ -40,8 +40,8 @@ if [ ! -f "external/gamecontrollerdb.txt" ]; then
 fi
 
 if [ -d "$GAMEDIR/data/" ]; then
-  ./ikemen_linux.${DEVICE_ARCH} -updatechar -updatestage -debug
+  ./ikemen_linux.${DEVICE_ARCH} -updatechar -updatestage
 else
-  ./ikemen_linux.${DEVICE_ARCH} -installrun -debug
+  ./ikemen_linux.${DEVICE_ARCH} -installrun
 fi
 pm_finish
