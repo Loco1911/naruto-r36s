@@ -6,44 +6,44 @@
   <img src="screenshot3.png" alt="Naruto R36S gamepad mapper" width="32%">
 </p>
 
-**Naruto R36S** es un port listo para usar de un juego de pelea fan-made de
-Naruto, preparado para consolas R36S y otros dispositivos compatibles con
-PortMaster en arquitectura `aarch64`.
+**Naruto R36S** is a ready-to-run PortMaster build of a fan-made Naruto 2D
+fighting game, prepared for the R36S handheld and other PortMaster-compatible
+devices running the `aarch64` architecture.
 
-El juego corre sobre **Ikemen GO**, un motor open source compatible con recursos
-de M.U.G.E.N que agrega soporte moderno, scripting, modos extendidos y mejor
-portabilidad. Este repositorio contiene el arbol del juego, launchers de
-PortMaster, herramientas de desarrollo y el flujo para generar el paquete final.
+The game is powered by **Ikemen GO**, an open source fighting game engine with
+M.U.G.E.N resource compatibility, modern portability, scripting support, and
+expanded game modes. This repository contains the canonical game tree,
+PortMaster launchers, development tools, and the release packaging workflow.
 
-## Caracteristicas
+## Features
 
-- Juego de pelea 2D basado en Naruto, powered by Ikemen GO.
-- Paquete PortMaster `Ready to run`, sin runtime externo declarado.
-- Launcher principal: `NarutoR36S.sh`.
-- Launcher de debug: `NarutoR36SDebug.sh`.
-- Herramienta de remapeo: `NarutoR36SGamepad.sh`.
-- 157 carpetas de personajes incluidas en `chars/`.
-- 35 definiciones de escenarios en `stages/`.
-- Movelists en `moves/` y soporte de contenido de historia en `storymode/`.
-- Binario ARM64 incluido: `ikemen_linux.aarch64`.
-- Binario x64 local para pruebas de escritorio: `Ikemen_GO_Linux`.
+- Naruto-based 2D fighting game powered by Ikemen GO.
+- Ready-to-run PortMaster package with no external runtime declared.
+- Main launcher: `NarutoR36S.sh`.
+- Debug launcher: `NarutoR36SDebug.sh`.
+- Gamepad remapping launcher: `NarutoR36SGamepad.sh`.
+- 157 character folders included under `chars/`.
+- 35 stage definitions included under `stages/`.
+- Movelists in `moves/` and story content support in `storymode/`.
+- Included ARM64 binary: `ikemen_linux.aarch64`.
+- Included x64 desktop binary for local testing: `Ikemen_GO_Linux`.
 
-## Instalacion En R36S / PortMaster
+## Installation On R36S / PortMaster
 
-1. Genera el zip del port:
+1. Build the port zip:
 
    ```bash
    tools/build-portmaster-release.sh
    ```
 
-2. El paquete queda en:
+2. The package is written to:
 
    ```text
    dist/naruto-r36s.zip
    ```
 
-3. Instala el zip con PortMaster o extraelo en la carpeta de ports de tu
-   firmware. La estructura final debe quedar asi:
+3. Install the zip with PortMaster, or extract it into your firmware's ports
+   folder. The final layout should look like this:
 
    ```text
    ports/
@@ -58,122 +58,123 @@ PortMaster, herramientas de desarrollo y el flujo para generar el paquete final.
        `-- ikemen_linux.aarch64
    ```
 
-4. Desde el menu de ports ejecuta **Naruto R36S**.
+4. Launch **Naruto R36S** from the ports menu.
 
-Para remapear controles, abre **Naruto R36S Gamepad** desde Ports. Para probar
-arranque con informacion de debug, usa **Naruto R36S (Debug)**.
+To remap controls, open **Naruto R36S Gamepad** from Ports. To run the game with
+debug output, use **Naruto R36S (Debug)**.
 
-## Controles
+## Controls
 
-| Boton | Accion |
+| Button | Action |
 | --- | --- |
-| Y | Golpe debil |
-| X | Golpe fuerte |
-| B | Patada debil |
-| A | Patada fuerte |
+| Y | Low punch |
+| X | High punch |
+| B | Low kick |
+| A | High kick |
 | Start | Menu |
 | Select | Taunt |
 
-## Desarrollo Local
+## Local Development
 
-El root del repositorio es el arbol canonico del juego. Para probar en Linux x64:
+The repository root is the canonical game tree. To run the game locally on
+Linux x64:
 
 ```bash
 tools/run-x64.sh
 ```
 
-Para un smoke test rapido de arranque:
+For a quick startup smoke test:
 
 ```bash
 tools/smoke-x64.sh
 ```
 
-El smoke test ejecuta Ikemen en modo ventana, sin musica ni sonido, actualizando
-personajes y stages. Si la UI permanece viva hasta el timeout, se considera una
-prueba correcta.
+The smoke test runs Ikemen in windowed mode, with music and sound disabled, while
+updating characters and stages. If the UI stays alive until the timeout, the
+test is treated as successful.
 
-## Empaquetado
+## Packaging
 
-El script de release arma una estructura temporal de PortMaster y genera:
+The release script stages the PortMaster layout and builds the final package:
 
 ```bash
 tools/build-portmaster-release.sh
 ```
 
-Salida por defecto:
+Default output:
 
 ```text
 dist/naruto-r36s.zip
 ```
 
-Tambien puedes indicar una ruta de salida:
+You can also choose a custom output path:
 
 ```bash
-tools/build-portmaster-release.sh --output dist/mi-build.zip
+tools/build-portmaster-release.sh --output dist/my-build.zip
 ```
 
-O revisar que se copiaria sin crear el zip:
+Or preview what would be copied without creating the zip:
 
 ```bash
 tools/build-portmaster-release.sh --dry-run
 ```
 
-Durante el empaquetado se excluyen binarios x64, herramientas de editor, logs,
-archivos temporales, metadata de Windows y carpetas antiguas de staging. El
-paquete final queda separado del port oficial de Ikemen usando el directorio
-`naruto-r36s/`.
+During packaging, the script excludes x64 binaries, editor tools, logs,
+temporary files, Windows metadata, and old staging folders. The final package
+uses the `naruto-r36s/` data folder so it can coexist with the official Ikemen
+port.
 
-## Estructura Del Repositorio
+## Repository Layout
 
 ```text
 .
-|-- NarutoR36S.sh              # Launcher principal de PortMaster
-|-- NarutoR36SDebug.sh         # Launcher con debug de Ikemen
-|-- NarutoR36SGamepad.sh       # Remapeo de controles SDL
-|-- chars/                     # Personajes
-|-- data/                      # Configuracion, screenpack y datos de Ikemen
-|-- external/                  # Configuracion externa, gamecontrollerdb, iconos
-|-- font/                      # Fuentes
+|-- NarutoR36S.sh              # Main PortMaster launcher
+|-- NarutoR36SDebug.sh         # Ikemen debug launcher
+|-- NarutoR36SGamepad.sh       # SDL gamepad remapping launcher
+|-- chars/                     # Characters
+|-- data/                      # Ikemen data, configuration, and screenpack
+|-- external/                  # External config, gamecontrollerdb, icons
+|-- font/                      # Fonts
 |-- lifebars/                  # Lifebars
 |-- moves/                     # Movelists
-|-- save/                      # Configuracion y datos de guardado
-|-- sound/                     # Sonido y musica
-|-- stages/                    # Escenarios
-|-- storymode/                 # Scripts y catalogo del modo historia
-|-- tools/                     # Scripts de desarrollo y release
-|-- gameinfo.xml               # Metadata de juegos para frontend
-`-- port.json                  # Metadata PortMaster
+|-- save/                      # Save data and configuration
+|-- sound/                     # Sound and music
+|-- stages/                    # Stages
+|-- storymode/                 # Story mode scripts and catalog
+|-- tools/                     # Development and release scripts
+|-- gameinfo.xml               # Frontend game metadata
+`-- port.json                  # PortMaster metadata
 ```
 
-## Metadata Del Port
+## Port Metadata
 
-- Nombre: `Naruto R36S`
-- Archivo PortMaster: `naruto-r36s.zip`
-- Arquitectura: `aarch64`
+- Name: `Naruto R36S`
+- PortMaster archive: `naruto-r36s.zip`
+- Architecture: `aarch64`
 - Porter: `leonkasovan`
-- Motor: `Ikemen GO`
-- Estado: `Ready to run`
-- Carpeta de datos: `naruto-r36s/`
+- Engine: `Ikemen GO`
+- Status: `Ready to run`
+- Data folder: `naruto-r36s/`
 
-## Motor
+## Engine
 
-Ikemen GO busca compatibilidad con recursos de M.U.G.E.N 1.1 Beta y suma
-funciones propias del motor, como scripting avanzado, modos de juego ampliados y
-mejor soporte multiplataforma. Este port usa esa base para correr el contenido de
-Naruto dentro del entorno de PortMaster.
+Ikemen GO aims for compatibility with M.U.G.E.N 1.1 Beta resources while adding
+its own engine features, including advanced scripting, expanded game modes, and
+better cross-platform support. This port uses that foundation to run the Naruto
+content inside the PortMaster environment.
 
-Mas informacion:
+Learn more:
 
 - Ikemen GO: <https://github.com/ikemen-engine/Ikemen-GO>
-- Wiki de Ikemen GO: <https://github.com/ikemen-engine/Ikemen-GO/wiki>
-- Documentacion de M.U.G.E.N: <https://www.elecbyte.com/mugendocs-11b1/mugen.html>
+- Ikemen GO Wiki: <https://github.com/ikemen-engine/Ikemen-GO/wiki>
+- M.U.G.E.N documentation: <https://www.elecbyte.com/mugendocs-11b1/mugen.html>
 
-## Licencias Y Creditos
+## Licenses And Credits
 
-Gracias al equipo de **Ikemen GO** por desarrollar y liberar el motor.
+Thanks to the **Ikemen GO** team for developing and releasing the engine.
 
-Este es un proyecto fan-made. Naruto y sus marcas relacionadas pertenecen a sus
-respectivos titulares. Revisa tambien los archivos de licencia incluidos en:
+This is a fan-made project. Naruto and related marks belong to their respective
+owners. See the included license files as well:
 
 - `License.txt`
 - `ScreenpackLicense.txt`
